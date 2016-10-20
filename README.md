@@ -4,33 +4,33 @@
 2. sudo apt-get update
 3. sudo apt-get upgrade
 4. Install ros indigo (instructions from: http://wiki.ros.org/indigo/Installation/Ubuntu)
-    a. sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-    b. sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
-    c. sudo apt-get update
-    d. sudo apt-get install ros-indigo-desktop-full
-    e. echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc
-    f. source ~/.bashrc
-    g. type "roscore" in terminal to confirm ros installation is working properly, ctl+c to kill it
+    * sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+    * sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
+    * sudo apt-get update
+    * sudo apt-get install ros-indigo-desktop-full
+    * echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc
+    * source ~/.bashrc
+    * type "roscore" in terminal to confirm ros installation is working properly, ctl+c to kill it
 5. Setup a catkin workspace (instructions from http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
-    a. mkdir -p ~/catkin_ws/src
-    b. cd ~/catkin_ws/src
-    c. catkin_init_workspace
-    d. cd ~/catkin_ws
-    e. catkin_make
-    f. source devel/setup.bash
-    g. echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+    * mkdir -p ~/catkin_ws/src
+    * cd ~/catkin_ws/src
+    * catkin_init_workspace
+    * cd ~/catkin_ws
+    * catkin_make
+    * source devel/setup.bash
+    * echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 6. Install ROS packages we use
-    a. sudo apt-get install ros-indigo-husky-*
-    b. sudo apt-get install ros-indigo-urg-*
-    c. sudo apt-get install ros-indigo-teleop-*
-    d. sudo apt-get install ros-indigo-rospy-*
+    * sudo apt-get install ros-indigo-husky-*
+    * sudo apt-get install ros-indigo-urg-*
+    * sudo apt-get install ros-indigo-teleop-*
+    * sudo apt-get install ros-indigo-rospy-*
 
 7. Install our packages
-    a. Copy mbzirc_c2 into ~/catkin_ws/src/
-    b. cd ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/bin
-    c. sudo chmod +x *.py
-    d. sudo cp ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
-    e. cd ~/catkin_ws
-    f. catkin_make
-    g. source devel/setup.bash
-    h. roslaunch mbzirc_ch2_auto ch2-sim.launch
+    * Copy mbzirc_c2 into ~/catkin_ws/src/
+    * cd ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/bin
+    * sudo chmod +x *.py
+    * sudo cp ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
+    * cd ~/catkin_ws
+    * catkin_make
+    * source devel/setup.bash
+    * roslaunch mbzirc_ch2_auto ch2-sim.launch
