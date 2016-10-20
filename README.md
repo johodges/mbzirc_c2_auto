@@ -26,10 +26,11 @@
     * sudo apt-get install ros-indigo-rospy-*
 
 7. Install our packages
-    * Copy mbzirc_c2 into ~/catkin_ws/src/
-    * cd ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/bin
+    * cd ~/catkin_ws/src
+    * git clone https://github.com/johodges/mbzirc_c2_auto
+    * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
     * sudo chmod +x *.py
-    * sudo cp ~/catkin_ws/src/mbzirc_c2/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
+    * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
     * cd ~/catkin_ws
     * catkin_make
     * source devel/setup.bash
