@@ -97,7 +97,7 @@ catkin_python_setup()
 catkin_package(
   #INCLUDE_DIRS include
   LIBRARIES mbzirc_c2_auto
-  CATKIN_DEPENDS husky_navigation
+  #CATKIN_DEPENDS husky_navigation
   #DEPENDS system_lib
 )
 
@@ -135,7 +135,7 @@ catkin_package(
 ## Install ##
 #############
 
-catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v2.py bin/orient.py bin/orient_scan.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html

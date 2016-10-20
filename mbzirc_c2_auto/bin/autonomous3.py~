@@ -129,7 +129,6 @@ class mbzirc_c2_auto():
                     self.move_base.send_goal(self.goal)
                     self.ct = 0
         else:
-            t = tf.TransformListener()
             x0 = self.feedback.feedback.base_position.pose.position.x
             y0 = self.feedback.feedback.base_position.pose.position.y
             z0 = self.feedback.feedback.base_position.pose.position.z
@@ -154,7 +153,13 @@ class mbzirc_c2_auto():
             self.move_base.send_goal(self.goal)
             state = self.move_base.get_state()
             if bear < 3:
-                rospy.signal_shutdown('We are close enough to the object!')
+                self.goal.target_pose.header.frame_id = 'base_link'
+                self.goal.target_pose.pose = Pose(Point(0,0,0), Quaternion(0,0,-bearing.data[0],1))
+                self.move_base.send_goal(self.goal)
+                rospy.loginfo('We are close enough to the object!')
+                while self.move_base.get_state() != 3:
+                    rospy.sleep(1)
+                rospy.signal_shutdown('Ending node.')
             rospy.sleep(5)
             rospy.loginfo("State:" + str(state))
 

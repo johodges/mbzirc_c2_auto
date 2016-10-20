@@ -32,10 +32,6 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
 from decimal import *
-import message_filters
-import sensor_msgs.msg
-import scipy.signal as sg
-import scipy.misc as ms
 import tf
 
 class mbzirc_c2_auto():
@@ -79,7 +75,6 @@ class mbzirc_c2_auto():
 
         # Subscribe to the move_base action server
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-        #self.move_base = actionlib.ActionClient("move_base", MoveBaseAction)
 
         rospy.loginfo("Waiting for move_base action server...")
 
@@ -90,18 +85,8 @@ class mbzirc_c2_auto():
         rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
         rospy.sleep(self.rest_time)
-        self.goal.target_pose.pose = self.locations[self.wpname[self.wp+1]]
-        self.goal.target_pose.header.frame_id = 'odom'
-        self.goal.target_pose.header.stamp = rospy.Time.now()
-        self.move_base.send_goal(self.goal)
-        self.wp = self.wp+1
-        self.ct = 0
-        rospy.sleep(0.1)
-        self.state = self.move_base.get_state()
-        rospy.Subscriber("/scan", sensor_msgs.msg.LaserScan, self.callback, queue_size=1)
-        #tss = message_filters.ApproximateTimeSynchronizer([message_filters.Subscriber("/scan",sensor_msgs.msg.LaserScan),message_filters.Subscriber("/move_base/feedback", MoveBaseFeedback)],1,True)
-        #tss = message_filters.ApproximateTimeSynchronizer([message_filters.Subscriber("/scan",sensor_msgs.msg.LaserScan),message_filters.Subscriber("/tf", tf)],1,True)
-        #tss.registerCallback(self.callback)
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
+        rospy.Subscriber("/move_base/feedback", MoveBaseFeedback, self.callback_feedback, queue_size=1)
 
     def shutdown(self):
         rospy.loginfo("Stopping the robot...")
@@ -109,46 +94,24 @@ class mbzirc_c2_auto():
         rospy.sleep(2)
         self.cmd_vel_pub.publish(Twist())
         rospy.sleep(1)
-    #def callback(self,scan,trans):
-    def callback(self, scan):
-        #Look for objects within /scan
-        x = np.arange(-1.66,1.6525,0.0029146999)
-        thresh = 0.1
-        xsin = np.sin(x)
-        xcos = np.cos(x)
-        y = sg.medfilt(scan.ranges,1)
-        y_diff1 = np.power(np.diff(y),2)
-        x_coord = y*xsin
-        y_coord = y*xcos
-        x_diff = np.power(np.diff(x_coord),2)
-        y_diff = np.power(np.diff(y_coord),2)
-        dist = np.power(x_diff+y_diff,0.5)
-        x2 = np.array(np.split(x, np.argwhere(dist > thresh).flatten()[1:]))
-        y2 = np.array(np.split(y, np.argwhere(dist > thresh).flatten()[1:]))
-        dist2 = np.array(np.split(dist, np.argwhere(dist > thresh).flatten()[1:]))
-        x_coord2 = np.array(np.split(x_coord, np.argwhere(dist > thresh).flatten()[1:]))
-        y_coord2 = np.array(np.split(y_coord, np.argwhere(dist > thresh).flatten()[1:]))
-        bearing = [0, 0]
-        self.state = self.move_base.get_state()
-        for i in range(len(x2)):
-            xlen = len(x2[i])-0
-            if xlen > 4:
-                dist2_sum = np.sum(dist2[i][1:xlen-1])
-                if dist2_sum < 0.25:
-                    bearing[0] = 0
-                else:
-                    if dist2_sum > 5:
-                        bearing[0] = 0
-                    else:
-                        ang = np.median(x2[i])
-                        dis = np.median(y2[i])
-                        mn = min(y2[i][1:xlen])
-                        mx = max(y2[i][1:xlen])
-                        bearing = np.array([ang,dis], dtype=np.float32)
+    
+    def callback_feedback(self, data):
+        self.feedback = data
         
-        if bearing[0] == 0:
+    def callback(self, bearing):
+        if self.wp > -1:
+            state = self.move_base.get_state()
+        else:
+            self.goal.target_pose.pose = self.locations[self.wpname[self.wp+1]]
+            self.goal.target_pose.header.frame_id = 'odom'
+            self.goal.target_pose.header.stamp = rospy.Time.now()
+            self.move_base.send_goal(self.goal)
+            self.wp = self.wp+1
+            self.ct = 0
+            state = self.move_base.get_state()
+        if bearing.data[0] == 0:
             rospy.loginfo("%f",self.ct)
-            if self.state == 3:
+            if state == 3:
                 self.wp = self.wp+1
                 location = self.wpname[self.wp]
                 self.goal.target_pose.pose = self.locations[location]
@@ -156,7 +119,6 @@ class mbzirc_c2_auto():
                 rospy.loginfo("Going to: " + str(location))
                 self.move_base.send_goal(self.goal)
                 self.ct = 0
-                rospy.sleep(5)
             else:
                 self.ct = self.ct+1
                 if self.ct > self.stalled_threshold:
@@ -167,25 +129,39 @@ class mbzirc_c2_auto():
                     self.move_base.send_goal(self.goal)
                     self.ct = 0
         else:
-            if bearing[1] > 10:
+            x0 = self.feedback.feedback.base_position.pose.position.x
+            y0 = self.feedback.feedback.base_position.pose.position.y
+            z0 = self.feedback.feedback.base_position.pose.position.z
+            X0 = self.feedback.feedback.base_position.pose.orientation.x
+            Y0 = self.feedback.feedback.base_position.pose.orientation.y
+            Z0 = self.feedback.feedback.base_position.pose.orientation.z
+            W0 = self.feedback.feedback.base_position.pose.orientation.w
+
+            if bearing.data[1] > 10:
                 bear = 10
             else:
-                bear = bearing[1]
+                bear = bearing.data[1]
             if bear < 3:
                 bear = 0
-            x = bear*np.cos(bearing[0])-1
-            y = -bear*np.sin(bearing[0])-1
-            self.goal.target_pose.header.frame_id = 'base_link'
+            x = bear*np.cos(bearing.data[0]-Z0)-1+x0-1
+            y = -bear*np.sin(bearing.data[0]-Z0)-1+y0
+            print bearing.data[0], Z0
+            self.goal.target_pose.header.frame_id = 'odom'
             self.goal.target_pose.pose = Pose(Point(x,y,0), Quaternion(0,0,0,1))
-            rospy.loginfo("Going to: (%f,%f)",bearing[0],bearing[1])
+            rospy.loginfo("Going to: (%f,%f)",x,y)
             self.goal.target_pose.header.stamp = rospy.Time.now()
             self.move_base.send_goal(self.goal)
-            self.state = self.move_base.get_state()
-            
+            state = self.move_base.get_state()
             if bear < 3:
-                rospy.signal_shutdown('We are close enough to the object!')
+                self.goal.target_pose.header.frame_id = 'base_link'
+                self.goal.target_pose.pose = Pose(Point(0,0,0), Quaternion(0,0,-bearing.data[0],1))
+                #self.move_base.send_goal(self.goal)
+                rospy.loginfo('We are close enough to the object!')
+                #while self.move_base.get_state() != 3:
+                    #rospy.sleep(1)
+                rospy.signal_shutdown('Ending node.')
             rospy.sleep(5)
-            rospy.loginfo("State:" + str(self.state))
+            rospy.loginfo("State:" + str(state))
 
 if __name__ == '__main__':
     try:
