@@ -135,7 +135,7 @@ catkin_package(
 ## Install ##
 #############
 
-catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v2.py bin/orient.py bin/orient_scan.py bin/wrench_detect.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v2.py bin/orient.py bin/orient_scan.py bin/wrench_detect.py bin/panel.sh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
