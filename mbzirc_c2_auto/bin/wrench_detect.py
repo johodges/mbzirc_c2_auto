@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import roslib
 import rospy
+import rospkg
 import sys
-import rospy
 import cv2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -20,13 +20,14 @@ class find_wrench:
     self.ct = 0
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback)
-
+    
   def callback(self,data):
     try:
       cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
     except CvBridgeError as e:
       print(e)
-    cascade = cv2.CascadeClassifier('/home/jonathan/wrench.xml')
+    rospack = rospkg.RosPack()
+    cascade = cv2.CascadeClassifier(rospack.get_path('mbzirc_c2_auto')+'/params/wrench.xml')
     cv_image = cv2.resize(cv_image, (0,0), fx= 4, fy=4);
     rects = cascade.detectMultiScale(cv_image, 1.3, 4, cv2.cv.CV_HAAR_SCALE_IMAGE, (35, 200))
     #print 'I am trying!'
