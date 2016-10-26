@@ -32,6 +32,7 @@
     * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
     * sudo chmod +x *.py
     * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
+    * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/costmap_common.yaml /opt/ros/indigo/share/husky_navigation/config
     * cd ~/catkin_ws
     * catkin_make
     * source devel/setup.bash
