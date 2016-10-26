@@ -38,3 +38,7 @@
     * source devel/setup.bash
     * roslaunch mbzirc_ch2_auto ch2-sim.launch
     * When the autonomous_v2 node ends, do roslaunch mbzirc_ch2_auto orient.launch in another terminal.
+
+8. Modifying the panel
+    * Changing color: modify lines 29-41 in: mbzirc_c2_auto/mbzirc_c2_auto/gazebo_models/models/panel/model.sdf
+    * Changing position/orientation: modify x, y, Y in: mbzirc_c2_auto/mbzirc_c2_auto/bin/panel.sh
