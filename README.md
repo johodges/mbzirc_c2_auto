@@ -1,6 +1,6 @@
 # mbzirc_c2_auto
 
-1. Install ubuntu 14.04 LTS with auto-install updates enables.
+1. Install ubuntu 14.04 LTS with auto-install updates enabled.
 2. sudo apt-get update
 3. sudo apt-get upgrade
 4. Install ros indigo (instructions from: http://wiki.ros.org/indigo/Installation/Ubuntu)

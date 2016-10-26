@@ -12,4 +12,6 @@
   <remap from="image" to="/image_topic_2"/>
 </node>
 
+<node name="board" pkg="mbzirc_c2_auto" type="panel.sh" />
+
 </launch>
