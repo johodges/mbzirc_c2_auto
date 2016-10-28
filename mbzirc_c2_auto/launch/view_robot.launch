@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find mbzirc_c2_auto)/rviz/husky.rviz" output="screen"/>
+</launch>

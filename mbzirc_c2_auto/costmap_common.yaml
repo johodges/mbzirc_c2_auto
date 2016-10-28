@@ -8,8 +8,8 @@ transform_tolerance: 0.5
 
 resolution: 0.05
 
-obstacle_range: 2.5
-raytrace_range: 3.0
+obstacle_range: 2.0
+raytrace_range: 4.0
 
 #layer definitions
 static:
@@ -21,4 +21,4 @@ obstacles_laser:
     laser: {data_type: LaserScan, clearing: true, marking: true, topic: scan, inf_is_valid: true}
 
 inflation:
-    inflation_radius: 0.55
+    inflation_radius: 0.1
