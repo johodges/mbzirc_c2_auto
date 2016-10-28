@@ -46,3 +46,6 @@
 8. Modifying the panel
     * Changing color: modify lines 29-41 in: mbzirc_c2_auto/mbzirc_c2_auto/gazebo_models/models/panel/model.sdf
     * Changing position/orientation: modify x, y, Y in: mbzirc_c2_auto/mbzirc_c2_auto/bin/panel.sh
+
+9. Running with SMACH instead of individual navigation package:
+    * roslaunch mbzirc_c2_auto ch2-smach.launch
