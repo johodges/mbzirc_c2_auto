@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="num_samples" default="1000" />
+  <arg name="chain_start" default="base_link" />
+  <arg name="chain_end" default="ee_link" />
+  <arg name="timeout" default="0.005" />
+
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find ur_description)/urdf/ur5_robot.urdf.xacro'" />
+
+
+  <node name="ik_ros" pkg="trac_ik_tests" type="ik_ros" output="screen">
+    <param name="chain_start" value="$(arg chain_start)"/>
+    <param name="chain_end" value="$(arg chain_end)"/>
+    <param name="timeout" value="$(arg timeout)"/>
+    <param name="urdf_param" value="/robot_description"/>
+  </node>
+
+
+</launch>

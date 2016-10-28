@@ -1,0 +1,239 @@
+#!/usr/bin/env python
+import math
+import numpy
+import time
+import rospy
+import actionlib
+from control_msgs.msg import *
+from trajectory_msgs.msg import *
+
+JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
+
+ZERO_THRESH = 0.00000001
+
+d1 =  0.089159
+a2 = -0.42500
+a3 = -0.39225
+d4 =  0.10915
+d5 =  0.09465
+d6 =  0.0823
+q = [-0.0566717, -0.663753, 2.54625, -0.262812, -0.0316878, -0.177685]
+
+client = None
+
+def inverse(T, q6_des):
+    	num_sols = 0
+	
+    	T02 = T[0]
+    	T00 = T[1]
+    	T01 = T[2]
+    	T03 = T[3]
+    	T12 = T[4]
+    	T10 = T[5]
+    	T11 = T[6]
+    	T13 = T[7]
+    	T22 = T[8]
+    	T20 = T[9]
+    	T21 = T[10]
+	T23 = T[11]
+
+    #shoulder rotate joint (q1)
+	q1 = [0, 0]
+	A = d6*T12 - T13
+	B = d6*T02 - T03
+	R = A*A + B*B
+	if(math.fabs(A) < ZERO_THRESH):
+		div
+        	if(math.fabs(math.fabs(d4) - math.fabs(B)) < ZERO_THRESH):
+			div = -numpy.sign(d4)*numpy.sign(B)
+        	else:
+			div = -d4/B
+        	arcsin = math.asin(div)
+        	if(math.fabs(arcsin) < ZERO_THRESH):
+			arcsin = 0.0
+        	if(arcsin < 0.0):
+			q1[0] = arcsin + 2.0*math.pi
+        	else:
+			q1[0] = arcsin
+			q1[1] = math.pi - arcsin
+      
+	elif(math.fabs(B) < ZERO_THRESH):
+        	div
+        	if(math.fabs(math.fabs(d4) - math.fabs(A)) < ZERO_THRESH):
+          		div = numpy.sign(d4)*numpy.sign(A)
+        	else:
+			div = d4/A
+		arccos = math.acos(div)
+		q1[0] = arccos
+		q1[1] = 2.0*math.pi - arccos
+	elif(d4*d4 > R):
+        	return num_sols
+
+	else:
+        	arccos = math.acos(d4 / math.sqrt(R))
+        	arctan = math.atan2(-B, A)
+        	pos = arccos + arctan
+        	neg = -arccos + arctan
+        	if(math.fabs(pos) < ZERO_THRESH):
+          		pos = 0.0
+        		if(math.fabs(neg) < ZERO_THRESH):
+          			neg = 0.0
+        		if(pos >= 0.0):
+          			q1[0] = pos
+        		else:
+          			q1[0] = 2.0*math.pi + pos
+        		if(neg >= 0.0):
+          			q1[1] = neg 
+        		else:
+          			q1[1] = 2.0*math.pi + neg
+
+    #wrist 2 joint (q5) //////////////////////////////
+	q5 = [[0, 0], [0, 0]]
+	for i in range (0, 2):
+        	numer = (T03*math.sin(q1[i]) - T13*math.cos(q1[i])-d4)
+        	if(math.fabs(math.fabs(numer) - math.fabs(d6)) < ZERO_THRESH):
+          		div = numpy.sign(numer) * numpy.sign(d6)
+        	else:
+          		div = numer / d6
+        	arccos = math.acos(div)
+        	q5[i][0] = arccos
+        	q5[i][1] = 2.0*math.pi - arccos
+    #///////////////////////////////////////////////////////////////////
+
+      	for i in range (0, 2):
+        	for j in range (0, 2):
+          		c1 = math.cos(q1[i])
+			s1 = math.sin(q1[i])
+          		c5 = math.cos(q5[i][j])
+			s5 = math.sin(q5[i][j])
+    #////////////////////////////// wrist 3 joint (q6) //////////////////////////////
+		if(math.fabs(s5) < ZERO_THRESH):
+            		q6 = q6_des
+          	else:
+            		q6 = math.atan2(numpy.sign(s5)*-(T01*s1 - T11*c1), numpy.sign(s5)*(T00*s1 - T10*c1))
+            	if(math.fabs(q6) < ZERO_THRESH):
+              		q6 = 0.0
+            	if(q6 < 0.0):
+              		q6 += 2.0*math.pi
+
+   #////////////////////////////////////////////////////////////////
+
+	q2 = [0, 0]
+	q3 = [0, 0]
+	q4 = [0, 0]
+       #//////////////////////////// RRR joints (q2,q3,q4) ////////////////////////////
+	c6 = math.cos(q6)
+	s6 = math.sin(q6)
+        x04x = -s5*(T02*c1 + T12*s1) - c5*(s6*(T01*c1 + T11*s1) - c6*(T00*c1 + T10*s1))
+        x04y = c5*(T20*c6 - T21*s6) - T22*s5
+        p13x = d5*(s6*(T00*c1 + T10*s1) + c6*(T01*c1 + T11*s1)) - d6*(T02*c1 + T12*s1) + T03*c1 + T13*s1
+        p13y = T23 - d1 - d6*T22 + d5*(T21*c6 + T20*s6)
+
+        c3 = (p13x*p13x + p13y*p13y - a2*a2 - a3*a3) / (2.0*a2*a3)
+        if(math.fabs(math.fabs(c3) - 1.0) < ZERO_THRESH):
+		c3 = numpy.sign(c3)
+	arccos = math.acos(c3)
+	q3[0] = arccos
+ 	q3[1] = 2.0*math.pi - arccos
+   	denom = a2*a2 + a3*a3 + 2*a2*a3*c3
+    	s3 = math.sin(arccos)
+      	A = (a2 + a3*c3)
+	B = a3*s3
+        q2[0] = math.atan2((A*p13y - B*p13x) / denom, (A*p13x + B*p13y) / denom)
+        q2[1] = math.atan2((A*p13y + B*p13x) / denom, (A*p13x - B*p13y) / denom)
+        c23_0 = math.cos(q2[0]+q3[0])
+        s23_0 = math.sin(q2[0]+q3[0])
+        c23_1 = math.cos(q2[1]+q3[1])
+        s23_1 = math.sin(q2[1]+q3[1])
+        q4[0] = math.atan2(c23_0*x04y - s23_0*x04x, x04x*c23_0 + x04y*s23_0)
+        q4[1] = math.atan2(c23_1*x04y - s23_1*x04x, x04x*c23_1 + x04y*s23_1)
+        #////////////////////////////////////////////////////////////////
+	q_sols = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        for k in range (0, 2):
+        	if(math.fabs(q2[k]) < ZERO_THRESH):
+              		q2[k] = 0.0
+            	elif(q2[k] < 0.0):
+			q2[k] += 2.0*math.pi
+            	if(math.fabs(q4[k]) < ZERO_THRESH):
+              		q4[k] = 0.0
+            	elif(q4[k] < 0.0):
+			q4[k] += 2.0*math.pi
+           	q_sols[num_sols*6+0] = q1[i]
+		q_sols[num_sols*6+1] = q2[k] 
+            	q_sols[num_sols*6+2] = q3[k]
+		q_sols[num_sols*6+3] = q4[k] 
+            	q_sols[num_sols*6+4] = q5[i][j]
+		q_sols[num_sols*6+5] = q6 
+            	num_sols += 1
+
+	first_sol = [q_sols[6] ,q_sols[7] ,q_sols[8] ,q_sols[9] ,q_sols[10] ,q_sols[11]]
+	g = FollowJointTrajectoryGoal()
+	g.trajectory = JointTrajectory()
+    	g.trajectory.joint_names = JOINT_NAMES
+    	g.trajectory.points = [JointTrajectoryPoint(positions=first_sol, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
+	client.send_goal(g)
+	try:
+		client.wait_for_result()
+	except KeyboardInterrupt:
+		client.cancel_goal()
+		raise
+	return num_sols
+
+def main():
+    global client
+    try:
+        rospy.init_node("test_move", anonymous=True, disable_signals=True)
+        client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+
+	s1 = math.sin(q[0])
+	c1 = math.cos(q[0])
+	q234 = q[1]
+	s2 = math.sin(q[1])
+	c2 = math.cos(q[1])
+	s3 = math.sin(q[2])
+	c3 = math.cos(q[2])
+	q234 += q[2]
+	q234 += q[3]
+	s5 = math.sin(q[4])
+	c5 = math.cos(q[4])
+	s6 = math.sin(q[5])
+	c6 = math.cos(q[5])
+	s234 = math.sin(q234)
+	c234 = math.cos(q234)
+	T = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	T[0] = -(((c1*c234-s1*s234)*s5)/2.0 - c5*s1 + ((c1*c234+s1*s234)*s5)/2.0)
+    	T[1] = (c6*(s1*s5 + ((c1*c234-s1*s234)*c5)/2.0 + ((c1*c234+s1*s234)*c5)/2.0) - (s6*((s1*c234+c1*s234) - (s1*c234-c1*s234)))/2.0)
+    	T[2] =  (-(c6*((s1*c234+c1*s234) - (s1*c234-c1*s234)))/2.0 - s6*(s1*s5 + ((c1*c234-s1*s234)*c5)/2.0 + ((c1*c234+s1*s234)*c5)/2.0))
+    	T[3] = -(((d5*(s1*c234-c1*s234))/2.0 - (d5*(s1*c234+c1*s234))/2.0 - d4*s1 + (d6*(c1*c234-s1*s234)*s5)/2.0 + (d6*(c1*c234+s1*s234)*s5)/2.0 - a2*c1*c2 - d6*c5*s1 - a3*c1*c2*c3 + a3*c1*s2*s3))
+    	T[4] = -(c1*c5 + ((s1*c234+c1*s234)*s5)/2.0 + ((s1*c234-c1*s234)*s5)/2.0)
+    	T[5] = (c6*(((s1*c234+c1*s234)*c5)/2.0 - c1*s5 + ((s1*c234-c1*s234)*c5)/2.0) + s6*((c1*c234-s1*s234)/2.0 - (c1*c234+s1*s234)/2.0))
+    	T[6] =  (c6*((c1*c234-s1*s234)/2.0 - (c1*c234+s1*s234)/2.0) - s6*(((s1*c234+c1*s234)*c5)/2.0 - c1*s5 + ((s1*c234-c1*s234)*c5)/2.0))
+    	T[7] = -(((d5*(c1*c234-s1*s234))/2.0 - (d5*(c1*c234+s1*s234))/2.0 + d4*c1 + (d6*(s1*c234+c1*s234)*s5)/2.0 + (d6*(s1*c234-c1*s234)*s5)/2.0 + d6*c1*c5 - a2*c2*s1 - a3*c2*c3*s1 + a3*s1*s2*s3))
+    	T[8] = ((c234*c5-s234*s5)/2.0 - (c234*c5+s234*s5)/2.0)
+    	T[9] = -(((s234*c6-c234*s6)/2.0 - (s234*c6+c234*s6)/2.0 - s234*c5*c6))
+    	T[10] = -((s234*c5*s6 - (c234*c6+s234*s6)/2.0 - (c234*c6-s234*s6)/2.0))
+	T[11] = (d1 + (d6*(c234*c5-s234*s5))/2.0 + a3*(s2*c3+c2*s3) + a2*s2 - (d6*(c234*c5+s234*s5))/2.0 - d5*c234)
+
+	print T[0]
+	print T[1]
+	print T[2]
+	print T[3]
+	print T[4]
+	print T[5]
+	print T[6]
+	print T[7]
+	print T[8]
+	print T[9]
+	print T[10]
+	print T[11]
+
+        print "Waiting for ur5_arm server..."
+        client.wait_for_server()
+        print "Connected to ur5_arm server"
+        inverse(T, q[5])
+    except KeyboardInterrupt:
+        rospy.signal_shutdown("KeyboardInterrupt")
+        raise
+
+if __name__ == '__main__': main()
+

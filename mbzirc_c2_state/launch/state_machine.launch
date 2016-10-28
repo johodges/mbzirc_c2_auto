@@ -1,0 +1,10 @@
+<launch>
+
+<include file="$(find mbzirc_c2_auto)/launch/h-arena2.launch" />
+<include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
+  <arg name="no_static_map" value="true"/>
+</include>
+
+<node name="statemachine" pkg="smach_tutorials" type="mbzirc_simulation_state_machine_2.py" />
+
+</launch>

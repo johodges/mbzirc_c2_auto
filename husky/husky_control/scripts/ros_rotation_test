@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+import time
+import rospy
+import actionlib
+import math
+from control_msgs.msg import *
+from trajectory_msgs.msg import *
+from sensor_msgs.msg import JointState
+
+JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
+
+ZERO_THRESH = 0.00000001
+
+client = None
+
+def callback(data):
+
+	q1 = [data.position[0], data.position[1], data.position[2], data.position[3], data.position[4] - (math.pi / 2.0), data.position[5]]
+	q2 = [data.position[0], data.position[1], data.position[2], data.position[3], data.position[4] - (math.pi / 2.0), data.position[5] - (math.pi * 4.0)]
+	print "Waiting for ur5_arm server..."
+        client.wait_for_server()
+        print "Connected to ur5_arm server"
+        g = FollowJointTrajectoryGoal()
+	g.trajectory = JointTrajectory()
+    	g.trajectory.joint_names = JOINT_NAMES
+    	g.trajectory.points = [JointTrajectoryPoint(positions=q1, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
+	client.send_goal(g)
+	try:
+		client.wait_for_result()
+	except KeyboardInterrupt:
+		client.cancel_goal()
+		raise
+
+    	g.trajectory.points = [JointTrajectoryPoint(positions=q2, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
+	client.send_goal(g)
+	try:
+		client.wait_for_result()
+	except KeyboardInterrupt:
+		client.cancel_goal()
+		raise
+
+def main():
+	global client
+	try:
+        	rospy.init_node("kinematics_listener", anonymous=True, disable_signals=True)
+		rospy.Subscriber("/ik_ros/kinematics_talker", JointState, callback)
+        	client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+
+		rospy.spin()
+
+	except KeyboardInterrupt:
+        	rospy.signal_shutdown("KeyboardInterrupt")
+        	raise
+
+if __name__ == '__main__': main()
+

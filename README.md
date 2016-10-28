@@ -25,6 +25,8 @@
     * sudo apt-get install ros-indigo-teleop-*
     * sudo apt-get install ros-indigo-rospy-*
     * sudo apt-get install git
+    * sudo apt-get install ros-indigo-trac-ik*
+    * sudo apt-get install ros-indigo-smach-*
 
 7. Install our packages
     * cd ~/catkin_ws/src

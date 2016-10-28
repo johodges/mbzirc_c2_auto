@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-""" mbzirc_c2_auto.py - Version 1.0 2016-10-12
+""" autonomous.py - Version 1.0 2016-10-12
 
     General framework based on Patrick Goebel's nav_test.py
     Initial version based on ccam-navigation by Chris Mobley
+    Autonomous movement added by Jonathan Hodges
 
     Define waypoint destinations for a robot to move autonomously within
     a map framework.
@@ -34,10 +35,18 @@ import numpy as np
 from decimal import *
 
 class mbzirc_c2_auto():
-
+    # A few key tasks are achieved in the initializer function:
+    #     1. We load the pre-defined search routine
+    #     2. We connect to the move_base server in ROS
+    #     3. We start the ROS subscriber callback function registering the object
+    #     4. We initialize counters in the class to be shared by the various callback routines
     def __init__(self):
-	rospy.init_node('autonomous', anonymous=True) # Give the node a name
-        rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
+        # Name this node, it must be unique
+	rospy.init_node('autonomous', anonymous=True)
+
+        # Enable shutdown in rospy (This is important so we cancel any move_base goals
+        # when the node is killed)
+        rospy.on_shutdown(self.shutdown)
         self.rest_time = rospy.get_param("~rest_time", 0.1) # Minimum pause at each location
         self.stalled_threshold = rospy.get_param("~stalled_threshold", 100) # Loops before stall
 
