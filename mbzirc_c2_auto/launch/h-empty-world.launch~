@@ -4,7 +4,7 @@
   <arg name="laser_enabled" default="true"/>
   <arg name="ur5_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
-  <include file="(find mbzirc_c2_auto)/launch/empty_world.launch">
+  <include file="$(find mbzirc_c2_auto)/launch/empty_world.launch">
     <arg name="world_name" value="$(arg world_name)"/>
     <arg name="paused" value="true"/>
     <arg name="use_sim_time" value="true"/>
@@ -13,7 +13,7 @@
     <arg name="debug" value="false"/>
   </include>
 
-  <include file="(find mbzirc_c2_auto)/launch/h-spawn.launch">
+  <include file="$(find mbzirc_c2_auto)/launch/h-spawn.launch">
     <arg name="laser_enabled" value="$(arg laser_enabled)"/>
     <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>
     <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>

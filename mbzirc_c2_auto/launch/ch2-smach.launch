@@ -6,7 +6,7 @@
 <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
   <arg name="no_static_map" value="true"/>
 </include>
-<include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
+<!-- include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" / -->
 <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
 
 <node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine_2.py" />
