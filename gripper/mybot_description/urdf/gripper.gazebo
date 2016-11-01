@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<robot name="mybot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <gazebo reference="link2">
+    <kp>10000.0</kp>
+    <!-- kp and kd for rubber -->
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <!-- is this correct? -->
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+
+  <gazebo reference="left_tip">
+    <kp>10000.0</kp>
+    <!-- kp and kd for rubber -->
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <!-- is this correct? -->
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+
+  <gazebo reference="right_tip">
+    <kp>10000.0</kp>
+    <!-- kp and kd for rubber -->
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <!-- is this correct? -->
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+
+<gazebo>
+  <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+    <robotNamespace>/mybot</robotNamespace>
+  </plugin>
+</gazebo>
+
+<!--gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <alwaysOn>true</alwaysOn>
+    <updateRate>100</updateRate>
+    <leftJoint>left_wheel_hinge</leftJoint>
+    <rightJoint>right_wheel_hinge</rightJoint>
+    <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
+    <wheelDiameter>${2*wheelRadius}</wheelDiameter>
+    <torque>20</torque>
+    <commandTopic>cmd_vel</commandTopic>
+    <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <robotBaseFrame>footprint</robotBaseFrame>
+  </plugin>
+</gazebo -->
+
+<gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <alwaysOn>true</alwaysOn>
+    <updateRate>100</updateRate>
+    <leftJoint>left_tip_hinge</leftJoint>
+    <rightJoint>right_tip_hinge</rightJoint>
+    <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
+    <wheelDiameter>${2*wheelRadius}</wheelDiameter>
+    <torque>20</torque>
+    <commandTopic>gripper/cmd_vel</commandTopic>
+    <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <robotBaseFrame>footprint</robotBaseFrame>
+  </plugin>
+</gazebo>
+
+<gazebo reference="camera">
+  <material>Gazebo/Black</material>
+  <sensor type="camera" name="camera1">
+    <update_rate>30.0</update_rate>
+    <camera name="head">
+      <horizontal_fov>1.3962634</horizontal_fov>
+      <image>
+        <width>1920</width>
+        <height>1080</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>0.02</near>
+        <far>300</far>
+      </clip>
+    </camera>
+    <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>0.0</updateRate>
+      <cameraName>mybot/camera1</cameraName>
+      <imageTopicName>image_raw</imageTopicName>
+      <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+      <frameName>camera_link</frameName>
+      <hackBaseline>0.07</hackBaseline>
+      <distortionK1>0.0</distortionK1>
+      <distortionK2>0.0</distortionK2>
+      <distortionK3>0.0</distortionK3>
+      <distortionT1>0.0</distortionT1>
+      <distortionT2>0.0</distortionT2>
+    </plugin>
+  </sensor>
+ </gazebo>
+
+</robot>

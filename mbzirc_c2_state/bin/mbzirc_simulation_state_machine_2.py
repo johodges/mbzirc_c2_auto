@@ -63,17 +63,6 @@ class Orient(smach.State):
 	d.kill()
 	e.kill()
 
-	#twist = Twist()
-	#twist.linear.x = 0.5
-	#twist.linear.y = 0
-        #twist.linear.z = 0
-        #twist.angular.x = 0
-        #twist.angular.y = 0
-        #twist.angular.z = 0
-	#pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
-	#for x in range(0, 150000):
-	#	pub.publish(twist)
-
         return 'oriented'
 
 class Grasp(smach.State):
@@ -94,12 +83,12 @@ class Grasp(smach.State):
 	g.trajectory = JointTrajectory()
     	g.trajectory.joint_names = JOINT_NAMES
     	g.trajectory.points = [JointTrajectoryPoint(positions=q, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
-	client.send_goal(g)
-	try:
-		client.wait_for_result()
-	except KeyboardInterrupt:
-		client.cancel_goal()
-		raise
+	#client.send_goal(g)
+	#try:
+	#	client.wait_for_result()
+	#except KeyboardInterrupt:
+	#	client.cancel_goal()
+	#	raise
 
         return 'graspedWrench'
 
@@ -121,12 +110,12 @@ class UseWrench(smach.State):
 	g.trajectory = JointTrajectory()
     	g.trajectory.joint_names = JOINT_NAMES
     	g.trajectory.points = [JointTrajectoryPoint(positions=q, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
-	client.send_goal(g)
-	try:
-		client.wait_for_result()
-	except KeyboardInterrupt:
-		client.cancel_goal()
-		raise
+	#client.send_goal(g)
+	#try:
+	#	client.wait_for_result()
+	#except KeyboardInterrupt:
+	#	client.cancel_goal()
+	#	raise
         
 	return 'succeeded'
 

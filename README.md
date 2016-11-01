@@ -34,18 +34,13 @@
     * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
     * sudo chmod +x *.py
     * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
-    * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/costmap_common.yaml /opt/ros/indigo/share/husky_navigation/config
     * cd ~/catkin_ws
     * catkin_make
     * source devel/setup.bash
-    * roslaunch mbzirc_ch2_auto ch2-sim.launch
-    * wait until "process has finished cleanly" for board-16 message appears.
-    * Unpause the simulation in gazebo.
-    * When the autonomous_v2 node ends, do roslaunch mbzirc_ch2_auto orient.launch in another terminal.
 
 8. Modifying the panel
     * Changing color: modify lines 29-41 in: mbzirc_c2_auto/mbzirc_c2_auto/gazebo_models/models/panel/model.sdf
     * Changing position/orientation: modify x, y, Y in: mbzirc_c2_auto/mbzirc_c2_auto/bin/panel.sh
 
-9. Running with SMACH instead of individual navigation package:
+9. Running with SMACH:
     * roslaunch mbzirc_c2_auto ch2-smach.launch

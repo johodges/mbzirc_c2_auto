@@ -21,7 +21,7 @@ class find_wrench:
     self.w = rospy.Publisher("/wrench_center",numpy_msg(Floats), queue_size=1)
     self.ct = 0
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback)
+    self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
     
   def callback(self,data):
     try:
@@ -29,8 +29,9 @@ class find_wrench:
     except CvBridgeError as e:
       print(e)
     rospack = rospkg.RosPack()
+
     cascade = cv2.CascadeClassifier(rospack.get_path('mbzirc_c2_auto')+'/params/wrench.xml')
-    cv_image = cv2.resize(cv_image, (0,0), fx= 4, fy=4);
+    cv_image = cv2.resize(cv_image, (0,0), fx=2, fy=2);
     rects = cascade.detectMultiScale(cv_image, 1.3, 4, cv2.cv.CV_HAAR_SCALE_IMAGE, (35, 200))
     cv_image2 = cv_image.copy()
     #print 'I am trying!'
@@ -79,7 +80,7 @@ class find_wrench:
         w_loc = np.array([0],np.float32)
 
     self.ct = self.ct+1
-    cv_image2 = cv2.resize(cv_image2, (0,0), fx=0.25, fy=0.25);
+    cv_image2 = cv2.resize(cv_image2, (0,0), fx=0.5, fy=0.5);
 
     try:
       self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
