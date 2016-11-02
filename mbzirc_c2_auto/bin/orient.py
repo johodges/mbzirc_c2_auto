@@ -190,7 +190,7 @@ class orient():
                     print "ymx, ymn:", ymx, ymn
 
                     # Define the target location in the local coordinate system
-                    tar_loc = np.array([[xmn+1],[ymx+2]])#y_loc+x_loc+ymx+1]])
+                    tar_loc = np.array([[xmn+0.5],[ymx+3]])#y_loc+x_loc+ymx+1]])
                     print "Target loc in local coord and local sys:", tar_loc
 
                     # Convert local object and target locations to global coordinate system
