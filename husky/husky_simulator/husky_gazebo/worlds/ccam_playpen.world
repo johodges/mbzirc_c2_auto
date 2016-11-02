@@ -1,0 +1,97 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <world name="default">
+    <physics type='ode'>
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>100</real_time_update_rate>
+      <gravity>0 0 -9.8</gravity>
+    </physics>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://willowgarage</uri>
+      <name>willowgarage</name>
+      <pose>-27 -16 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://drill_station_1_sign</uri>
+      <name>drill_station_1_sign</name>
+      <pose>-12.5 20.65 2.1 1.57079632679 -1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://ccam_drill_pattern_1</uri>
+      <name>ccam_drill_pattern_1</name>
+      <pose>-12.5 20.65 1.1 1.57079632679 -1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://drill_station_2_sign</uri>
+      <name>drill_station_2_sign</name>
+      <pose>-7 20.65 2.1 1.57079632679 -1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://ccam_drill_pattern_2</uri>
+      <name>ccam_drill_pattern</name>
+      <pose>-7 20.65 1.1 1.57079632679 -1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://seal_station_1_sign</uri>
+      <name>seal_station_1_sign</name>
+      <pose>-19.425 15 2.1 0 -1.57079632679 3.14159265359</pose>
+    </include>
+    <include>
+      <uri>model://ar_marker_0</uri>
+      <name>ar_marker_0_42</name>
+      <pose>-19.425 14.3269 0.8657 3.14159265359 1.57079632679 3.14159265359</pose>
+    </include>
+    <include>
+      <uri>model://ccam_8020_frame_4_2</uri>
+      <name>4'x2' 80/20 Frame</name>
+      <pose>-19.425 15 0.7952 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://seal_station_2_sign</uri>
+      <name>seal_station_2_sign</name>
+      <pose>-19.425 18.5 2.1 0 -1.57079632679 3.14159265359</pose>
+    </include>
+    <include>
+      <uri>model://ar_marker_0</uri>
+      <name>ar_marker_0_21</name>
+      <pose>-19.425 18.1317 0.8657 3.14159265359 1.57079632679 3.14159265359</pose>
+    </include>
+    <include>
+      <uri>model://ccam_8020_frame_2_1</uri>
+      <name>2'x1' 80/20 Frame</name>
+      <pose>-19.425 18.5 0.7952 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://start_sign</uri>
+      <name>start_sign</name>
+      <pose>-21.81 12.275 2.1 0 -1.57079632679 3.14159265359</pose>
+    </include>
+    <include>
+      <uri>model://charging_station_sign</uri>
+      <name>charging_station_sign</name>
+      <pose>-11.5 6.2 2.1 1.57079632679 1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://tool_change_station_sign</uri>
+      <name>tool_change_station_sign</name>
+      <pose>-6.5 6.2 2.1 1.57079632679 1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://finish_sign</uri>
+      <name>finish_sign</name>
+      <pose>-16.5 6.2 2.1 1.57079632679 1.57079632679 0</pose>
+    </include>
+    <include>
+      <uri>model://extra_walls</uri>
+      <name>extra_walls</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+  </world>
+</sdf>

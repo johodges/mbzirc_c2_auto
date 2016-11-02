@@ -18,7 +18,7 @@
                 <mu2>50</mu2>
               </ode>
             </friction>
-          <bounce>
+          <!-- bounce>
             <restitution_coefficient>0</restitution_coefficient>
             <threshold>1e+06</threshold>
           </bounce>
@@ -41,7 +41,7 @@
               <kp>1e+13</kp>
               <kd>1</kd>
             </bullet>
-          </contact>
+          </contact -->
           </surface>
           <max_contacts>10</max_contacts>
           <laser_retro>0</laser_retro>

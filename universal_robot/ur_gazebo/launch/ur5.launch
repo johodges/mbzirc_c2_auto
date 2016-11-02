@@ -23,9 +23,5 @@
 
   <rosparam file="$(find ur_gazebo)/controller/arm_controller_ur5.yaml" command="load"/>
   <node name="arm_controller_spawner" pkg="controller_manager" type="controller_manager" args="spawn arm_controller" respawn="false" output="screen"/>
-  
-  <!-- ur usb camera -->
-  <node name="usb_cam_node" pkg="usb_cam" type="usb_cam">
-   <param name="image_raw" value="${prefix}usbcam_link" />
-  </node>
+
 </launch>

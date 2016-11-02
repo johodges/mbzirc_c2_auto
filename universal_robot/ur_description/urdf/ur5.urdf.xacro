@@ -5,6 +5,7 @@
   <xacro:include filename="$(find ur_description)/urdf/ur.gazebo.xacro" />
 
   <property name="pi" value="3.14159265" />
+  <property name="stl_scale" value="0.001" />
 
   <!-- Inertia parameters -->
   <property name="base_mass" value="4.0" />  <!-- This mass might be incorrect -->
@@ -335,6 +336,79 @@
       <child link="${prefix}tool0"/>
     </joint>
 
-  
+    <xacro:if value="$(arg ur5_camera_enabled)">
+
+      <joint name="${prefix}camera_mount_joint" type="fixed">
+        <origin xyz="0.0 ${wrist_3_length} 0.0" rpy="0.0 0.0 ${pi/2}" />
+        <parent link="${prefix}wrist_3_link" />
+        <child link = "${prefix}camera_mount_link" />
+      </joint>
+
+      <link name="${prefix}camera_mount_link">
+        <visual>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+          <geometry>
+            <mesh filename="package://ur_description/meshes/ur5/visual/camera_mount.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+          </geometry>
+        </visual>
+        <collision>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+          <geometry>
+            <mesh filename="package://ur_description/meshes/ur5/collision/camera_mount.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+          </geometry>
+        </collision>
+      </link>
+
+       <joint name="${prefix}camera_joint" type="fixed">
+         <origin xyz=".056433755002348 0.0 0.069206449979048" rpy="0.0 0.29984756549263 0.0" />
+         <parent link="${prefix}camera_mount_link" />
+         <child link = "${prefix}camera_link" />
+       </joint>
+
+       <link name="${prefix}camera_link">
+         <visual>
+           <origin xyz="-0.0295 0.0 0.0" rpy="0.0 0.0 0.0" />
+           <geometry>
+             <mesh filename="package://ur_description/meshes/ur5/visual/camera.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+           </geometry>
+         </visual>
+         <collision>
+           <origin xyz="-0.0295 0.0 0.0" rpy="0.0 0.0 0.0" />
+           <geometry>
+             <mesh filename="package://ur_description/meshes/ur5/collision/camera.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+           </geometry>
+         </collision>
+       </link>
+
+       <link name="${prefix}camera_optical_frame"/>
+       <joint name="${prefix}camera_optical_joint" type="fixed">
+          <origin xyz="0.0 0.0 0.0" rpy="-1.5708 0.0 -1.5708"/>
+          <parent link="${prefix}camera_link"/>
+          <child link="${prefix}camera_optical_frame"/>
+      </joint>
+
+       <joint name="${prefix}laser_pointer_joint" type="fixed">
+         <origin xyz="0.157 0.0 0.0" rpy="0.0 0.0 0.0" />
+         <parent link="${prefix}camera_mount_link" />
+         <child link = "${prefix}laser_pointer_link" />
+       </joint>
+
+       <link name="${prefix}laser_pointer_link">
+         <visual>
+           <origin xyz="-0.157 0.0 0.0" rpy="0.0 0.0 0.0" />
+           <geometry>
+             <mesh filename="package://ur_description/meshes/ur5/visual/laser_pointer.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+           </geometry>
+         </visual>
+         <collision>
+           <origin xyz="-0.157 0.0 0.0" rpy="0.0 0.0 0.0" />
+           <geometry>
+             <mesh filename="package://ur_description/meshes/ur5/collision/laser_pointer.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+           </geometry>
+         </collision>
+       </link>
+
+    </xacro:if>
+
   </xacro:macro>
 </robot>

@@ -10,8 +10,7 @@ JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5
 
 Q1 = [1.5707,-1.57,0.0,0.0,0.0,0.0]
 Q2 = [1.5707,-1.57,0.0,-2.7925,-1.5707,0.0]
-#Q3 = [1.5707,-2.6927,2.6927,-3.1415,-1.5707,0.0]
-Q3 = [1.5707,-2.8,2.8,-3.1415,-1.5707,0.0]
+Q3 = [1.5707,-2.6927,2.6927,-3.1415,-1.5707,0.0]
 
 client = None
 
@@ -44,12 +43,12 @@ def move_disordered():
         JointTrajectoryPoint(positions=q3, velocities=[0]*6, time_from_start=rospy.Duration(4.0))]
     client.send_goal(g)
     client.wait_for_result()
-    
+
 def move_repeated():
     g = FollowJointTrajectoryGoal()
     g.trajectory = JointTrajectory()
     g.trajectory.joint_names = JOINT_NAMES
-    
+
     d = 2.0
     g.trajectory.points = []
     for i in range(10):
@@ -77,7 +76,7 @@ def move_interrupt():
         JointTrajectoryPoint(positions=Q1, velocities=[0]*6, time_from_start=rospy.Duration(2.0)),
         JointTrajectoryPoint(positions=Q2, velocities=[0]*6, time_from_start=rospy.Duration(3.0)),
         JointTrajectoryPoint(positions=Q3, velocities=[0]*6, time_from_start=rospy.Duration(4.0))]
-    
+
     client.send_goal(g)
     time.sleep(2.0)
     print "Interrupting"
@@ -102,4 +101,3 @@ def main():
         raise
 
 if __name__ == '__main__': main()
-

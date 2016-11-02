@@ -55,6 +55,8 @@ def callback(data):
                     #plt.plot(x2[i],y_coord2[i],'rs')
                     ang = np.median(x2[i])
                     dis = np.median(y2[i])
+                    mn = min(y2[i][1:xlen])
+                    mx = max(y2[i][1:xlen])
                     bearing = np.array([ang,dis], dtype=np.float32)
                     
     if 'bearing' in locals():

@@ -17,7 +17,7 @@ def callback(data):
     #x = np.arange(4.71239,0,-0.004363323)
     #x = np.arange(2.35619,-2.358,-0.004363323)
     #x = np.arange(-2.35619,2.358,0.0065540750511)
-    x = np.arange(-1.66,1.6525,0.0029146999)
+    x = np.arange(1.66,-1.6525,-0.0029146999)
     thresh = 0.1
     xsin = np.sin(x)
     xcos = np.cos(x)

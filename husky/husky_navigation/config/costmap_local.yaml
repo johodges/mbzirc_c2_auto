@@ -1,6 +1,16 @@
 global_frame: odom
 rolling_window: true
 
+update_frequency: 3.0
+publish_frequency: 2.0
+
+width: 10.0
+height: 10.0
+resolution: 0.025
+
 plugins:
-  - {name: obstacles_laser,           type: "costmap_2d::ObstacleLayer"}
+  - {name: obstacles,                 type: "costmap_2d::ObstacleLayer"}
   - {name: inflation,                 type: "costmap_2d::InflationLayer"}
+
+obstacles:
+  publish_observations: false

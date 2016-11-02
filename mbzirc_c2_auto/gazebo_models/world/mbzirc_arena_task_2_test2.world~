@@ -3,9 +3,9 @@
   <world name='default'>
 
     <physics type='ode'>
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.005</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_update_rate>500</real_time_update_rate>
       <gravity>0 0 -9.8</gravity>
     </physics>
 
@@ -33,47 +33,6 @@
     <include>
       <uri>model://arena</uri>
     </include>
-<!-->
-    <include>
-      <pose>0.333 20.65 0.05 0 0 3.14 </pose>
-      <uri>model://panel</uri>
-    </include>
-<-->
-
-    <!-- Wrench tools: last number indicate the size, like wrench12 means 12mm. 
-there are six wrenches, just change the last number, do not change the pose, 
-when the panel pose is changed, change the wrenches x and y too.-->
-<!-->
-    <include>
-      <pose>0.165 20.20 0.6725  0 0 3.14</pose>
-      <uri>model://wrench12</uri>
-    </include>
-
-    <include>
-      <pose>0.165 20.25 0.6725  0 0 3.14</pose>
-      <uri>model://wrench15</uri>
-    </include>
-
-    <include>
-      <pose>0.165 20.30 0.6725  0 0 3.14</pose>
-      <uri>model://wrench13</uri>
-    </include>
-
-    <include>
-      <pose>0.165 20.35 0.6725  0 0 3.14</pose>
-      <uri>model://wrench18</uri>
-    </include>
-
-    <include>
-      <pose>0.165 20.40 0.6725  0 0 3.14</pose>
-      <uri>model://wrench19</uri>
-    </include>
-
-    <include>
-      <pose>0.165 20.45 0.6725  0 0 3.14</pose>
-      <uri>model://wrench14</uri>
-    </include>
-<-->
     <gui fullscreen='0'>
       <camera name='user_camera'>
         <pose>159.908 -1.39949 83.4967 0 0.559643 -3.11099</pose>

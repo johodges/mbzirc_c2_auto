@@ -10,5 +10,3 @@ sensors:
   padding_scale: 4.0
   padding_offset: 0.03
   filtered_cloud_topic: output_cloud
-
-

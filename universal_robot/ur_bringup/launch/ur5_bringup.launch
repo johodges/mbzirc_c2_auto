@@ -22,13 +22,10 @@
   
   <!-- ur common -->
   <include file="$(find ur_bringup)/launch/ur_common.launch">
-    <arg name="robot_ip" value="$(arg robot_ip)"/>e
+    <arg name="robot_ip" value="$(arg robot_ip)"/>
     <arg name="reverse_port" value="$(arg reverse_port)"/>
     <arg name="min_payload"  value="$(arg min_payload)"/>
     <arg name="max_payload"  value="$(arg max_payload)"/>
   </include>
-  <!-- ur usb camera -->
-  <node name="usb_cam_node" pkg="usb_cam" type="usb_cam">
-   <param name="image_raw" value="${prefix}usbcam_link" />
-  </node>
+
 </launch>

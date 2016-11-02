@@ -55,7 +55,7 @@ class laser_listener():
 
         # Establish LIDAR test angles. This must match the parameters of the LIDAR
         # in gazebo.
-        y = np.arange(1.66,-1.6525,-0.0029146999)
+        y = np.arange(-1.66,1.6525,0.0029146999)
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)

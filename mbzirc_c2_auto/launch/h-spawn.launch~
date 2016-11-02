@@ -2,13 +2,19 @@
 <launch>
 
   <arg name="laser_enabled" default="true"/>
-  <arg name="ur5_enabled" default="false"/>
+  <arg name="ur5_enabled" default="true"/>
+  <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
+  <arg name="kinectv2_enabled" default="true"/>
+  <arg name="primesense_enabled" default="false"/>
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(env HUSKY_GAZEBO_DESCRIPTION)'
     laser_enabled:=$(arg laser_enabled)
     ur5_enabled:=$(arg ur5_enabled)
+    ur5_camera_enabled:=$(arg ur5_camera_enabled)
     kinect_enabled:=$(arg kinect_enabled)
+    kinectv2_enabled:=$(arg kinectv2_enabled)
+    primesense_enabled:=$(arg primesense_enabled)
     " />
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
