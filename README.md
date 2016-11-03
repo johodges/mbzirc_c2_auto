@@ -27,6 +27,10 @@
     * sudo apt-get install git
     * sudo apt-get install ros-indigo-trac-ik*
     * sudo apt-get install ros-indigo-smach*
+    * sudo dpkg -i libassimp3_3.0~dfsg-2_amd64.deb
+    * sudo apt-get install ros-indigo-moveit-python ros-indigo-moveit-commander 
+
+
 
 7. Install our packages
     * cd ~/catkin_ws/src

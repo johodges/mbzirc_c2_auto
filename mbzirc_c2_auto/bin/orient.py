@@ -115,6 +115,17 @@ class orient():
         # We need some feedback from the move_base server to obtain our current
         # location. Since the move_base server does not publish feedback without an
         # active goal, we set an initial goal to get our position.
+        def wait_for_finish():
+            self.ct_move = 0
+            rospy.sleep(1)
+            while self.move_base.get_state() != 3:
+                if self.ct_move > self.stalled_threshold:
+                    self.move_base.send_goal(self.goal)
+                    self.ct_move = 0
+                self.ct_move = self.ct_move + 1
+                rospy.sleep(0.1)
+            return None
+
         if self.wp == -1:
             print "Setting initial state."
             self.goal.target_pose.header.frame_id = 'base_link'
@@ -125,14 +136,7 @@ class orient():
             self.wp = self.wp+1
             self.state = self.move_base.get_state()
         else:
-
-            # We check to see if we are bouncing between two angle increments, if
-            # yes increment counter, otherwise set to 0.
-            if bearing.data[0] != self.old_bearing:
-                self.ct3 = self.ct3+1
-            else:
-                self.ct3 = 0
-            
+           
             # Check if we are currently trying to rotate around the panel
             if self.flag == 0:
                 # Extract points of interest from the /bearing topic:
@@ -148,6 +152,12 @@ class orient():
                 ymn = bearing.data[7]
                 ymx = bearing.data[8]
 
+                # We check to see if we are bouncing between two angle increments, if
+                # yes increment counter, otherwise set to 0.
+                if bearing.data[0] != self.old_bearing:
+                    self.ct3 = self.ct3+1
+                else:
+                    self.ct3 = 0
                 # Extract the current pose of the robot in the global reference from
                 # the /feedback topic:
                 x0 = self.feedback.feedback.base_position.pose.position.x
@@ -169,6 +179,7 @@ class orient():
                     #print self.goal.target_pose.pose
                     self.flag = 0
                     self.goal.target_pose.header.frame_id = 'base_link'
+                    rospy.sleep(0.5)
                 else:
                     print "Let's circle around!"
                     # Convert quaternion angle to euler angles
@@ -190,7 +201,7 @@ class orient():
                     print "ymx, ymn:", ymx, ymn
 
                     # Define the target location in the local coordinate system
-                    tar_loc = np.array([[xmn+0.5],[ymx+3]])#y_loc+x_loc+ymx+1]])
+                    tar_loc = np.array([[xmn+0.5],[ymx+3]])
                     print "Target loc in local coord and local sys:", tar_loc
 
                     # Convert local object and target locations to global coordinate system
@@ -212,34 +223,19 @@ class orient():
                     q = tf.transformations.quaternion_from_euler(0,0,yaw-1.57)
                     loc = Pose(Point(x_tar_glo,y_tar_glo,0), Quaternion(q[0],q[1],q[2],q[3]))
                     q = tf.transformations.quaternion_from_euler(0,0,1.57)
-                    self.goal.target_pose.pose = Pose(Point(0,0,0),Quaternion(q[0],q[1],q[2],q[3]))
+                    self.goal.target_pose.pose = Pose(Point(x0,y0,0),Quaternion(q[0],q[1],q[2],q[3]))
+                    self.goal.target_pose.header.frame_id = 'odom'
+                    self.move_base.send_goal(self.goal)
+
+                    wait_for_finish()
+                    print "Done rotating!"
+
+                    print "Moving around the box a bit to give clearance."
+                    self.goal.target_pose.pose = Pose(Point(2,0,0),Quaternion(0,0,0,1))
                     self.goal.target_pose.header.frame_id = 'base_link'
                     self.move_base.send_goal(self.goal)
-                    rospy.sleep(1)
-                    self.ct_move = 0
 
-                    # Loop until goal is reached. If stalled, resend goal
-                    while self.move_base.get_state() != 3:
-                        if self.ct_move > self.stalled_threshold:
-                            self.move_base.send_goal(self.goal)
-                            self.ct_move = 0
-                        self.ct_move = self.ct_move + 1
-                        rospy.sleep(0.1)
-                    print "Done rotating!"
-                    print "Moving around the box a bit to give clearance."
-                    q = tf.transformations.quaternion_from_euler(0,0,-1.57)
-                    self.goal.target_pose.pose = Pose(Point(2,0,0),Quaternion(q[0],q[1],q[2],q[3]))
-                    self.move_base.send_goal(self.goal)
-                    rospy.sleep(1)
-                    self.ct_move = 0
-
-                    # Loop until goal is reached. If stalled, resend goal
-                    while self.move_base.get_state() != 3:
-                        if self.ct_move > self.stalled_threshold:
-                            self.move_base.send_goal(self.goal)
-                            self.ct_move = 0
-                        self.ct_move = self.ct_move + 1
-                        rospy.sleep(0.1)
+                    wait_for_finish()
                     print "Done getting clearance."
 
                     # Move to target location
@@ -249,19 +245,12 @@ class orient():
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.move_base.send_goal(self.goal)
                     self.ct3 = 0
-                    rospy.sleep(1)
-                    self.ct_move = 0
 
-                    # Loop until goal is reached. If stalled, resend goal
-                    while self.move_base.get_state() != 3:
-                        if self.ct_move > self.stalled_threshold:
-                            self.move_base.send_goal(self.goal)
-                            self.ct_move = 0
-                        self.ct_move = self.ct_move + 1
-                        rospy.sleep(0.1)
+                    wait_for_finish()
                 self.goal.target_pose.header.stamp = rospy.Time.now()
             if self.flag == 0:
                 self.move_base.send_goal(self.goal)
+                wait_for_finish()
             else:
                 if self.flag == 1: #Check if we reached target location. If yes, start the normalizing process.
                     if self.move_base.get_state() == 3:
@@ -301,12 +290,7 @@ class orient():
                 # Loop until goal is reached. If stalled, resend goal
                 rospy.sleep(5)
                 self.ct_move = 0
-                while self.move_base.get_state() != 3:
-                    if self.ct_move > self.stalled_threshold:
-                        self.move_base.send_goal(self.goal)
-                        self.ct_move = 0
-                    self.ct_move = self.ct_move + 1
-                    rospy.sleep(0.1)
+                wait_for_finish()
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
                 vw_c = (valve+wrenc)/2
@@ -388,14 +372,8 @@ class orient():
                     #self.goal.target_pose.pose = Pose(Point(-1,0,0), Quaternion(X0,Y0,Z0,W0))
                     #self.move_base.send_goal(self.goal)
 
-                    rospy.sleep(1)
-                    self.ct_move = 0
-                    while self.move_base.get_state() != 3:
-                        if self.ct_move > self.stalled_threshold:
-                            self.move_base.send_goal(self.goal)
-                            self.ct_move = 0
-                        self.ct_move = self.ct_move + 1
-                        rospy.sleep(0.1)
+                    wait_for_finish()
+
                     if vw_off < 0:
                         di = -0.1
                     else:
@@ -406,14 +384,8 @@ class orient():
                     print x0+di*np.sin(yaw), y0-di*np.cos(yaw)
                     self.move_base.send_goal(self.goal)
                     print "Moving forward 1m and to the left-right 0.2m"
-                    rospy.sleep(1)
-                    self.ct_move = 0
-                    while self.move_base.get_state() != 3:
-                        if self.ct_move > self.stalled_threshold:
-                            self.move_base.send_goal(self.goal)
-                            self.ct_move = 0
-                        self.ct_move = self.ct_move + 1
-                        rospy.sleep(0.1)
+                    wait_for_finish()
+
 
 if __name__ == '__main__':
     try:
