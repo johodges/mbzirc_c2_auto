@@ -77,6 +77,7 @@ class mbzirc_c2_auto():
                 self.locations[self.wpname[ct2]] = Pose(Point(x,y,z), Quaternion(X,Y,Z,1))
                 ct2 = ct2+1
         self.wp = -1
+        self.ct4 = 0
 
         # Publisher to manually control the robot (e.g. to stop it, queue_size=5)
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
@@ -116,6 +117,8 @@ class mbzirc_c2_auto():
             state = self.move_base.get_state()
         if bearing.data[0] == 0:
             rospy.loginfo("%f",self.ct)
+            self.ct4 = 0
+            print "I see no object!"
             if state == 3:
                 self.wp = self.wp+1
                 location = self.wpname[self.wp]
@@ -135,24 +138,29 @@ class mbzirc_c2_auto():
                     self.move_base.send_goal(self.goal)
                     self.ct = 0
         else:
-            if bearing.data[1] > 10:
-                bear = 10
+            if self.ct4 > 10:
+                print "I see an object!"
+                if bearing.data[1] > 10:
+                    bear = 10
+                else:
+                    bear = bearing.data[1]
+                if bear < 3:
+                    bear = 0
+                x = bear*np.cos(bearing.data[0])-1
+                y = -bear*np.sin(bearing.data[0])-1
+                self.goal.target_pose.header.frame_id = 'base_link'
+                self.goal.target_pose.pose = Pose(Point(x,y,0), Quaternion(0,0,0,1))
+                rospy.loginfo("Going to: (%f,%f)",bearing.data[0],bearing.data[1])
+                self.goal.target_pose.header.stamp = rospy.Time.now()
+                self.move_base.send_goal(self.goal)
+                state = self.move_base.get_state()
+                self.ct4 = self.ct4+1
+                if bear < 3:
+                    rospy.signal_shutdown('We are close enough to the object!')
+                rospy.sleep(5)
+                rospy.loginfo("State:" + str(state))
             else:
-                bear = bearing.data[1]
-            if bear < 3:
-                bear = 0
-            x = bear*np.cos(bearing.data[0])-1
-            y = -bear*np.sin(bearing.data[0])-1
-            self.goal.target_pose.header.frame_id = 'base_link'
-            self.goal.target_pose.pose = Pose(Point(x,y,0), Quaternion(0,0,0,1))
-            rospy.loginfo("Going to: (%f,%f)",bearing.data[0],bearing.data[1])
-            self.goal.target_pose.header.stamp = rospy.Time.now()
-            self.move_base.send_goal(self.goal)
-            state = self.move_base.get_state()
-            if bear < 3:
-                rospy.signal_shutdown('We are close enough to the object!')
-            rospy.sleep(5)
-            rospy.loginfo("State:" + str(state))
+                self.ct4 = self.ct4+1
 
 if __name__ == '__main__':
     try:

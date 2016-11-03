@@ -51,10 +51,10 @@
               <mu2>50</mu2>
             </ode>
           </friction>
-          <bounce>
+          <!-- bounce>
             <restitution_coefficient>0</restitution_coefficient>
             <threshold>1e+06</threshold>
-          </bounce>
+          </bounce -->
         </surface>
       </collision>
     </link>

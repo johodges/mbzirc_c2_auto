@@ -223,10 +223,10 @@ class orient():
                     q = tf.transformations.quaternion_from_euler(0,0,yaw-1.57)
                     loc = Pose(Point(x_tar_glo,y_tar_glo,0), Quaternion(q[0],q[1],q[2],q[3]))
                     q = tf.transformations.quaternion_from_euler(0,0,1.57)
-                    self.goal.target_pose.pose = Pose(Point(x0,y0,0),Quaternion(q[0],q[1],q[2],q[3]))
-                    self.goal.target_pose.header.frame_id = 'odom'
+                    self.goal.target_pose.pose = Pose(Point(0,0,0),Quaternion(q[0],q[1],q[2],q[3]))
+                    self.goal.target_pose.header.frame_id = 'base_link'
                     self.move_base.send_goal(self.goal)
-
+                    self.goal.target_pose.pose = Pose(Point(0,0,0),Quaternion(0,0,0,1))
                     wait_for_finish()
                     print "Done rotating!"
 

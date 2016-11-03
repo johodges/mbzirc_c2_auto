@@ -2,7 +2,7 @@
 
 <include file="$(find mbzirc_c2_auto)/launch/h-arena2.launch">
   <arg name="ur5_enabled" value="true" />
-  <arg name="paused" value="true" />
+  <arg name="paused" value="false" />
 </include>
 <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
   <arg name="no_static_map" value="true"/>
