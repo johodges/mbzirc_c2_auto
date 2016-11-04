@@ -29,6 +29,7 @@ import scipy.misc as ms
 import scipy.spatial.distance as scd
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+import math
 
 class laser_listener():
     # Initialize the class
@@ -143,6 +144,46 @@ class laser_listener():
 
                         # Determine which way the robot needs to rotate based on the
                         # physical orientations of the median and minimum scans
+                        m = (yB-yA)/(xB-xA)
+                        m2 = 1/m
+                        theta2 = math.atan(-m2/1)
+                        b2 = yA-m2*xA
+                        d = 2
+                        t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
+                        t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
+
+                        xc1 = pow(-t1+(t1*t1-4*t2),0.5)/2
+                        xc2 = pow(-t1-(t1*t1-4*t2),0.5)/2
+                        yc1 = m2*xc1+b2
+                        yc2 = m2*xc2+b2
+                        #tmp = pow(-m2*m2*xA*xA+2*m2*xA*(yA-b2)-yA*yA+2*b2*yA-b2*b2+d*d*(m2*m2+1),0.5)
+                        #xc3 = -1*(tmp-xA-m2*(yA-b2))/(m2*m2+1)
+
+                        #yc3 = m2*xc3+b2
+                        e = pow(xA*xA+yA*yA,0.5)
+                        xc3 = xA-d*np.cos(theta2)
+                        yc3 = yA-d*np.sin(theta2)
+                        #e = d*np.sin(theta2)/(np.sin(math.radians(90)-theta2))
+                        print e
+                        #xc3 = e*np.cos(math.radians(90)-theta2)
+                        #yc3 = e*np.sin(math.radians(90)-theta2)
+                        #print m, m2
+                        #print xc1, yc1
+                        #print xc2, yc2
+                        #print xc3, yc3, math.degrees(theta2)
+                        if math.isnan(xc2) == 1:
+                            xC = xc1
+                            yC = yc1
+                        else:
+                            xC = xc2
+                            yC = yc2
+
+                        print xc3, yc3, math.degrees(theta2)
+                        print xA, yA
+                        print xB, yB
+                        print e
+                        #print xC, yC, math.degrees(theta2)
+                        
                         if xA > xB:
                             if yA > yB:
                                 if debug_flag == 1:
@@ -163,7 +204,7 @@ class laser_listener():
                                 rot = 1
 
                         # Output the bearing for publishing
-                        bearing = np.array([rot*0.2,xA,yA,xB,yB,xmn,xmx,ymn,ymx], dtype=np.float32)
+                        bearing = np.array([theta2,xA,yA,xB,yB,xmn,xmx,ymn,ymx,xc3,yc3], dtype=np.float32)
                         if debug_flag == 1:
                             print bearing
         
