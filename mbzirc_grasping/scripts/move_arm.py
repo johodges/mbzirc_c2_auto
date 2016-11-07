@@ -45,8 +45,8 @@ def callback(data):
         arm.allow_replanning(True)
 
         # Allow some leeway in position (meters) and orientation (radians)
-        arm.set_goal_position_tolerance(0.0001)
-        arm.set_goal_orientation_tolerance(0.0001)
+        arm.set_goal_position_tolerance(0.01)
+        arm.set_goal_orientation_tolerance(0.01)
         
         #Set the target pose from the input
         target_pose = PoseStamped()
@@ -74,7 +74,7 @@ def callback(data):
             arm.execute(traj)
             
             # Pause for a second
-            rospy.sleep(1)
+            rospy.sleep(5.0)
                 
             rospy.loginfo("Successfully moved")
                 
@@ -83,10 +83,6 @@ def callback(data):
 
 def main():
 	rospy.init_node("move_arm", anonymous=False)
-
-	paramlist=rosparam.load_file("src/husky/husky_ur5_moveit_config/config/kinematics.yaml", default_namespace="my_namespace")
-	for params, ns in paramlist:
-    		rosparam.upload_params(ns,params)
 
 	rospy.set_param('arm_prefix', 'ur5_arm_')
 	rospy.set_param('reference_frame', '/base_link')

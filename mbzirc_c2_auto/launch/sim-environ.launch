@@ -7,7 +7,6 @@
   <arg name="no_static_map" value="true"/>
 </include>
 
-<include file="$(find husky_ur5_moveit_config)/launch/planning_context.launch"/>
 <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch"/>
 
 <node name="board" pkg="mbzirc_c2_auto" type="panel.sh" />
