@@ -127,6 +127,8 @@ class orient():
             rospy.sleep(1)
             while self.move_base.get_state() != 3:
                 if self.ct_move > self.stalled_threshold:
+                    back_it_up(-0.1,0.02)
+                    rospy.sleep(0.5)
                     self.move_base.send_goal(self.goal)
                     self.ct_move = 0
                 self.ct_move = self.ct_move + 1
