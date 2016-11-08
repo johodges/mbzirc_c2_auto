@@ -7,7 +7,7 @@ project(arm_nav_correct)
 find_package(catkin REQUIRED COMPONENTS
   control_msgs
   geometry_msgs
-  manipulator_msgs
+  manipulation_msgs
   moveit_msgs
   roscpp
   rospy
@@ -74,7 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   control_msgs#   geometry_msgs#   manipulator_msgs#   moveit_msgs#   std_msgs#   trajectory_msgs
+#   control_msgs#   geometry_msgs#   manipulation_msgs#   moveit_msgs#   std_msgs#   trajectory_msgs
 # )
 
 ################################################
@@ -109,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES arm_nav_correct
-#  CATKIN_DEPENDS control_msgs geometry_msgs manipulator_msgs moveit_msgs roscpp rospy std_msgs tf2 tf2_ros trajectory_msgs
+#  CATKIN_DEPENDS control_msgs geometry_msgs manipulation_msgs moveit_msgs roscpp rospy std_msgs tf2 tf2_ros trajectory_msgs
 #  DEPENDS system_lib
 )
 
