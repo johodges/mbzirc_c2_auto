@@ -377,10 +377,10 @@ class orient():
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
                 print self.v_c
                 print self.w_c
-                valve_y = (self.v_c[0]-0)/(1920-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-                valve_z = (self.v_c[1]-0)/(1080-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
-                wrenc_y = (self.w_c[0]-0)/(1920-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-                wrenc_z = (self.w_c[1]-0)/(1080-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                valve_y = (self.v_c[1]-0)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                valve_z = (self.v_c[0]-0)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                wrenc_y = (self.w_c[1]-0)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                wrenc_z = (self.w_c[0]-0)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
                 wrench = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
                     #rospy.set_param('valve',valve)
