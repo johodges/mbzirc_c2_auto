@@ -383,7 +383,8 @@ class orient():
                 wrenc_z = (self.w_c[0]-0)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
                 wrench = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-                    #rospy.set_param('valve',valve)
+
+                
                     #rospy.set_param('wrench',wrench)
 
                     # Publish the estimated position of the wrenches and valve
@@ -394,6 +395,8 @@ class orient():
                 print xmn, xmx, ymn, ymx
                 print "Wrench location (x,y,z): ", wrench
                 print "Valve location (x,y,z): ", valve
+                rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
+                rospy.set_param('wrench',[float(wrench[0]), float(wrench[1]), float(wrench[2])])
                 rospy.sleep(2)
                 rospy.signal_shutdown('Ending node.')
 
