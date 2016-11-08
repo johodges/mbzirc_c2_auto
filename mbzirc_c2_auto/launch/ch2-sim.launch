@@ -8,6 +8,7 @@
 <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
   <arg name="no_static_map" value="true"/>
 </include>
+<include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch"/>
 <!-->
 <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
 <include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
