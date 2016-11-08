@@ -5,7 +5,7 @@
   <arg name="ur5_enabled" default="true"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
-  <arg name="kinectv2_enabled" default="true"/>
+  <arg name="kinectv2_enabled" default="false"/>
   <arg name="primesense_enabled" default="false"/>
   <arg name="paused" default="false"/>
   <include file="$(find mbzirc_c2_auto)/launch/empty_world.launch">

@@ -1,7 +1,10 @@
+<?xml version="1.0"?>
 <launch>
 
 <include file="$(find mbzirc_c2_auto)/launch/h-arena2.launch">
-  <arg name="paused" value="false" />
+  <arg name="paused" value="true" />
+  <arg name="ur5_camera_enabled" value="false"/>
+  <arg name="kinectv2_enabled" default="true"/>
 </include>
 <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
   <arg name="no_static_map" value="true"/>
