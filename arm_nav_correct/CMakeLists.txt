@@ -1,10 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mbzirc_c2_auto)
+project(arm_nav_correct)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy husky_navigation move_base)
+find_package(catkin REQUIRED COMPONENTS
+  control_msgs
+  geometry_msgs
+  manipulator_msgs
+  moveit_msgs
+  roscpp
+  rospy
+  std_msgs
+  tf2
+  tf2_ros
+  trajectory_msgs
+)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -12,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS rospy husky_navigation move_base)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -62,7 +74,7 @@ catkin_python_setup()
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   control_msgs#   geometry_msgs#   manipulator_msgs#   moveit_msgs#   std_msgs#   trajectory_msgs
 # )
 
 ################################################
@@ -95,10 +107,10 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  #INCLUDE_DIRS include
-  LIBRARIES mbzirc_c2_auto
-  #CATKIN_DEPENDS husky_navigation
-  #DEPENDS system_lib
+#  INCLUDE_DIRS include
+#  LIBRARIES arm_nav_correct
+#  CATKIN_DEPENDS control_msgs geometry_msgs manipulator_msgs moveit_msgs roscpp rospy std_msgs tf2 tf2_ros trajectory_msgs
+#  DEPENDS system_lib
 )
 
 ###########
@@ -108,34 +120,35 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
-# add_library(mbzirc_c2_auto
-#   src/${PROJECT_NAME}/mbzirc_c2_auto.cpp
+# add_library(arm_nav_correct
+#   src/${PROJECT_NAME}/arm_nav_correct.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(mbzirc_c2_auto ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(arm_nav_correct ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(mbzirc_c2_auto_node src/mbzirc_c2_auto_node.cpp)
+# add_executable(arm_nav_correct_node src/arm_nav_correct_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(mbzirc_c2_auto_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(arm_nav_correct_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(mbzirc_c2_auto_node
+# target_link_libraries(arm_nav_correct_node
 #   ${catkin_LIBRARIES}
 # )
 
 #############
 ## Install ##
 #############
-
-catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v2.py bin/orient.py bin/orient2.py bin/orient_scan.py bin/wrench_detect.py bin/panel.sh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
@@ -148,7 +161,7 @@ catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mbzirc_c2_auto mbzirc_c2_auto_node
+# install(TARGETS arm_nav_correct arm_nav_correct_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -173,7 +186,7 @@ catkin_install_python(PROGRAMS bin/findbox.py bin/autonomous.py bin/autonomous_v
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mbzirc_c2_auto.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_arm_nav_correct.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
