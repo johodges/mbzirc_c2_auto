@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('smach_tutorials')
+# import roslib; roslib.load_manifest('smach_tutorials')
+import roslib
 import rospy
 import smach
 import smach_ros
@@ -28,7 +29,7 @@ class Bar(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing state BAR')
         return 'outcome2'
-        
+
 
 
 
@@ -42,15 +43,20 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        smach.StateMachine.add('FOO', Foo(), 
-                               transitions={'outcome1':'BAR', 
+        smach.StateMachine.add('FOO', Foo(),
+                               transitions={'outcome1':'BAR',
                                             'outcome2':'outcome4'})
-        smach.StateMachine.add('BAR', Bar(), 
+        smach.StateMachine.add('BAR', Bar(),
                                transitions={'outcome2':'FOO'})
 
+    # Create the introspection server
+    sis = smach_ros.IntrospectionServer('mbzirc_server', sm, '/SM_ROOT')
+    sis.start()
     # Execute SMACH plan
     outcome = sm.execute()
 
+    rospy.spin()
+    sis.stop()
 
 if __name__ == '__main__':
     main()

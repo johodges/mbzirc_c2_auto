@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 
 <include file="$(find mbzirc_c2_auto)/launch/h-arena2.launch" />

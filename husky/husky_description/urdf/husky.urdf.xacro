@@ -89,8 +89,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <!-- Interial link stores the robot's inertial information -->
     <link name="inertial_link">
       <inertial>
+        <!-- <mass value="33.455" /> -->
         <mass value="60" />
+        <!-- <origin xyz="-0.08748 -0.00085 -0.2" /> -->
         <origin xyz="-0.08748 -0.00085 0.09947" />
+        <!-- <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" /> -->
         <inertia ixx="1.08995475113" ixy="-0.0427873303" ixz="-0.2166515837" iyy="3.14678733031" iyz="-0.00279457012" izz="3.67348416289" />
       </inertial>
 </link>
@@ -131,26 +134,27 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <xacro:if value="$(arg ur5_enabled)">
 
       <xacro:property name="reflect" value="-1" />
-  
+
       <!-- Spawn arm -->
       <xacro:ur5_robot prefix="ur5_arm_" joint_limited="true"/>
-      
+
       <!-- Join arm -->
       <joint name="ur5_arm_base" type="fixed">
         <parent link="top_plate_link" />
         <child link="ur5_arm_base_link" />
         <origin xyz="0.3058 0 0.0065" rpy="0.0 0.0 -1.57079632679" />
       </joint>
-      
+
       <!-- Spawn gripper-->
       <xacro:gripper />
 
       <!-- Join Gripper -->
 
+
         <joint name="base_to_arm" type="fixed">
           <parent link="ur5_arm_wrist_3_link"/>
           <child link="base"/>
-          <origin xyz="0 0.09 0" rpy="0 0 0"/> 
+          <origin xyz="0 0.09 0" rpy="0 0 0"/>
         </joint>
 
     </xacro:if>

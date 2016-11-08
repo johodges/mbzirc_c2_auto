@@ -2,22 +2,22 @@
 <robot name="mybot" xmlns:xacro="http://ros.org/wiki/xacro">
 
 <link name='base'>
-  <collision> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <geometry> 
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
       <mesh filename="package://mybot_description/meshes/base.DAE"/>
-    </geometry> 
+    </geometry>
   </collision>
-  <visual> 
-  <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <geometry> 
+  <visual>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
 <mesh filename="package://mybot_description/meshes/base.DAE"/>
-    </geometry> 
+    </geometry>
     <material name="white"/>
   </visual>
-  <inertial> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <mass value="${baseMass}"/> 
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="${baseMass}"/>
     <box_inertia m="${baseMass}" x="${baseLength}" y="${baseWidth}" z="${baseHeight}"/>
   </inertial>
 </link>
@@ -25,7 +25,7 @@
 <joint name="base_to_link1" type="fixed">
   <parent link="base"/>
   <child link="link1"/>
- <origin xyz="0 0.005 -0.07" rpy="0 0 ${PI/2}"/> 
+ <origin xyz="0 0.005 -0.07" rpy="0 0 ${PI/2}"/>
 </joint>
 
 <xacro:property name="PI" value="3.1415926535897931"/>
@@ -33,7 +33,7 @@
 <xacro:property name="chassisHeight" value="0.05"/>
 <xacro:property name="chassisLength" value="0.15"/>
 <xacro:property name="chassisWidth" value="0.1"/>
-<xacro:property name="chassisMass" value="50"/>
+<xacro:property name="chassisMass" value="0"/>
 
 <xacro:property name="casterRadius" value="0.025"/>
 <xacro:property name="casterMass" value="2.5"/>
@@ -74,49 +74,49 @@
  <xacro:include filename="$(find mybot_description)/urdf/macros.xacro" />
 
 <link name='link1'>
-  <collision> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <geometry> 
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
       <mesh filename="package://mybot_description/meshes/link1.DAE"/>
-    </geometry> 
+    </geometry>
   </collision>
-  <visual> 
-   <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <geometry> 
+  <visual>
+   <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
 <mesh filename="package://mybot_description/meshes/link1.DAE"/>
-    </geometry> 
+    </geometry>
     <material name="white"/>
   </visual>
-  <inertial> 
-     <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <mass value="${link1Mass}"/> 
+  <inertial>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="${link1Mass}"/>
     <box_inertia m="${link1Mass}" x="${link1Length}" y="${link1Width}" z="${link1Height}"/>
   </inertial>
 </link>
 
 <joint name="link1_to_link2" type="fixed">
-    <origin xyz="0.104 0 0" rpy="0 0 ${PI/2}"/> 
+    <origin xyz="0.104 0 0" rpy="0 0 ${PI/2}"/>
   <parent link="link1"/>
   <child link="link2"/>
 </joint>
 
 <link name='link2'>
-  <collision> 
-    <origin xyz="0 0 0" rpy="0 0 ${PI}"/> 
-    <geometry> 
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+    <geometry>
       <mesh filename="package://mybot_description/meshes/link2.DAE"/>
-    </geometry> 
+    </geometry>
   </collision>
-  <visual> 
-    <origin xyz="0 0 0" rpy="0 0 ${PI}"/> 
-    <geometry> 
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+    <geometry>
 <mesh filename="package://mybot_description/meshes/link2.DAE"/>
-    </geometry> 
+    </geometry>
     <material name="white"/>
   </visual>
-  <inertial> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <mass value="${link2Mass}"/> 
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="${link2Mass}"/>
     <box_inertia m="${link2Mass}" x="${link2Length}" y="${link2Width}" z="${link2Height}"/>
   </inertial>
 </link>
@@ -131,22 +131,22 @@
 </joint>
 
 <link name='left_tip'>
-  <collision> 
+  <collision>
    <origin xyz="0 0 0" rpy="0 0 0" />
-    <geometry> 
+    <geometry>
       <mesh filename="package://mybot_description/meshes/tip.DAE"/>
-    </geometry> 
+    </geometry>
   </collision>
-  <visual> 
+  <visual>
    <origin xyz="0 0 0" rpy="0 0 0" />
-    <geometry> 
+    <geometry>
 <mesh filename="package://mybot_description/meshes/tip.DAE"/>
-    </geometry> 
+    </geometry>
     <material name="white"/>
   </visual>
-  <inertial> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <mass value="${tipMass}"/> 
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="${tipMass}"/>
     <box_inertia m="${tipMass}" x="${tipLength}" y="${tipWidth}" z="${tipHeight}"/>
   </inertial>
 </link>
@@ -155,28 +155,28 @@
   <parent link="link2"/>
   <child link="right_tip"/>
 <origin xyz="-0.0125 0 0.00025" rpy="0 0 ${PI/2}" />
-  <axis xyz="0 0 1" rpy="0 0 0" /> 
+  <axis xyz="0 0 1" rpy="0 0 0" />
   <limit effort="100" velocity="5" lower="-0.6" upper="0.037" />
   <joint_properties damping="0.0" friction="10.0"/>
 </joint>
 
 <link name='right_tip'>
-  <collision> 
+  <collision>
    <origin xyz="0 0 0" rpy="0 ${PI} 0" />
-    <geometry> 
+    <geometry>
       <mesh filename="package://mybot_description/meshes/tip.DAE"/>
-    </geometry> 
+    </geometry>
   </collision>
-  <visual> 
+  <visual>
    <origin xyz="0 0 0" rpy="0 ${PI} 0" />
-    <geometry> 
+    <geometry>
 <mesh filename="package://mybot_description/meshes/tip.DAE"/>
-    </geometry> 
+    </geometry>
     <material name="white"/>
   </visual>
-  <inertial> 
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <mass value="${tipMass}"/> 
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="${tipMass}"/>
     <box_inertia m="${tipMass}" x="${tipLength}" y="${tipWidth}" z="${tipHeight}"/>
   </inertial>
 </link>
