@@ -51,7 +51,7 @@ class Orient(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Orienting')
         
-	c = subprocess.Popen("rosrun mbzirc_c2_auto orient.py", shell=True)
+	c = subprocess.Popen("rosrun mbzirc_c2_auto orient2.py", shell=True)
 	d = subprocess.Popen("rosrun mbzirc_c2_auto orient_scan.py", shell=True)
 	e = subprocess.Popen("rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
 
