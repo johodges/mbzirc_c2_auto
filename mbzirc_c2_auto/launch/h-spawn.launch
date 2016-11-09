@@ -5,7 +5,7 @@
   <arg name="ur5_enabled" default="true"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
-  <arg name="kinectv2_enabled" default="true"/>
+  <arg name="kinectv2_enabled" default="false"/>
   <arg name="primesense_enabled" default="false"/>
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(env HUSKY_GAZEBO_DESCRIPTION)'
@@ -33,7 +33,7 @@
     <node pkg="rostopic" type="rostopic" name="fake_joint_calibration" args="pub calibrated std_msgs/Bool true" />
 
     <!-- Stow the arm -->
-    <node pkg="husky_control" type="stow_ur5" name="stow_ur5"/>
+    <!-- <node pkg="husky_control" type="stow_ur5" name="stow_ur5"/> -->
 
   </group>
 

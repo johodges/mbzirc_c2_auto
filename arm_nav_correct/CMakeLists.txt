@@ -1,13 +1,20 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mbzirc_grasping)
+project(arm_nav_correct)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  control_msgs
+  geometry_msgs
+  manipulation_msgs
+  moveit_msgs
   roscpp
   rospy
   std_msgs
+  tf2
+  tf2_ros
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,7 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   control_msgs#   geometry_msgs#   manipulation_msgs#   moveit_msgs#   std_msgs#   trajectory_msgs
 # )
 
 ################################################
@@ -101,8 +108,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mbzirc_grasping
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES arm_nav_correct
+#  CATKIN_DEPENDS control_msgs geometry_msgs manipulation_msgs moveit_msgs roscpp rospy std_msgs tf2 tf2_ros trajectory_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,24 +125,24 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(mbzirc_grasping
-#   src/${PROJECT_NAME}/mbzirc_grasping.cpp
+# add_library(arm_nav_correct
+#   src/${PROJECT_NAME}/arm_nav_correct.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(mbzirc_grasping ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(arm_nav_correct ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(mbzirc_grasping_node src/mbzirc_grasping_node.cpp)
+# add_executable(arm_nav_correct_node src/arm_nav_correct_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(mbzirc_grasping_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(arm_nav_correct_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(mbzirc_grasping_node
+# target_link_libraries(arm_nav_correct_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -154,7 +161,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mbzirc_grasping mbzirc_grasping_node
+# install(TARGETS arm_nav_correct arm_nav_correct_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -179,13 +186,10 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mbzirc_grasping.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_arm_nav_correct.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-catkin_install_python(PROGRAMS scripts/move_arm.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS scripts/test_output.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS scripts/move_arm_param.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
