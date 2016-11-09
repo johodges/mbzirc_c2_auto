@@ -40,15 +40,15 @@ class orient():
     def __init__(self):
         # Name this node, it must be unique
 	rospy.init_node('orient', anonymous=True)
-        
+
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
-        
+
         # Establish number of loops through callback routine before we decide to resend
         # the move base goal since the robot is stuck
         self.stalled_threshold = rospy.get_param("~stalled_threshold", 1000) # Loops before stall
-        
+
         # Initialize counter variables
         self.old_bearing = 0
         self.ct3 = 0
@@ -207,6 +207,7 @@ class orient():
         # active goal, we set an initial goal to get our position.
         if self.wp == -1:
             print "Setting initial state."
+            rospy.loginfo("Setting initial state.")
             self.goal.target_pose.header.frame_id = 'base_link'
             self.goal.target_pose.pose = Pose(Point(-0.5,0,0), Quaternion(0,0,0,1))
             self.goal.target_pose.header.stamp = rospy.Time.now()
@@ -248,6 +249,9 @@ class orient():
                 q2 = tf.transformations.quaternion_from_euler(0,0,bearing.data[0])
                 err_ang = pow(q2[0]*q2[0]+q2[1]*q2[1]+q2[2]*q2[2]+(q2[3]-1)*(q2[3]-1),0.5)
                 print err_dist, err_ang
+                rospy.loginfo('Error is:'
+                              + str(err_dist) + 'meters '
+                              + str(err_ang) + 'degrees')
 
                 # Check if the error in distance and angle is below the threshold
                 if err_dist > 0.4 or err_ang > 0.07:
@@ -272,6 +276,7 @@ class orient():
                 # Check if we see wrenches
                 if np.shape(self.wrench)[0] > 6:
                     print "We found wrenches!"
+                    rospy.loginfo("We found wrenches!")
                     self.ct_wrench = self.ct_wrench+1
                     self.ct3 = 0
                     # Make sure we saw wrenches 5 times through the loop (reduce false positives)
@@ -297,7 +302,7 @@ class orient():
                     print "Camera FOV: ", camera_y_mn, camera_y_mx
                     print "Box positions: ", ymn, ymx
                     update_rot()
-                    
+
                     # Check if the left end of the box is visible by the camera
                     if camera_y_mx > ymx:
                         self.off = 0
@@ -323,10 +328,10 @@ class orient():
                         print "Current location in global coord and global sys:", self.x0, self.y0
                         print "Object in global coord and global sys:", self.x_obj_glo, self.y_obj_glo
                         print "Target in global coord and global sys:", self.x_tar_glo, self.y_tar_glo
-  
+
                         # Pause for a few seconds to allow user to cancel if needed
-                        rospy.sleep(2) 
-                    
+                        rospy.sleep(2)
+
                         # The path planner likes to try and run into the object. We force the
                         # robot to move in a specific direction initially to mitigate this.
                         print "Rotating to make path better."

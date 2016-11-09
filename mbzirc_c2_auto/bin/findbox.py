@@ -13,7 +13,6 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 
 def callback(data):
-    rospy.loginfo('I am finding the box.')
     rate = rospy.Rate(10)
     #x = np.arange(4.71239,0,-0.004363323)
     #x = np.arange(2.35619,-2.358,-0.004363323)
@@ -87,5 +86,6 @@ def laser_listener():
 if __name__ == '__main__':
 
     #plt.ion()
+    rospy.loginfo('Looking for oject...')
     print "Looking for object..."
     laser_listener()
