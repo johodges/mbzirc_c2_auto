@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 import roslib; roslib.load_manifest('urg_node')
 import rospy
@@ -13,6 +13,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 
 def callback(data):
+    rospy.loginfo('I am finding the box.')
     rate = rospy.Rate(10)
     #x = np.arange(4.71239,0,-0.004363323)
     #x = np.arange(2.35619,-2.358,-0.004363323)
@@ -37,7 +38,7 @@ def callback(data):
     for i in range(len(x2)):
         xlen = len(x2[i])-0
         if xlen > 4:
-            
+
             #x_diff[x_diff > 0.1] = 0
             #y_diff[y_diff > 0.1] = 0
             dist2_sum = np.sum(dist2[i][1:xlen-1])
@@ -58,7 +59,7 @@ def callback(data):
                     mn = min(y2[i][1:xlen])
                     mx = max(y2[i][1:xlen])
                     bearing = np.array([ang,dis], dtype=np.float32)
-                    
+
     if 'bearing' in locals():
         hihi = 1
     else:
@@ -81,10 +82,10 @@ def laser_listener():
     rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,callback, queue_size=1)
     #rospy.Subscriber("/hokuyo/laser/most_intense",sensor_msgs.msg.LaserScan,callback, queue_size=1)
     rospy.spin()
-    #print 
+    #print
 
 if __name__ == '__main__':
-    
+
     #plt.ion()
     print "Looking for object..."
     laser_listener()
