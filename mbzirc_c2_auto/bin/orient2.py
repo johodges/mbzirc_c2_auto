@@ -127,6 +127,8 @@ class orient():
             rospy.sleep(1)
             while self.move_base.get_state() != 3:
                 if self.ct_move > self.stalled_threshold:
+                    back_it_up(-0.1,0.02)
+                    rospy.sleep(0.5)
                     self.move_base.send_goal(self.goal)
                     self.ct_move = 0
                 self.ct_move = self.ct_move + 1
@@ -383,10 +385,6 @@ class orient():
                 wrenc_z = (self.w_c[0]-0)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
                 wrench = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-                    #rospy.set_param('valve',valve)
-                    #rospy.set_param('wrench',wrench)
-
-                    # Publish the estimated position of the wrenches and valve
                 wpub = rospy.Publisher('/wrench_mm', numpy_msg(Floats), queue_size=5)
                 wpub.publish(wrench)
                 vpub = rospy.Publisher('/valve_mm', numpy_msg(Floats), queue_size=5)
@@ -394,6 +392,10 @@ class orient():
                 print xmn, xmx, ymn, ymx
                 print "Wrench location (x,y,z): ", wrench
                 print "Valve location (x,y,z): ", valve
+
+                # Store valve and wrench (x,y,z) location as ros parameters
+                rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
+                rospy.set_param('wrench',[float(wrench[0]), float(wrench[1]), float(wrench[2])])
                 rospy.sleep(2)
                 rospy.signal_shutdown('Ending node.')
 
