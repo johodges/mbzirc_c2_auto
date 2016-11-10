@@ -77,6 +77,7 @@ class idwrench():
 if __name__ == '__main__':
     try:
         idwrench()
+        print "I'm done!"
 #        rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("idwrench finished.")
