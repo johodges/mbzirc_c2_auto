@@ -46,7 +46,7 @@ def callback(data):
                 #plt.plot(x2[i],y_coord2[i],'ks')
                 hihi = 1
             else:
-                if dist2_sum > 5:
+                if dist2_sum > 1.5:
                     #plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-')
                     #plt.plot(x2[i],y_coord2[i],'bs')
                     hihi = 1

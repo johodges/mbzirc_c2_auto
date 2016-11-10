@@ -47,7 +47,7 @@ class orient():
 
         # Establish number of loops through callback routine before we decide to resend
         # the move base goal since the robot is stuck
-        self.stalled_threshold = rospy.get_param("~stalled_threshold", 1000) # Loops before stall
+        self.stalled_threshold = rospy.get_param("~stalled_threshold", 500) # Loops before stall
 
         # Initialize counter variables
         self.old_bearing = 0
@@ -122,14 +122,20 @@ class orient():
     def callback(self, bearing):
 
         # wait_for_finish - this subroutine waits for a goal to finish before returning
-        def wait_for_finish():
+        def wait_for_finish(stalled_threshold):
             self.ct_move = 0
             rospy.sleep(1)
             while self.move_base.get_state() != 3:
-                if self.ct_move > self.stalled_threshold:
-                    back_it_up(-0.1,0.02)
+                if self.ct_move > stalled_threshold:
+                    print "We are stuck! Cancelling current goal and moving backwards 0.5m."
+                    self.move_base.cancel_goal()
+                    rospy.sleep(1)
+                    back_it_up(-0.25,0.5)
                     rospy.sleep(0.5)
+                    rot_cmd(0.25,0.25)
+                    print "Resending goal."
                     self.move_base.send_goal(self.goal)
+                    rospy.sleep(1)
                     self.ct_move = 0
                 self.ct_move = self.ct_move + 1
                 rospy.sleep(0.1)
@@ -267,7 +273,7 @@ class orient():
                     back_it_up(-0.25,0.5)
                     print "We should be done backing up..."
                     self.move_base.send_goal(self.goal)
-                    wait_for_finish()
+                    wait_for_finish(100)
                 else:
                     # A flag of 1 means we should check for wrenches
                     self.flag = 1
@@ -295,10 +301,10 @@ class orient():
             # If we can, rotate 90 degrees around the box.
             if self.flag == 2:
                     # Determine bounds of camera FOV
-                    camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
-                    camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
-                    camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
-                    camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
+                    camera_y_mx = xA*np.tan(self.camera_fov_h/2)
+                    camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
+                    camera_z_mx = xA*np.tan(self.camera_fov_v/2)
+                    camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
                     print "Camera FOV: ", camera_y_mn, camera_y_mx
                     print "Box positions: ", ymn, ymx
                     update_rot()
@@ -354,7 +360,7 @@ class orient():
                         rospy.sleep(1)
                         self.ct3 = 0
                         self.flag = 1
-                        wait_for_finish()
+                        wait_for_finish(self.stalled_threshold)
                         print "I should be at the target location!"
                         rospy.sleep(1)
 
@@ -408,7 +414,7 @@ class orient():
             if self.flag == 3:
                 rospy.sleep(1)
                 self.ct_move = 0
-                wait_for_finish()
+                wait_for_finish(100)
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
                 vw_c = (valve+wrenc)/2
@@ -448,7 +454,7 @@ class orient():
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.move_base.send_goal(self.goal)
                     print "Moving forward 1m and to the left-right 0.2m"
-                    wait_for_finish()
+                    wait_for_finish(100)
 
 
 if __name__ == '__main__':

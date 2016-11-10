@@ -1,0 +1,21 @@
+<launch>
+  <node pkg="arm_nav_correct" name="valve_nav_correct" type="valve_nav_correct.py" output="screen">
+
+    <rosparam>
+       arm_offset: .4572
+       arm_group_name: ur5_arm
+       transition_group_state: transition
+       work_group_state: work
+       reference_frame: map
+       initial_location_topic: /predict_locations
+       poi_topic: /poi
+       allow_replanning: True
+       position_tolerance: .01
+       orientation_tolerance: .08
+       cartestian_path: True
+       cp_max_attempts: 100
+       workface_offset: 1.0
+    </rosparam>
+
+  </node>
+</launch>
