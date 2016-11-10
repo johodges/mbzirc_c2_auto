@@ -49,7 +49,7 @@ class move2grasp():
         self.camera_pix_v = 1080
 
         # Set up ROS subscriber callback routines+
-        rospy.Subscriber("/wrench_centroids", numpy_msg(Floats), self.callback_wrench, queue_size=1)
+        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
 
     def shutdown(self):
         rospy.sleep(1)
@@ -57,27 +57,17 @@ class move2grasp():
     # callback_wrench is used to store the wrench topic into the class to be
     # referenced by the other callback routines.
     def callback_wrench(self, data):
-        tmp = np.reshape(data.data,(np.size(data.data)/2,2))
-        self.wrench = tmp[tmp[:,0].argsort()]
-        self.left_wrench = self.wrench[0,:]
-        wrench = rospy.get_param('wrench')
-        xA = wrench[0]
-        print "Left wrench in pixels: ", self.left_wrench
-        camera_y_mx = xA*np.tan(self.camera_fov_h/2)
-        camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
-        camera_z_mx = xA*np.tan(self.camera_fov_v/2)
-        camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-        print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
-        wrenc_y = (self.left_wrench[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-        wrenc_z = (self.left_wrench[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
-        self.wrench_id = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-        print "Left wrench in m: ", self.wrench_id
-        rospy.set_param('wrench_ID',[float(self.wrench_id[0]), float(self.wrench_id[1]), float(self.wrench_id[2])]) 
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            print(e)
+        rospy.sleep(10)
+        rospy.set_param('smach_state',[float(1)]) 
 
 if __name__ == '__main__':
     try:
-        idwrench()
+        move2grasp()
 #        rospy.spin()
     except rospy.ROSInterruptException:
-        rospy.loginfo("idwrench finished.")
+        rospy.loginfo("move2grasp finished.")
 
