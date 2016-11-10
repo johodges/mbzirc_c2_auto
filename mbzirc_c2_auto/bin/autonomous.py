@@ -226,6 +226,7 @@ class mbzirc_c2_auto():
                 state = self.move_base.get_state()
                 self.ct4 = self.ct4+1
                 if bear < 3:
+                    rospy.set_param('smach_state','atBoard')
                     rospy.signal_shutdown('We are close enough to the object!')
                 rospy.sleep(5)
                 rospy.loginfo("State:" + str(state))
