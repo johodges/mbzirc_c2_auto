@@ -105,12 +105,12 @@ class orient():
     # callback_w_c is used to store the wrench center topic into the class to be
     # referenced by the other callback routines.
     def callback_w_c(self, data):
-        self.w_c = data.data/2
+        self.w_c = data.data
 
     # callback_v_c is used to store the valve center topic into the class to be
     # referenced by the other callback routines.
     def callback_v_c(self, data):
-        self.v_c = data.data/2
+        self.v_c = data.data
 
     # callback (bearing) is the primary function in this node. The general process is:
     #     1. Rotate husky until it is normal to the surface
