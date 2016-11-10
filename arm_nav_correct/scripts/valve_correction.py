@@ -27,7 +27,7 @@ import moveit_commander
 from geometry_msgs.msg import PoseArray, PoseStamped
 from copy import deepcopy
 
-class DrillCorrection:
+class ValveCorrection:
     def __init__(self):
         #Give the node a name
         rospy.init_node("valve_correction", anonymous=False)
