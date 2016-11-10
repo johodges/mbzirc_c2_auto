@@ -32,6 +32,7 @@ import numpy as np
 from decimal import *
 import tf
 import math
+import random
 
 if __name__ == '__main__':
     rospy.init_node('grasp')
@@ -55,5 +56,9 @@ if __name__ == '__main__':
         pub.publish(twist)
         rospy.sleep(0.1)
         ct = ct+1
-
+    if random.random() < 0.1:
+        rospy.set_param('smach_state','gripFailure')
+    else:
+        rospy.set_param('smach_state','wrenchGrasped')
+    rospy.signal_shutdown('Ending node.')
 

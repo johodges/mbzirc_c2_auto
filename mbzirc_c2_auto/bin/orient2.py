@@ -403,6 +403,7 @@ class orient():
                 rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
                 rospy.set_param('wrench',[float(wrench[0]), float(wrench[1]), float(wrench[2])])
                 rospy.sleep(2)
+                rospy.set_param('smach_state','oriented')
                 rospy.signal_shutdown('Ending node.')
 
             # A flag of 3 denotes centering between the valve and wrenches
