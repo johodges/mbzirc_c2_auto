@@ -40,7 +40,7 @@ if __name__ == '__main__':
     twist = Twist()
     speed = .5; turn = 1
     x = 0; y = 0; z = 0;
-    th = -1 # To open gripper, use th = 1
+    th = 1 # To open gripper (1) use th = 1
     twist.linear.x = x*speed;
     twist.linear.y = y*speed;
     twist.linear.z = z*speed;
@@ -50,12 +50,22 @@ if __name__ == '__main__':
 
     ct = 0
     rest_time = 0.1
-    tot_time = 5
+    tot_time = 3
     
     while ct*rest_time < tot_time:
         pub.publish(twist)
         rospy.sleep(0.1)
         ct = ct+1
+
+    th = -1
+    twist.angular.z = th*turn
+    ct = 0
+
+    while ct*rest_time < tot_time:
+        pub.publish(twist)
+        rospy.sleep(0.1)
+        ct = ct+1
+
     if random.random() < 0.1:
         rospy.set_param('smach_state','gripFailure')
     else:
