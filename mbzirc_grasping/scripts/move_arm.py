@@ -55,6 +55,10 @@ def callback(data):
         target_pose.pose.position.x = data.position[0]
         target_pose.pose.position.y = data.position[1]
         target_pose.pose.position.z = data.position[2]
+        target_pose.pose.orientation.x = data.position[3]
+        target_pose.pose.orientation.y = data.position[4]
+        target_pose.pose.orientation.z = data.position[5]
+        target_pose.pose.orientation.w = data.position[6]
 
 	# Set the start state to the current state
         arm.set_start_state_to_current_state()
