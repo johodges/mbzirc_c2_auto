@@ -36,11 +36,12 @@ import numpy as np
 from decimal import *
 import tf
 import math
+import random
 
-class move2grasp():
+class move2op():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('move2grasp', anonymous=True)
+	rospy.init_node('idvalve', anonymous=True)
         
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
@@ -66,13 +67,16 @@ class move2grasp():
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        rospy.set_param('smach_state','readyToGrasp')
+    if random.random() < 0.1:
+        rospy.set_param('smach_state','valveNotFound')
+    else:
+        rospy.set_param('smach_state','valveFound')
         rospy.sleep(10)
 
 if __name__ == '__main__':
     try:
-        move2grasp()
+        move2op()
 #        rospy.spin()
     except rospy.ROSInterruptException:
-        rospy.loginfo("move2grasp finished.")
+        rospy.loginfo("idvalve finished.")
 
