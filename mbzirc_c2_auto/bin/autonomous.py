@@ -78,6 +78,7 @@ class mbzirc_c2_auto():
                 ct2 = ct2+1
         self.wp = -1
         self.ct4 = 0
+        self.ct5 = 0
 
         # Publisher to manually control the robot (e.g. to stop it, queue_size=5)
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
@@ -104,6 +105,66 @@ class mbzirc_c2_auto():
         rospy.sleep(1)
 
     def callback(self, bearing):
+
+        # back_it_up - this subroutine moves the husky forward or backward a distance by manually
+        # controlling the wheels
+        def back_it_up(ve,dist_to_move):
+            sleep_time = 0.1
+            time_to_move = abs(dist_to_move/ve)
+            twist = Twist()
+            twist.linear.x = ve
+            twist.linear.y = 0
+            twist.linear.z = 0
+            twist.angular.x = 0
+            twist.angular.y = 0
+            twist.angular.z = 0
+            twi_pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+            self.ct_move = 0
+            while self.ct_move*sleep_time < time_to_move:
+                twi_pub.publish(twist)
+                self.ct_move = self.ct_move+1
+                rospy.sleep(sleep_time)
+            return None
+
+        # rot_cmd - this subroutine rotates the husky 90 degrees by controlling the wheels manually
+        def rot_cmd(ve,dist_to_move):
+            sleep_time = 0.1
+            time_to_move = abs(dist_to_move/ve)
+            twist = Twist()
+            twist.linear.x = 0
+            twist.linear.y = 0
+            twist.linear.z = 0
+            twist.angular.x = 0
+            twist.angular.y = 0
+            twist.angular.z = ve
+            twi_pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+            self.ct_move = 0
+            while self.ct_move*sleep_time < time_to_move:
+                twi_pub.publish(twist)
+                self.ct_move = self.ct_move+1
+                rospy.sleep(sleep_time)
+            return None
+
+        # wait_for_finish - this subroutine waits for a goal to finish before returning
+        def wait_for_finish(stalled_threshold):
+            self.ct_move = 0
+            rospy.sleep(1)
+            while self.move_base.get_state() != 3:
+                if self.ct_move > stalled_threshold:
+                    print "We are stuck! Cancelling current goal and moving backwards 0.5m."
+                    self.move_base.cancel_goal()
+                    rospy.sleep(1)
+                    back_it_up(-0.25,0.5)
+                    rospy.sleep(0.5)
+                    rot_cmd(0.25,0.25)
+                    print "Resending goal."
+                    self.move_base.send_goal(self.goal)
+                    rospy.sleep(1)
+                    self.ct_move = 0
+                self.ct_move = self.ct_move + 1
+                rospy.sleep(0.1)
+            return None
+
         if self.wp > -1:
             state = self.move_base.get_state()
         else:
@@ -117,26 +178,35 @@ class mbzirc_c2_auto():
             state = self.move_base.get_state()
         if bearing.data[0] == 0:
             rospy.loginfo("%f",self.ct)
-            self.ct4 = 0
+            self.ct5 = self.ct5+1
             print "I see no object!"
-            if state == 3:
-                self.wp = self.wp+1
-                location = self.wpname[self.wp]
-                self.goal.target_pose.pose = self.locations[location]
-                self.goal.target_pose.header.frame_id = 'odom'
-                rospy.loginfo("Going to: " + str(location))
-                self.move_base.send_goal(self.goal)
-                self.ct = 0
-                rospy.sleep(5)
-            else:
-                self.ct = self.ct+1
-                if self.ct > self.stalled_threshold:
-                    rospy.loginfo("Potentially stuck. Resending goal.")
-                    location = self.wpname[self.wp]
-                    self.goal.target_pose.pose = self.locations[location]
-                    self.goal.target_pose.header.frame_id = 'odom'
-                    self.move_base.send_goal(self.goal)
-                    self.ct = 0
+            if self.ct5 > 10:
+                self.ct4 = 0
+            wait_for_finish(500)
+
+            #if state == 3:
+            self.wp = self.wp+1
+            location = self.wpname[self.wp]
+            self.goal.target_pose.pose = self.locations[location]
+            self.goal.target_pose.header.frame_id = 'odom'
+            rospy.loginfo("Going to: " + str(location))
+            self.move_base.send_goal(self.goal)
+            self.ct = 0
+            self.ct4 = 0
+            rospy.sleep(5)
+            #else:
+            #    self.ct = self.ct+1
+            #    if self.ct > self.stalled_threshold:
+            #        rospy.loginfo("Potentially stuck. Resending goal.")
+            #        location = self.wpname[self.wp]
+            #        self.goal.target_pose.pose = self.locations[location]
+            #        self.goal.target_pose.header.frame_id = 'odom'
+            #        if self.ct4 > 5:
+            #            back_it_up(-0.1,0.5)
+            #            rospy.sleep(0.5)
+            #        self.move_base.send_goal(self.goal)
+            #        self.ct = 0
+            #        self.ct4 = self.ct4+1
         else:
             if self.ct4 > 10:
                 print "I see an object!"
@@ -161,6 +231,7 @@ class mbzirc_c2_auto():
                 rospy.loginfo("State:" + str(state))
             else:
                 self.ct4 = self.ct4+1
+                self.ct5 = 0
 
 if __name__ == '__main__':
     try:
