@@ -17,27 +17,19 @@ from sensor_msgs.msg import JointState
 JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
 
 # define states
-class FindBoard(smach.State):
+class Navigate(smach.State):
     def __init__(self):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
 				outcomes=['atBoard'])
 
     def execute(self, userdata):
         rospy.loginfo('Searching for board')
  #        rospy.sleep(0.1)
 	# a0 = subprocess.Popen("rosrun husky_control stow_ur5", shell=True)
-        rospy.sleep(1)
 	a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
 	b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
 	b.wait()
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
-	rospy.loginfo('Searching for board')
 	rospy.loginfo('Searching for board')
 	a.kill()
 
@@ -45,22 +37,17 @@ class FindBoard(smach.State):
 
 class Orient(smach.State):
     def __init__(self):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
 				outcomes=['oriented'])
 
     def execute(self, userdata):
         rospy.loginfo('Orienting')
-        
+
 	c = subprocess.Popen("rosrun mbzirc_c2_auto orient2.py", shell=True)
 	d = subprocess.Popen("rosrun mbzirc_c2_auto orient_scan.py", shell=True)
 	e = subprocess.Popen("rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
 
 	c.wait()
-        rospy.loginfo('Orienting')
-        rospy.loginfo('Orienting')
-        rospy.loginfo('Orienting')
-        rospy.loginfo('Orienting')
-        rospy.loginfo('Orienting')
         rospy.loginfo('Orienting')
 	d.kill()
 	e.kill()
@@ -69,7 +56,7 @@ class Orient(smach.State):
 
 class Grasp(smach.State):
     def __init__(self):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
 				outcomes=['graspedWrench'])
 
     def execute(self, userdata):
@@ -96,7 +83,7 @@ class Grasp(smach.State):
 
 class UseWrench(smach.State):
     def __init__(self):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
 				outcomes=['succeeded'])
 
     def execute(self, userdata):
@@ -118,7 +105,7 @@ class UseWrench(smach.State):
 	#except KeyboardInterrupt:
 	#	client.cancel_goal()
 	#	raise
-        
+
 	return 'succeeded'
 
 # main
@@ -131,16 +118,16 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        smach.StateMachine.add('FINDBOARD', FindBoard(), 
+        smach.StateMachine.add('NAVIGATE', Navigate(),
                                transitions={'atBoard':'ORIENT'})
 
-        smach.StateMachine.add('ORIENT', Orient(), 
+        smach.StateMachine.add('ORIENT', Orient(),
                                transitions={'oriented':'GRASP'})
 
-        smach.StateMachine.add('GRASP', Grasp(), 
+        smach.StateMachine.add('GRAB WRENCH', Grasp(),
                                transitions={'graspedWrench':'USEWRENCH'})
 
-        smach.StateMachine.add('USEWRENCH', UseWrench(), 
+        smach.StateMachine.add('OPERATE VALVE', UseWrench(),
                                transitions={'succeeded':'success'})
 
     # Create the introspection server
