@@ -23,7 +23,12 @@ import roslib
 roslib.load_manifest("rosparam")
 import rosparam
 
-def callback(data):
+def main():
+	rospy.init_node("move_arm", anonymous=False)
+
+	rospy.set_param('arm_prefix', 'ur5_arm_')
+	rospy.set_param('reference_frame', '/base_link')
+
 	rospy.loginfo("Moving arm to desired position")
 
 	# Initialize the move_group API
@@ -36,7 +41,8 @@ def callback(data):
         end_effector_link = arm.get_end_effector_link()
 
         # Initialize Necessary Variables
-        reference_frame = rospy.get_param("~reference_frame", "/base_link")
+        #reference_frame = rospy.get_param("~reference_frame", "/base_link")
+	reference_frame = "ur5_arm_ee_link"
 
         # Set the ur5_arm reference frame accordingly
         arm.set_pose_reference_frame(reference_frame)
@@ -52,9 +58,10 @@ def callback(data):
         target_pose = PoseStamped()
         target_pose.header.frame_id = reference_frame
         target_pose.header.stamp = rospy.Time.now()
-        target_pose.pose.position.x = data.position[0]
-        target_pose.pose.position.y = data.position[1]
-        target_pose.pose.position.z = data.position[2]
+	wrench = rospy.get_param('wrench')
+        target_pose.pose.position.x = wrench[0] - 0.04
+        target_pose.pose.position.y = wrench[1]
+        target_pose.pose.position.z = wrench[2]
 
 	# Set the start state to the current state
         arm.set_start_state_to_current_state()
@@ -76,15 +83,5 @@ def callback(data):
                 
         else:
             rospy.loginfo("Unable to reach")
-
-def main():
-	rospy.init_node("move_arm", anonymous=False)
-
-	rospy.set_param('arm_prefix', 'ur5_arm_')
-	rospy.set_param('reference_frame', '/base_link')
-
-	rospy.Subscriber("/whatevertellsthearmwheretogo", JointState, callback)
-
-	rospy.spin()
 
 if __name__ == '__main__': main()
