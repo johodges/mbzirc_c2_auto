@@ -405,11 +405,11 @@ class orient():
                 #tf_y = 0.109
                 #tf_z = 0.62
 
-                if self.tftree.frameExists("/ur5_arm_base_link") and self.tftree.frameExists("/camera"):
-                    t = self.tftree.getLatestCommonTime("/ur5_arm_base_link", "/camera")
-                    posi, quat = self.tftree.lookupTransform("/ur5_arm_base_link", "/camera", t)
+                if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/camera"):
+                    t = self.tftree.getLatestCommonTime("/base_link", "/camera")
+                    posi, quat = self.tftree.lookupTransform("/base_link", "/camera", t)
                     print posi, quat
-                tf_x = posi[0]-0.040 # So we are 40 cm off the board
+                tf_x = posi[0]
                 tf_y = posi[1]
                 tf_z = posi[2]
                 # Convert quaternion angle to euler angles
