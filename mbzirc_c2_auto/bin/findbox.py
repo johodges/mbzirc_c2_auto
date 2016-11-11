@@ -55,7 +55,7 @@ def callback(data):
     # If we want to plot the LIDAR scan, open the plot environment
     if plot_flag == 1:
         plt.cla()
-    
+
     # Loop through each segmented object
     for i in range(len(x2)):
 
@@ -65,7 +65,7 @@ def callback(data):
 
             # Calculate distance of this object
             dist2_sum = np.sum(dist2[i][1:xlen-1])
-            
+
             # Check if this object is too small
             if dist2_sum < 0.25:
                 # If we want to plot, plot small object
@@ -122,6 +122,7 @@ def laser_listener():
     rospy.spin()
 
 if __name__ == '__main__':
+    rospy.loginfo('Looking for object...')
     plot_flag = 0
     if plot_flag == 1:
         plt.ion()
