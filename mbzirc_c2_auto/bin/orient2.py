@@ -387,21 +387,23 @@ class orient():
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                print self.v_c
-                print self.w_c
-                valve_y = (self.v_c[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-                valve_z = (self.v_c[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
-                wrenc_y = (self.w_c[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-                wrenc_z = (self.w_c[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
+                print "Camera zmn/zmx: ", camera_z_mn, camera_z_mx
+                print "Valve pixel (c,r): ", self.v_c
+                print "Wrench pixel (c,r): ", self.w_c
+                valve_y = (1-self.v_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                valve_z = (1-self.v_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                wrenc_y = (1-self.w_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                wrenc_z = (1-self.w_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 #tf_x = 0.479
                 #tf_y = 0.109
                 #tf_z = 0.62
 
-                if self.tftree.frameExists("/top_plate_link") and self.tftree.frameExists("/camera"):
-                    t = self.tftree.getLatestCommonTime("/top_plate_link", "/camera")
-                    posi, quat = self.tftree.lookupTransform("/top_plate_link", "/camera", t)
+                if self.tftree.frameExists("/ur5_arm_base_link") and self.tftree.frameExists("/camera"):
+                    t = self.tftree.getLatestCommonTime("/ur5_arm_base_link", "/camera")
+                    posi, quat = self.tftree.lookupTransform("/ur5_arm_base_link", "/camera", t)
                     print posi, quat
-                tf_x = posi[0]
+                tf_x = posi[0]-0.040 # So we are 40 cm off the board
                 tf_y = posi[1]
                 tf_z = posi[2]
                 # Convert quaternion angle to euler angles
@@ -419,9 +421,10 @@ class orient():
                 print xmn, xmx, ymn, ymx
                 print "Wrench location (x,y,z): ", wrench
                 print "Valve location (x,y,z): ", valve
-
-                print "Wrench WRT base (x,y,z): ", wrench+[tf_x,tf_y,tf_z]
-                print "Valve WRT base (x,y,z): ", valve+[tf_x,tf_y,tf_z]
+                wrench = wrench+[tf_x,tf_y,tf_z]
+                valve = valve+[tf_x,tf_y,tf_z]
+                print "Wrench WRT base (x,y,z): ", wrench
+                print "Valve WRT base (x,y,z): ", valve
 
                 # Store valve and wrench (x,y,z) location as ros parameters
                 rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
@@ -438,13 +441,13 @@ class orient():
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
                 vw_c = (valve+wrenc)/2
-                vw_t = 1920
+                vw_t = 960
                 vw_off = (vw_c-vw_t)
                 print "Target Center: ", vw_t, "Current Center: ", vw_c
                 update_rot()
 
                 # Check if we are centered between valve and wrenches
-                if abs(vw_off) <= 100:
+                if abs(vw_off) <= 50:
                     print "Victory!"
                     xA = bearing.data[1]
                     yA = bearing.data[2]
