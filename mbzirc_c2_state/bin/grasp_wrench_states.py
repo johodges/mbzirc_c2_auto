@@ -42,8 +42,7 @@ class MoveToReady(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atReady',
-                                       'readyMoveFailed'])
+                             outcomes=['atReady'])
 
     def execute(self, userdata):
         # curr_pos = rospy.get_param('ee_position')
