@@ -77,10 +77,10 @@ class WrenchCorrection:
         target_pose.pose.position.x = wrench_pose.position.x
         target_pose.pose.position.y = wrench_pose.position.y
         target_pose.pose.position.z = wrench_pose.position.z
-        target_pose.pose.orientation.x = wrench_pose.orientation.x
-        target_pose.pose.orientation.y = wrench_pose.orientation.y
-        target_pose.pose.orientation.z = wrench_pose.orientation.z
-        target_pose.pose.orientation.w = wrench_pose.orientation.w
+        #target_pose.pose.orientation.x = wrench_pose.orientation.x
+        #target_pose.pose.orientation.y = wrench_pose.orientation.y
+        #target_pose.pose.orientation.z = wrench_pose.orientation.z
+        #target_pose.pose.orientation.w = wrench_pose.orientation.w
 
         # Set the start state to the current state
         self.arm.set_start_state_to_current_state()
