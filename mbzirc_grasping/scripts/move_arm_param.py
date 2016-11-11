@@ -39,10 +39,11 @@ def main():
 
         # Get the name of the end-effector link
         end_effector_link = arm.get_end_effector_link()
+	rospy.loginfo(end_effector_link)
 
         # Initialize Necessary Variables
-        #reference_frame = rospy.get_param("~reference_frame", "/base_link")
-	reference_frame = "ur5_arm_ee_link"
+        reference_frame = rospy.get_param("~reference_frame", "/base_link")
+	#reference_frame = "ee_link"
 
         # Set the ur5_arm reference frame accordingly
         arm.set_pose_reference_frame(reference_frame)
@@ -59,12 +60,13 @@ def main():
         target_pose.header.frame_id = reference_frame
         target_pose.header.stamp = rospy.Time.now()
 	wrench = rospy.get_param('wrench')
-        target_pose.pose.position.x = wrench[0] - 0.04
-        target_pose.pose.position.y = wrench[1]
-        target_pose.pose.position.z = wrench[2]
+        target_pose.pose.position.x = wrench[0]
+        target_pose.pose.position.y = wrench[1] - 0.25
+        target_pose.pose.position.z = wrench[2] + 0.3125
 
 	# Set the start state to the current state
         arm.set_start_state_to_current_state()
+	rospy.loginfo(arm.get_start_state)
 
         # Set the goal pose of the end effector to the stored pose
         arm.set_pose_target(target_pose, end_effector_link)

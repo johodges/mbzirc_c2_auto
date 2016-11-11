@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-    grasp.py - Version 0.1 2015-11-05
-    Use inverse kinemtatics to move the end effector to grab the wrench.
+    arm_wrech_cor.py - Version 0.1 2016-11-09
+    Use inverse kinemtatics to move the end effector to reach the position of the wrench.
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -37,7 +37,6 @@ def callback(data):
 
         # Initialize Necessary Variables
         reference_frame = rospy.get_param("~reference_frame", "/base_link")
-	#reference_frame = "/ur5_arm_wrist_3_link"
 
         # Set the ur5_arm reference frame accordingly
         arm.set_pose_reference_frame(reference_frame)
@@ -69,7 +68,6 @@ def callback(data):
         if traj is not None:
             # Execute the planned trajectory
             arm.execute(traj)
-	    arm.set_start_state_to_current_state()
             
             # Pause for a second
             rospy.sleep(5.0)

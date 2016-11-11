@@ -76,7 +76,7 @@ class orient():
         rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
         rospy.sleep(0.1)
-        
+
         # Set up tf listener
         self.tftree = tf.TransformListener()
 
@@ -334,6 +334,7 @@ class orient():
                         self.x_obj_glo = obj_glo[0]+self.x0
                         self.y_obj_glo = obj_glo[1]+self.y0
                         tar_in_global(tar_loc)
+
                         # print "Current location in global coord and global sys:", self.x0, self.y0
                         # print "Object in global coord and global sys:", self.x_obj_glo, self.y_obj_glo
                         # print "Target in global coord and global sys:", self.x_tar_glo, self.y_tar_glo

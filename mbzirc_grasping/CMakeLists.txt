@@ -188,4 +188,5 @@ include_directories(
 # catkin_add_nosetests(test)
 catkin_install_python(PROGRAMS scripts/move_arm.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS scripts/move_arm_param.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/move_arm_param_valve.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS scripts/test_output.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
