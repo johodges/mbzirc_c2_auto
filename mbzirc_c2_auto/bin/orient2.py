@@ -40,15 +40,15 @@ class orient():
     def __init__(self):
         # Name this node, it must be unique
 	rospy.init_node('orient', anonymous=True)
-        
+
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
-        
+
         # Establish number of loops through callback routine before we decide to resend
         # the move base goal since the robot is stuck
         self.stalled_threshold = rospy.get_param("~stalled_threshold", 500) # Loops before stall
-        
+
         # Initialize counter variables
         self.old_bearing = 0
         self.ct3 = 0
@@ -76,7 +76,7 @@ class orient():
         rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
         rospy.sleep(0.1)
-        
+
         # Set up tf listener
         self.tftree = tf.TransformListener()
 
@@ -307,7 +307,7 @@ class orient():
                     print "Camera FOV: ", camera_y_mn, camera_y_mx
                     print "Box positions: ", ymn, ymx
                     update_rot()
-                    
+
                     # Check if the left end of the box is visible by the camera
                     if camera_y_mx > ymx:
                         self.off = 0
@@ -333,10 +333,10 @@ class orient():
                         print "Current location in global coord and global sys:", self.x0, self.y0
                         print "Object in global coord and global sys:", self.x_obj_glo, self.y_obj_glo
                         print "Target in global coord and global sys:", self.x_tar_glo, self.y_tar_glo
-  
+
                         # Pause for a few seconds to allow user to cancel if needed
-                        rospy.sleep(2) 
-                    
+                        rospy.sleep(2)
+
                         # The path planner likes to try and run into the object. We force the
                         # robot to move in a specific direction initially to mitigate this.
                         print "Rotating to make path better."

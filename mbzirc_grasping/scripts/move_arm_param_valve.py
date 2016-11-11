@@ -23,7 +23,12 @@ import roslib
 roslib.load_manifest("rosparam")
 import rosparam
 
-def callback(data):
+def main():
+	rospy.init_node("move_arm", anonymous=False)
+
+	rospy.set_param('arm_prefix', 'ur5_arm_')
+	rospy.set_param('reference_frame', '/base_link')
+
 	rospy.loginfo("Moving arm to desired position")
 
 	# Initialize the move_group API
@@ -37,7 +42,7 @@ def callback(data):
 
         # Initialize Necessary Variables
         reference_frame = rospy.get_param("~reference_frame", "/base_link")
-	#reference_frame = "/ur5_arm_wrist_3_link"
+	#reference_frame = "ee_link"
 
         # Set the ur5_arm reference frame accordingly
         arm.set_pose_reference_frame(reference_frame)
@@ -53,9 +58,10 @@ def callback(data):
         target_pose = PoseStamped()
         target_pose.header.frame_id = reference_frame
         target_pose.header.stamp = rospy.Time.now()
-        target_pose.pose.position.x = data.position[0]
-        target_pose.pose.position.y = data.position[1]
-        target_pose.pose.position.z = data.position[2]
+	valve = rospy.get_param('valve')
+        target_pose.pose.position.x = valve[0]
+        target_pose.pose.position.y = valve[1] + 0.06
+        target_pose.pose.position.z = valve[2] + 0.35
 
 	# Set the start state to the current state
         arm.set_start_state_to_current_state()
@@ -69,7 +75,6 @@ def callback(data):
         if traj is not None:
             # Execute the planned trajectory
             arm.execute(traj)
-	    arm.set_start_state_to_current_state()
             
             # Pause for a second
             rospy.sleep(5.0)
@@ -78,15 +83,5 @@ def callback(data):
                 
         else:
             rospy.loginfo("Unable to reach")
-
-def main():
-	rospy.init_node("move_arm", anonymous=False)
-
-	rospy.set_param('arm_prefix', 'ur5_arm_')
-	rospy.set_param('reference_frame', '/base_link')
-
-	rospy.Subscriber("/whatevertellsthearmwheretogo", JointState, callback)
-
-	rospy.spin()
 
 if __name__ == '__main__': main()

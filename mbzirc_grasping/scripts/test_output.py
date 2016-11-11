@@ -13,7 +13,7 @@ def main():
 	rate = rospy.Rate(10) # 10hz
 
 	coords = JointState()
-	coords.position = [0.96, -0.1, 0.5]
+	coords.position = [1.0, 0.1, 0.2]
 	while not rospy.is_shutdown():
 		rospy.loginfo(coords)
 		pub.publish(coords)
