@@ -22,7 +22,7 @@ class find_wrench:
     self.ct = 0
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
-    
+
   def callback(self,data):
     try:
       cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -43,7 +43,7 @@ class find_wrench:
     else:
         rects[:, 2:] += rects[:, :2]
         cents = np.transpose(np.array([(rects[:,0]+rects[:,2])/2,(rects[:,1]+rects[:,3])/2],dtype=np.float32))
-        print rects
+        # print rects
         cents = np.reshape(cents,(np.size(cents),1))
         #print cents
         x_avg = 0

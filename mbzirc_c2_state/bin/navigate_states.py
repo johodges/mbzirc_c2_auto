@@ -8,7 +8,7 @@ class FindBoard(smach.State):
 
     Outcomes
     --------
-      atBoard : at the board location
+        atBoard : at the board location
 
     """
 

@@ -7,7 +7,7 @@ class MoveToValveReady(smach.State):
 
     Outcomes
     --------
-      atValveReady : at the ready position
+        atValveReady : at the ready position
 
     """
 
@@ -25,8 +25,8 @@ class IDValve(smach.State):
 
     Outcomes
     --------
-      valveFound : found the valve
-      valveNotFound : could not locate the valve
+        valveFound : found the valve
+        valveNotFound : could not locate the valve
 
     """
 
@@ -45,7 +45,7 @@ class MoveToValve(smach.State):
 
     Outcomes
     --------
-      atValve : at the valve ready to servo in
+        atValve : at the valve ready to servo in
 
     """
 
@@ -63,8 +63,8 @@ class MoveToOperate(smach.State):
 
     Outcomes
     --------
-      wrenchFell : wrench fell off the gripper
-      wrenchOnValve : at the ready position
+        wrenchFell : wrench fell off the gripper
+        wrenchOnValve : at the ready position
 
     """
 
@@ -83,9 +83,9 @@ class RotateValve(smach.State):
 
     Outcomes
     --------
-      wrenchFell : wrench fell out of the gripper
-      cantTurnValve : valve stuck
-      turnedValve : able to turn the valve
+        wrenchFell : wrench fell out of the gripper
+        cantTurnValve : valve stuck
+        turnedValve : able to turn the valve
 
     """
 

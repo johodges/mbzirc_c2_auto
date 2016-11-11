@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 """ orient_scan.py - Version 1.0 2016-10-12
 
@@ -88,7 +88,7 @@ class laser_listener():
         # Loop through each segmented object to check if it is the appropriate size
         for i in range(len(x2)):
             xlen = len(x2[i])-0
-            
+
             # Only consider scans with at least 4 entries (cuts down on noise)
             if xlen > 4:
 
@@ -107,10 +107,10 @@ class laser_listener():
                     #plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-')
                     #plt.plot(x2[i],y_coord2[i],'bs')
                         hihi = 1
-                    
+
                     # Check if the scan is just right
                     else:
-                        
+
                         # Plot the scan if desired
                         if plot_flag == 1:
                             plt.plot(y_coord2[i][1:xlen],x_coord2[i][1:xlen],'r-')
@@ -164,7 +164,7 @@ class laser_listener():
                         xc3 = xA-d*np.cos(theta2)
                         yc3 = yA-d*np.sin(theta2)
                         #e = d*np.sin(theta2)/(np.sin(math.radians(90)-theta2))
-                        print e
+                        # print e
                         #xc3 = e*np.cos(math.radians(90)-theta2)
                         #yc3 = e*np.sin(math.radians(90)-theta2)
                         #print m, m2
@@ -178,12 +178,12 @@ class laser_listener():
                             xC = xc2
                             yC = yc2
 
-                        print xc3, yc3, math.degrees(theta2)
-                        print xA, yA
-                        print xB, yB
-                        print e
+                        # print xc3, yc3, math.degrees(theta2)
+                        # print xA, yA
+                        # print xB, yB
+                        # print e
                         #print xC, yC, math.degrees(theta2)
-                        
+
                         if xA > xB:
                             if yA > yB:
                                 if debug_flag == 1:
@@ -207,7 +207,7 @@ class laser_listener():
                         bearing = np.array([theta2,xA,yA,xB,yB,xmn,xmx,ymn,ymx,xc3,yc3], dtype=np.float32)
                         if debug_flag == 1:
                             print bearing
-        
+
         # If bearing does not exist, publish [0,0] instead
         if 'bearing' in locals():
             hihi = 1
@@ -230,7 +230,7 @@ class laser_listener():
         pass
 
 if __name__ == '__main__':
-    
+
     plt.ion()
     print "Looking for object..."
     laser_listener()

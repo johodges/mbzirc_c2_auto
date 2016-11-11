@@ -7,10 +7,10 @@ import smach_ros
 # import time
 # import os
 # import subprocess
-# import navigation_states
-# import orient_states
-# import grab_wrench_states
-# import operate_valve_states
+from navigate_states import *
+from orient_states import *
+from grasp_wrench_states import *
+from operate_valve_states import *
 # from geometry_msgs.msg import Twist
 # import math
 # import actionlib
@@ -47,6 +47,32 @@ from trajectory_msgs.msg import *
 #
 # *************************************************************************
 
+# class FindBoard(smach.State):
+#     """Searches for and then navigates to the board
+
+#     Outcomes
+#     --------
+#       atBoard : at the board location
+
+#     """
+
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['atBoard'])
+
+#     def execute(self, userdata):
+
+#         rospy.loginfo('Searching for board')
+#         a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+#         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
+
+#         b.wait()
+#         rospy.loginfo('Searching for board')
+#         a.kill()
+
+#         return 'atBoard'
+
+
 
 
 def main():
@@ -56,7 +82,7 @@ def main():
     rospy.init_node('mbzirc_simulation_state_machine', anonymous=True)
 
     # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['success', 'failed'])
+    sm = smach.StateMachine(outcomes=['success', 'failure'])
 
     # Open the container
     with sm:
@@ -74,7 +100,7 @@ def main():
 
         # Create the sub SMACH state machine operating the valve
         sm_valve = smach.StateMachine(outcomes=['valveOperated',
-                                                'valveIDFailed'
+                                                'valveIDFailed',
                                                 'lostWrench',
                                                 'valveStuck'])
 

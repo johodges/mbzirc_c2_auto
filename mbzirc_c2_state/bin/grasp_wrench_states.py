@@ -7,7 +7,7 @@ class MoveToReady(smach.State):
     to the ready state from the stowed state
     Outcomes
     --------
-      atReady : at the ready position
+        atReady : at the ready position
 
     """
 
@@ -22,11 +22,11 @@ class MoveToReady(smach.State):
 
 
 class MoveToWrenchReady(smach.State):
-    """My description
+    """Moves the arm into position for identifying the wrench
 
     Outcomes
     --------
-      atWrenchReady : Outcome Reason
+        atWrenchReady : at location to determine correct wrench
 
     """
 
@@ -41,30 +41,35 @@ class MoveToWrenchReady(smach.State):
 
 
 class IDWrench(smach.State):
-    """My description
+    """ID the correct wrench
 
     Outcomes
     --------
-      wrenchFound : Outcome Reason
+        wrenchNotFound : unable to locate the correct wrench
+        wrenchFound : located the correct wrench
 
     """
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['wrenchFound'])
+                             outcomes=['wrenchFound',
+                                       'wrenchNotFound'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'wrenchFound'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
+
 
 
 
 class MoveToWrench(smach.State):
-    """My description
+    """Move in front of correct wrench to servo in to wrench
 
     Outcomes
     --------
-      atWrench : Outcome Reason
+        atWrench : in front of wrench
 
     """
 
@@ -79,11 +84,11 @@ class MoveToWrench(smach.State):
 
 
 class MoveToGrasp(smach.State):
-    """My description
+    """Video servo to the grasp position
 
     Outcomes
     --------
-      readyToGrasp - Outcome Reason
+        readyToGrasp - in position for the gripper to grab wrench
 
     """
 
@@ -92,25 +97,31 @@ class MoveToGrasp(smach.State):
                              outcomes=['readyToGrasp'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'readyToGrasp'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto move2grasp.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
 
 
 
 class GraspWrench(smach.State):
-    """My description
+    """Close the gripper
 
     Outcomes
     --------
-      wrenchGrasped - Outcome Reason
+        wrenchGrasped - Grabbed the wrench
+        gripFailure - failed to grab the wrench
 
     """
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['wrenchGrasped'])
+                             outcomes=['wrenchGrasped',
+                                       'gripFailure'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'wrenchGrasped'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
 
