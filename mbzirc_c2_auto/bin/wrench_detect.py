@@ -45,6 +45,7 @@ class find_wrench:
         cents = np.transpose(np.array([(rects[:,0]+rects[:,2])/2,(rects[:,1]+rects[:,3])/2],dtype=np.float32))
         # print rects
         cents = np.reshape(cents,(np.size(cents),1))
+        cents = cents/2
         #print cents
         x_avg = 0
         y_avg = 0
@@ -69,8 +70,8 @@ class find_wrench:
         idx = np.argwhere(circles[0,:,0] == mn)
         i = circles[0,:][idx][0][0]
 
-        val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
-        w_loc = np.array([x_avg,y_avg], dtype=np.float32)
+        val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)/2
+        w_loc = np.array([x_avg,y_avg], dtype=np.float32)/2
     # Publish /valve topic
         val = rospy.Publisher("/valve",numpy_msg(Floats), queue_size=1)
         val.publish(val_loc)
