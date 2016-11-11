@@ -1,3 +1,31 @@
+""" operate_valve_states.py - Version 1.0 - Created 2016-11-10
+
+    State machine classes for positioning and operating the valve.
+
+    State Classes
+        MoveToValveReady -
+        IDValve
+        MoveToValve
+        MoveToOperate
+        RotateValve
+
+    Alan Lattimer (alattimer at jensenhughes dot com)
+
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.5
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details at:
+
+    http://www.gnu.org/licenses/gpl.html
+
+"""
+
 import rospy
 import smach
 import subprocess
@@ -20,6 +48,7 @@ class MoveToValveReady(smach.State):
         return 'atValveReady'
 
 
+
 class IDValve(smach.State):
     """Identifies the center of the valve
 
@@ -36,8 +65,11 @@ class IDValve(smach.State):
                                        'valveNotFound'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'valveFound'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
+
 
 
 class MoveToValve(smach.State):
@@ -58,6 +90,7 @@ class MoveToValve(smach.State):
         return 'atValve'
 
 
+
 class MoveToOperate(smach.State):
     """Servo in to valve and place wrench on valve
 
@@ -74,8 +107,10 @@ class MoveToOperate(smach.State):
                                        'wrenchOnValve'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'wrenchOnValve'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto move2op.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
 
 
 class RotateValve(smach.State):
@@ -96,7 +131,9 @@ class RotateValve(smach.State):
                                        'turnedValve'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'turnedValve'
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto rotate.py", shell=True)
+        prc.wait()
+
+        return rospy.get_param('smach_state')
 
 

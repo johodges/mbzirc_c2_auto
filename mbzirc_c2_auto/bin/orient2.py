@@ -431,8 +431,12 @@ class orient():
                 # Store valve and wrench (x,y,z) location as ros parameters
                 rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
                 rospy.set_param('wrench',[float(wrench[0]), float(wrench[1]), float(wrench[2])])
-                rospy.sleep(2)
+
+                # Set the current position of the end effector with respect to the base
+                rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
+
                 rospy.set_param('smach_state','oriented')
+
                 rospy.signal_shutdown('Ending node.')
 
             # A flag of 3 denotes centering between the valve and wrenches

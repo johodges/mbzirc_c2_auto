@@ -1,10 +1,39 @@
+""" grasp_wrench_states.py - Version 1.0 2016-11-10
+
+    State machine classes for grasping a certain wrench from a peg board.
+
+    Classes
+        MoveToReady -
+        MoveToWrenchReady
+        IDWrench
+        MoveToWrench
+        MoveToGrasp
+        GraspWrench
+
+    Alan Lattimer (alattimer at jensenhughes dot com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.5
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details at:
+
+    http://www.gnu.org/licenses/gpl.html
+
+"""
+
+
 import rospy
 import smach
 import subprocess
 
 class MoveToReady(smach.State):
-    """Moves the arm
-    to the ready state from the stowed state
+    """Moves the arm to the ready state from the stowed state
+
     Outcomes
     --------
         atReady : at the ready position
@@ -13,10 +42,18 @@ class MoveToReady(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atReady'])
+                             outcomes=['atReady',
+                                       'readyMoveFailed'])
 
     def execute(self, userdata):
+        # curr_pos = rospy.get_param('ee_position')
+        # curr_pos[2] = curr_pos[2] + 0.4
+        # prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        # prc.wait()
+
         rospy.sleep(5)
+
+
         return 'atReady'
 
 

@@ -104,6 +104,9 @@ def main():
                                                 'lostWrench',
                                                 'valveStuck'])
 
+        # Define userdata for the state machines
+        sm_wrench.userdata.move_counter = 0
+
         # Define the NAVIGATE State Machine
         with sm_nav:
             smach.StateMachine.add('FINDBOARD', FindBoard(),
