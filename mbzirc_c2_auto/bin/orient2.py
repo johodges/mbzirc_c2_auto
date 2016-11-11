@@ -380,7 +380,7 @@ class orient():
             # A flag of 4 means it is time to output the wrench and valve location to ROS
             # This is placed before flag = 3 so that an updated bearing topic will be obtained.
             if self.flag == 4:
-                xA = bearing.data[1]
+                xA = bearing.data[1]+0.025
                 yA = bearing.data[2]
                 xB = bearing.data[3]
                 yB = bearing.data[4]
