@@ -76,6 +76,9 @@ class orient():
         rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
         rospy.sleep(0.1)
+        
+        # Set up tf listener
+        self.tftree = tf.TransformListener()
 
         # Set up ROS subscriber callback routines
         rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback, queue_size=1)
@@ -222,6 +225,7 @@ class orient():
             self.state = self.move_base.get_state()
         else:
             update_rot()
+
             # Check if we are currently trying to rotate around the panel
             if self.flag == 0:
                 # Extract points of interest from the /bearing topic:
@@ -393,6 +397,23 @@ class orient():
                 valve_z = (self.v_c[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 wrenc_y = (self.w_c[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
                 wrenc_z = (self.w_c[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                #tf_x = 0.479
+                #tf_y = 0.109
+                #tf_z = 0.62
+
+                if self.tftree.frameExists("/top_plate_link") and self.tftree.frameExists("/camera"):
+                    t = self.tftree.getLatestCommonTime("/top_plate_link", "/camera")
+                    posi, quat = self.tftree.lookupTransform("/top_plate_link", "/camera", t)
+                    print posi, quat
+                tf_x = posi[0]
+                tf_y = posi[1]
+                tf_z = posi[2]
+                # Convert quaternion angle to euler angles
+                #euler = tf.transformations.euler_from_quaternion(quat)
+                #self.roll = euler[0]
+                #self.pitch = euler[1]
+                #self.yaw = euler[2]
+
                 valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
                 wrench = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
                 wpub = rospy.Publisher('/wrench_mm', numpy_msg(Floats), queue_size=5)
@@ -402,6 +423,9 @@ class orient():
                 # print xmn, xmx, ymn, ymx
                 # print "Wrench location (x,y,z): ", wrench
                 # print "Valve location (x,y,z): ", valve
+
+                print "Wrench WRT base (x,y,z): ", wrench+[tf_x,tf_y,tf_z]
+                print "Valve WRT base (x,y,z): ", valve+[tf_x,tf_y,tf_z]
 
                 # Store valve and wrench (x,y,z) location as ros parameters
                 rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
