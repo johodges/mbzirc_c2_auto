@@ -163,7 +163,7 @@ class orient():
             twist.angular.x = 0
             twist.angular.y = 0
             twist.angular.z = 0
-            twi_pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+            twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
             while self.ct_move*sleep_time < time_to_move:
                 twi_pub.publish(twist)
@@ -182,7 +182,7 @@ class orient():
             twist.angular.x = 0
             twist.angular.y = 0
             twist.angular.z = ve
-            twi_pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+            twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
             while self.ct_move*sleep_time < time_to_move:
                 twi_pub.publish(twist)
@@ -215,7 +215,7 @@ class orient():
         # location. Since the move_base server does not publish feedback without an
         # active goal, we set an initial goal to get our position.
         if self.wp == -1:
-            print "Setting initial state."
+            rospy.loginfo("Setting initial state.")
             self.goal.target_pose.header.frame_id = 'base_link'
             self.goal.target_pose.pose = Pose(Point(-0.5,0,0), Quaternion(0,0,0,1))
             self.goal.target_pose.header.stamp = rospy.Time.now()
@@ -257,21 +257,24 @@ class orient():
                 err_dist = pow((xC*xC+yC*yC),0.5)
                 q2 = tf.transformations.quaternion_from_euler(0,0,bearing.data[0])
                 err_ang = pow(q2[0]*q2[0]+q2[1]*q2[1]+q2[2]*q2[2]+(q2[3]-1)*(q2[3]-1),0.5)
-                print err_dist, err_ang
+                # print err_dist, err_ang
+                rospy.logdebug('Error is:'
+                               + str(err_dist) + 'meters '
+                               + str(err_ang) + 'degrees')
 
                 # Check if the error in distance and angle is below the threshold
                 if err_dist > 0.4 or err_ang > 0.07:
                     tar_in_global([xC,yC+self.off])
-                    print self.goal
+                    # print self.goal
                     q = tf.transformations.quaternion_from_euler(0,0,self.theta+bearing.data[0])
                     self.goal.target_pose.pose = Pose(Point(self.x_tar_glo,self.y_tar_glo,0), Quaternion(q[0],q[1],q[2],q[3]))
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.flag = 0
                     self.old_bearing = self.theta
                     # Back up a bit to help the husky get to the target position
-                    print "We should be backing up..."
+                    # print "We should be backing up..."
                     back_it_up(-0.25,0.5)
-                    print "We should be done backing up..."
+                    # print "We should be done backing up..."
                     self.move_base.send_goal(self.goal)
                     wait_for_finish(100)
                 else:
@@ -281,12 +284,13 @@ class orient():
             if self.flag == 1:
                 # Check if we see wrenches
                 if np.shape(self.wrench)[0] > 6:
-                    print "We found wrenches!"
+                    # print "We found wrenches!"
+                    rospy.loginfo("We found wrenches!")
                     self.ct_wrench = self.ct_wrench+1
                     self.ct3 = 0
                     # Make sure we saw wrenches 5 times through the loop (reduce false positives)
                     if self.ct_wrench > 5:
-                        print "We are confident these are the wrenches we are looking for!"
+                        # print "We are confident these are the wrenches we are looking for!"
                         rospy.sleep(1)
                         self.flag = 3
                         #rospy.signal_shutdown('Ending node.')
@@ -304,54 +308,55 @@ class orient():
                     camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
                     camera_z_mx = xA*np.tan(self.camera_fov_v/2)
                     camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-                    print "Camera FOV: ", camera_y_mn, camera_y_mx
-                    print "Box positions: ", ymn, ymx
+                    # print "Camera FOV: ", camera_y_mn, camera_y_mx
+                    # print "Box positions: ", ymn, ymx
                     update_rot()
 
                     # Check if the left end of the box is visible by the camera
                     if camera_y_mx > ymx:
                         self.off = 0
-                        print "Let's circle around!"
-                        print "Rotation Matrix:", self.R
+                        # print "Let's circle around!"
+                        # print "Rotation Matrix:", self.R
 
                         # Calculate the object location in local coordinate system
                         x_loc = ((xmx-xmn)/2)+xmn
                         y_loc = ((ymx-ymn)/2)+ymn
-                        #print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
+                        print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                         obj_loc = np.array([[x_loc],[y_loc]])
-                        #print "ymx, ymn:", ymx, ymn
+                        print "ymx, ymn:", ymx, ymn
 
                         # Define the target location in the local coordinate system
                         tar_loc = np.array([[xmn+0.5],[ymx+3]])
-                        print "Target loc in local coord and local sys:", tar_loc
+                        # print "Target loc in local coord and local sys:", tar_loc
 
                         # Convert local object and target locations to global coordinate system
                         obj_glo = np.dot(self.R,obj_loc)
                         self.x_obj_glo = obj_glo[0]+self.x0
                         self.y_obj_glo = obj_glo[1]+self.y0
                         tar_in_global(tar_loc)
-                        print "Current location in global coord and global sys:", self.x0, self.y0
-                        print "Object in global coord and global sys:", self.x_obj_glo, self.y_obj_glo
-                        print "Target in global coord and global sys:", self.x_tar_glo, self.y_tar_glo
+
+                        # print "Current location in global coord and global sys:", self.x0, self.y0
+                        # print "Object in global coord and global sys:", self.x_obj_glo, self.y_obj_glo
+                        # print "Target in global coord and global sys:", self.x_tar_glo, self.y_tar_glo
 
                         # Pause for a few seconds to allow user to cancel if needed
                         rospy.sleep(2)
 
                         # The path planner likes to try and run into the object. We force the
                         # robot to move in a specific direction initially to mitigate this.
-                        print "Rotating to make path better."
+                        # print "Rotating to make path better."
                         q = tf.transformations.quaternion_from_euler(0,0,self.yaw-1.57)
                         loc = Pose(Point(self.x_tar_glo,self.y_tar_glo,0), Quaternion(q[0],q[1],q[2],q[3]))
                         rot_cmd(0.5,1.57)
-                        print "Done rotating!"
+                        # print "Done rotating!"
 
                         # Move 2 meters along the box to help with the path planning
-                        print "Moving around the box a bit to give clearance."
+                        # print "Moving around the box a bit to give clearance."
                         back_it_up(0.25,2)
-                        print "Done getting clearance."
+                        # print "Done getting clearance."
                         rospy.sleep(1)
                         # Move to target location
-                        print "Goal location in global frame:", self.x_tar_glo, self.y_tar_glo
+                        # print "Goal location in global frame:", self.x_tar_glo, self.y_tar_glo
 
                         self.goal.target_pose.pose = loc
                         self.goal.target_pose.header.frame_id = 'odom'
@@ -360,7 +365,7 @@ class orient():
                         self.ct3 = 0
                         self.flag = 1
                         wait_for_finish(self.stalled_threshold)
-                        print "I should be at the target location!"
+                        # print "I should be at the target location!"
                         rospy.sleep(1)
 
                         # Move back to the positioning/normalization state
@@ -387,8 +392,8 @@ class orient():
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                print self.v_c
-                print self.w_c
+                # print self.v_c
+                # print self.w_c
                 valve_y = (self.v_c[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
                 valve_z = (self.v_c[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 wrenc_y = (self.w_c[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
@@ -416,9 +421,9 @@ class orient():
                 wpub.publish(wrench)
                 vpub = rospy.Publisher('/valve_mm', numpy_msg(Floats), queue_size=5)
                 vpub.publish(valve)
-                print xmn, xmx, ymn, ymx
-                print "Wrench location (x,y,z): ", wrench
-                print "Valve location (x,y,z): ", valve
+                # print xmn, xmx, ymn, ymx
+                # print "Wrench location (x,y,z): ", wrench
+                # print "Valve location (x,y,z): ", valve
 
                 print "Wrench WRT base (x,y,z): ", wrench+[tf_x,tf_y,tf_z]
                 print "Valve WRT base (x,y,z): ", valve+[tf_x,tf_y,tf_z]
@@ -426,8 +431,12 @@ class orient():
                 # Store valve and wrench (x,y,z) location as ros parameters
                 rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
                 rospy.set_param('wrench',[float(wrench[0]), float(wrench[1]), float(wrench[2])])
-                rospy.sleep(2)
+
+                # Set the current position of the end effector with respect to the base
+                rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
+
                 rospy.set_param('smach_state','oriented')
+
                 rospy.signal_shutdown('Ending node.')
 
             # A flag of 3 denotes centering between the valve and wrenches
@@ -440,7 +449,7 @@ class orient():
                 vw_c = (valve+wrenc)/2
                 vw_t = 1920
                 vw_off = (vw_c-vw_t)
-                print "Target Center: ", vw_t, "Current Center: ", vw_c
+                # print "Target Center: ", vw_t, "Current Center: ", vw_c
                 update_rot()
 
                 # Check if we are centered between valve and wrenches
@@ -482,5 +491,5 @@ if __name__ == '__main__':
         orient()
         rospy.spin()
     except rospy.ROSInterruptException:
-        rospy.loginfo("orient finished.")
+        rospy.loginfo("Orient killed.")
 

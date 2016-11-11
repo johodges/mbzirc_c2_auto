@@ -14,7 +14,7 @@
 <!-- include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" / -->
 <!-- include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" / -->
 
-<node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine_2.py" />
+<node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine_2.py" output='screen'/>
 
 <node name="board" pkg="mbzirc_c2_auto" type="panel.sh" />
 <node name="image_view" pkg="image_view" type="image_view">
