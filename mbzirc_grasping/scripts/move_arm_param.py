@@ -29,7 +29,7 @@ class move_arm_param():
     def __init__(self):
         # Name this node, it must be unique
 	rospy.init_node('move_arm', anonymous=False)
-        rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
+        rospy.on_shutdown(self.cleanup) # Set rospy to execute a shutdown function when exiting
         self.flag = 0
         self.ct = 0
 
@@ -44,10 +44,10 @@ class move_arm_param():
         moveit_commander.roscpp_initialize(sys.argv)
 
         # Initialize the move group for the ur5_arm
-        arm = moveit_commander.MoveGroupCommander("ur5_arm")
+        self.arm = moveit_commander.MoveGroupCommander("ur5_arm")
 
         # Get the name of the end-effector link
-        end_effector_link = arm.get_end_effector_link()
+        end_effector_link = self.arm.get_end_effector_link()
         rospy.loginfo(end_effector_link)
 
         # Initialize Necessary Variables
@@ -55,14 +55,14 @@ class move_arm_param():
         #reference_frame = "ee_link"
 
         # Set the ur5_arm reference frame accordingly
-        arm.set_pose_reference_frame(reference_frame)
+        self.arm.set_pose_reference_frame(reference_frame)
 
         # Allow replanning to increase the odds of a solution
-        arm.allow_replanning(True)
+        self.arm.allow_replanning(True)
 
         # Allow some leeway in position (meters) and orientation (radians)
-        arm.set_goal_position_tolerance(0.01)
-        arm.set_goal_orientation_tolerance(0.01)
+        self.arm.set_goal_position_tolerance(0.01)
+        self.arm.set_goal_orientation_tolerance(0.01)
 
         # Set the target pose from the input
         self.target_pose = PoseStamped()
@@ -74,25 +74,21 @@ class move_arm_param():
         self.target_pose.pose.position.z = ee_pos[2]
 
         # Set the start state to the current state
-        arm.set_start_state_to_current_state()
+        self.arm.set_start_state_to_current_state()
 
         # Set the goal pose of the end effector to the stored pose
-        arm.set_pose_target(self.target_pose, end_effector_link)
+        self.arm.set_pose_target(self.target_pose, end_effector_link)
 
         # Plan the trajectory to the goal
-        traj = arm.plan()
+        traj = self.arm.plan()
 
         if traj is not None:
             # Execute the planned trajectory
-            arm.execute(traj)
+            self.arm.execute(traj)
 
             # Pause for a second
             rospy.sleep(1.0)
             self.flag = 1
-
-    # The shutdown function is used to cancel any move_base goals when this node is killed
-    def shutdown(self):
-        rospy.loginfo("Stopping the robot...")
 
     # callback_feedback is used to store the feedback topic into the class to be
     # referenced by the other callback routines.
@@ -112,7 +108,19 @@ class move_arm_param():
                     self.ct = self.ct + 1
                     rospy.sleep(0.5)
         if self.flag == 2:
+            self.cleanup()
             rospy.signal_shutdown('Ending node.')
+
+    def cleanup(self):
+        rospy.loginfo("Stopping the robot")
+    
+        # Stop any current arm movement
+        self.arm.stop()
+        
+        #Shut down MoveIt! cleanly
+        rospy.loginfo("Shutting down Moveit!")
+        moveit_commander.roscpp_shutdown()
+        moveit_commander.os._exit(0)
 
 if __name__ == '__main__':
     move_arm_param()
