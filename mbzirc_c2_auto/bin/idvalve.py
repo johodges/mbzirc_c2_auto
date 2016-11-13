@@ -56,9 +56,16 @@ class move2op():
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
+        rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c, queue_size=1)
 
     def shutdown(self):
         rospy.sleep(1)
+
+    # callback_v_c is used to store the valve center topic into the class to be
+    # referenced by the other callback routines.
+    def callback_v_c(self, data):
+        self.v_c = data.data
 
     # callback_wrench is used to store the wrench topic into the class to be
     # referenced by the other callback routines.
@@ -67,11 +74,39 @@ class move2op():
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-    if random.random() < 0.1:
-        rospy.set_param('smach_state','valveNotFound')
-    else:
-        rospy.set_param('smach_state','valveFound')
+
+        cimg = cv2.medianBlur(cv_image,5)
+        cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
+
+        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=500)
+
+        if circles is not None:
+            mn = min(circles[0,:,0])
+            idx = np.argwhere(circles[0,:,0] == mn)
+            i = circles[0,:][idx][0][0]
+
+            val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
+        ee_position = rospy.get_param('ee_position')
+        valve = rospy.get_param('valve')
+        xA = valve[0]-ee_position[0]
+        print "Valve in pixels: ", val_loc
+        camera_y_mx = xA*np.tan(self.camera_fov_h/2)
+        camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
+        camera_z_mx = xA*np.tan(self.camera_fov_v/2)
+        camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
+        print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
+        valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+        valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
+        self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
+        print "Valve in m: ", self.valve_id
+        rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])]) 
+
+        if random.random() < 0.1:
+            rospy.set_param('smach_state','valveNotFound')
+        else:
+            rospy.set_param('smach_state','valveFound')
         rospy.sleep(10)
+        rospy.signal_shutdown('Ending node.')
 
 if __name__ == '__main__':
     try:

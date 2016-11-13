@@ -41,11 +41,34 @@ class MoveToValveReady(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atValveReady'])
+                             outcomes=['atValveReady',
+                                       'moveStuck',
+                                       'moveFailed'],
+                             input_keys=['move_counter_in'],
+                             output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'atValveReady'
+        max_retries = 0
+
+        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        prc.wait()
+
+        move_state = rospy.get_param('move_arm_status')
+
+        # Preset the out move counter to 0, override if necessary
+        userdata.move_counter_out = 0
+
+        if move_state == 'success':
+            return 'atValveReady'
+
+        else:
+            if userdata.move_counter_in < max_retries:
+                userdata.move_counter_out = userdata.move_counter_in + 1
+                return 'moveStuck'
+
+            else:
+                return 'moveFailed'
+
 
 
 
@@ -83,11 +106,33 @@ class MoveToValve(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atValve'])
+                             outcomes=['atValve',
+                                       'moveStuck',
+                                       'moveFailed'],
+                             input_keys=['move_counter_in'],
+                             output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        rospy.sleep(5)
-        return 'atValve'
+        max_retries = 0
+
+        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        prc.wait()
+
+        move_state = rospy.get_param('move_arm_status')
+
+        # Preset the out move counter to 0, override if necessary
+        userdata.move_counter_out = 0
+
+        if move_state == 'success':
+            return 'atValve'
+
+        else:
+            if userdata.move_counter_in < max_retries:
+                userdata.move_counter_out = userdata.move_counter_in + 1
+                return 'moveStuck'
+
+            else:
+                return 'moveFailed'
 
 
 

@@ -68,6 +68,7 @@ class move2grasp():
             print(e)
         rospy.set_param('smach_state','readyToGrasp')
         rospy.sleep(10)
+        rospy.signal_shutdown('Ending node.')
 
 if __name__ == '__main__':
     try:
