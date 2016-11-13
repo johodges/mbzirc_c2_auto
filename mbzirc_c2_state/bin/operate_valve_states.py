@@ -36,6 +36,8 @@ class MoveToValveReady(smach.State):
     Outcomes
     --------
         atValveReady : at the ready position
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
 
     """
 
@@ -44,11 +46,19 @@ class MoveToValveReady(smach.State):
                              outcomes=['atValveReady',
                                        'moveStuck',
                                        'moveFailed'],
-                             input_keys=['move_counter_in'],
+                             input_keys=['move_counter_in',
+                                         'max_retries'],
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        max_retries = 0
+
+        valve_ID_ready_pos = rospy.get_param('valve')
+
+        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+
+        rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
+                                        float(valve_ID_ready_pos[1]),
+                                        float(valve_ID_ready_pos[2])])
 
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
@@ -61,8 +71,9 @@ class MoveToValveReady(smach.State):
         if move_state == 'success':
             return 'atValveReady'
 
+
         else:
-            if userdata.move_counter_in < max_retries:
+            if userdata.move_counter_in < userdata.max_retries:
                 userdata.move_counter_out = userdata.move_counter_in + 1
                 return 'moveStuck'
 
@@ -101,6 +112,8 @@ class MoveToValve(smach.State):
     Outcomes
     --------
         atValve : at the valve ready to servo in
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
 
     """
 
@@ -109,11 +122,22 @@ class MoveToValve(smach.State):
                              outcomes=['atValve',
                                        'moveStuck',
                                        'moveFailed'],
-                             input_keys=['move_counter_in'],
+                             input_keys=['move_counter_in',
+                                        'max_retries'],
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        max_retries = 0
+
+        valve_ID = rospy.get_param('valve_ID')
+        valve_ID_ready_pos = rospy.get_param('valve')
+
+        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+        valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+valve_ID[1]
+        valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+valve_ID[2]
+
+        rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
+                                        float(valve_ID_ready_pos[1]),
+                                        float(valve_ID_ready_pos[2])])
 
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
@@ -127,7 +151,7 @@ class MoveToValve(smach.State):
             return 'atValve'
 
         else:
-            if userdata.move_counter_in < max_retries:
+            if userdata.move_counter_in < userdata.max_retries:
                 userdata.move_counter_out = userdata.move_counter_in + 1
                 return 'moveStuck'
 

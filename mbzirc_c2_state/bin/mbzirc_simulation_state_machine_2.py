@@ -108,9 +108,11 @@ def main():
 
         # Define userdata for the state machines
         sm_wrench.userdata.move_counter = 0
+        sm_wrench.userdata.max_move_retries = 2
         sm_wrench.userdata.have_wrench = False
 
         sm_valve.userdata.move_counter = 0
+        sm_valve.userdata.max_move_retries = 2
         sm_valve.userdata.valve_turned = False
 
         # Define the NAVIGATE State Machine
@@ -130,6 +132,7 @@ def main():
                                                 'moveStuck' : 'MOVE_TO_READY',
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_WRENCH_READY', MoveToWrenchReady(),
@@ -139,6 +142,7 @@ def main():
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'got_wrench' : 'have_wrench',
                                               'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_WRENCH', IDWrench(),
@@ -150,6 +154,7 @@ def main():
                                                 'moveStuck' : 'MOVE_TO_WRENCH',
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_TO_GRASP', MoveToGrasp(),
@@ -165,7 +170,10 @@ def main():
             smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
                                    transitions={'atValveReady' : 'ID_VALVE',
                                                 'moveStuck' : 'MOVE_VALVE_READY',
-                                                'moveFailed' : 'failedToMove'})
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_VALVE', IDValve(),
                                    transitions={'valveFound' : 'MOVE_TO_VALVE',
@@ -174,7 +182,10 @@ def main():
             smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
                                    transitions={'atValve' : 'MOVE_TO_OPERATE',
                                                 'moveStuck' : 'MOVE_TO_VALVE',
-                                                'moveFailed' : 'failedToMove'})
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_TO_OPERATE', MoveToOperate(),
                                    transitions={'wrenchFell' : 'lostWrench',
