@@ -439,6 +439,7 @@ class orient():
 
                 # Set the current position of the end effector with respect to the base
                 rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
+                rospy.set_param('current_joint_state',[0,0,0,0,0,0])
 
                 rospy.set_param('smach_state','oriented')
 

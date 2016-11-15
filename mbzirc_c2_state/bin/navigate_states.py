@@ -38,17 +38,29 @@ class FindBoard(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atBoard'])
+                             outcomes=['atBoard',
+                                       'skipNav'],
+                             input_keys=['test_arm_in'])
 
     def execute(self, userdata):
 
-        rospy.loginfo('Searching for board')
-        a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
-        b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
+        if userdata.test_arm_in is True:
+            rospy.set_param('wrench',[1.50195926, -0.02785565, 0.40498503])
+            rospy.set_param('valve',[1.50195926, 0.23329135, 0.22560422])
+            rospy.set_param('ee_position',[0.4863007578206243,
+                                           0.10914527097633821,
+                                           0.6197410984973739])
+            rospy.set_param('current_joint_state', [0, 0, 0, 0, 0, 0])
+            return 'skipNav'
 
-        b.wait()
-        rospy.loginfo('Searching for board')
-        a.kill()
+        else:
+            rospy.loginfo('Searching for board')
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+            b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
-        return 'atBoard'
+            b.wait()
+            rospy.loginfo('Searching for board')
+            a.kill()
+
+            return 'atBoard'
 
