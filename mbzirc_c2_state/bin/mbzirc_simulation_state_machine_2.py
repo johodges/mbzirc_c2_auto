@@ -88,7 +88,8 @@ def main():
     with sm:
 
         # Create the sub SMACH state machine for navigation
-        sm_nav = smach.StateMachine(outcomes=['readyToOrient'])
+        sm_nav = smach.StateMachine(outcomes=['readyToOrient',
+                                              'moveArm'])
 
         # Create the sub SMACH state machine for orienting
         sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench'])
@@ -107,18 +108,22 @@ def main():
                                                 'valveStuck'])
 
         # Define userdata for the state machines
+        sm_nav.userdata.test_arm = False
+
         sm_wrench.userdata.move_counter = 0
-        sm_wrench.userdata.max_move_retries = 2
+        sm_wrench.userdata.max_move_retries = 1
         sm_wrench.userdata.have_wrench = False
 
         sm_valve.userdata.move_counter = 0
-        sm_valve.userdata.max_move_retries = 2
+        sm_valve.userdata.max_move_retries = 1
         sm_valve.userdata.valve_turned = False
 
         # Define the NAVIGATE State Machine
         with sm_nav:
             smach.StateMachine.add('FINDBOARD', FindBoard(),
-                                   transitions={'atBoard' : 'readyToOrient'})
+                                   transitions={'atBoard' : 'readyToOrient',
+                                                'skipNav' : 'moveArm'},
+                                   remapping={'test_arm_in' : 'test_arm'})
 
         # Define the ORIENT State Machine
         with sm_orient:
@@ -198,7 +203,8 @@ def main():
 
         # Add containers to the state
         smach.StateMachine.add('NAVIGATE', sm_nav,
-                               transitions={'readyToOrient' : 'ORIENT'})
+                               transitions={'readyToOrient' : 'ORIENT',
+                                            'moveArm' : 'GRAB_WRENCH'})
 
         smach.StateMachine.add('ORIENT', sm_orient,
                                transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
