@@ -159,13 +159,15 @@ class IDWrench(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['wrenchFound',
+                                       'armTest',
                                        'wrenchNotFound'])
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench.py", shell=True)
         prc.wait()
 
-        return rospy.get_param('smach_state')
+        ret_state = rospy.get_param('smach_state')
+        return ret_state
 
 
 
