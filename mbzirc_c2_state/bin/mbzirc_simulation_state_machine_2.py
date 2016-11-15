@@ -96,6 +96,7 @@ def main():
 
         # Create the sub SMACH state machine for grabbing wrench
         sm_wrench = smach.StateMachine(outcomes=['readyToOperate',
+                                                 'testingArm',
                                                  'failedToMove',
                                                  'droppedWrench',
                                                  'wrenchIDFailed'])
@@ -103,12 +104,13 @@ def main():
         # Create the sub SMACH state machine operating the valve
         sm_valve = smach.StateMachine(outcomes=['valveOperated',
                                                 'failedToMove',
+                                                'failedToStowArm',
                                                 'valveIDFailed',
                                                 'lostWrench',
                                                 'valveStuck'])
 
         # Define userdata for the state machines
-        sm_nav.userdata.test_arm = False
+        sm_nav.userdata.test_arm = True
 
         sm_wrench.userdata.move_counter = 0
         sm_wrench.userdata.max_move_retries = 1
@@ -152,6 +154,7 @@ def main():
 
             smach.StateMachine.add('ID_WRENCH', IDWrench(),
                                    transitions={'wrenchFound' : 'MOVE_TO_WRENCH',
+                                                'armTest' : 'testingArm'
                                                 'wrenchNotFound' : 'wrenchIDFailed'})
 
             smach.StateMachine.add('MOVE_TO_WRENCH', MoveToWrench(),
@@ -174,8 +177,8 @@ def main():
         with sm_valve:
             smach.StateMachine.add('DRIVE_TO_VALVE', DriveToValve(),
                                    transitions={'atValveDrive' : 'MOVE_VALVE_READY',
-                                                'moveStuck' : 'valveIDFailed',
-                                                'moveFailed' : 'valveIDFailed'})
+                                                'stowArmFailed' : 'failedToStowArm',
+                                                'moveFailed' : 'failedToMove'})
 
             smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
                                    transitions={'atValveReady' : 'ID_VALVE',
@@ -217,6 +220,7 @@ def main():
 
         smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
                                transitions={'readyToOperate' : 'OPERATE_VALVE',
+                                            'testingArm' : 'success'
                                             'failedToMove' : 'failure',
                                             'droppedWrench' : 'failure',
                                             'wrenchIDFailed' : 'failure'})
@@ -224,6 +228,7 @@ def main():
         smach.StateMachine.add('OPERATE_VALVE', sm_valve,
                                transitions={'valveOperated' : 'success',
                                             'failedToMove' : 'failure',
+                                            'failedToStowArm' : 'failure',
                                             'valveIDFailed' : 'failure',
                                             'lostWrench' : 'failure',
                                             'valveStuck' : 'failure'})

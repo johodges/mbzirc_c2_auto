@@ -46,7 +46,7 @@ class DriveToValve(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['atValveDrive',
-                                       'moveStuck',
+                                       'stowArmFailed',
                                        'moveFailed'])
 
     def execute(self, userdata):
@@ -58,16 +58,13 @@ class DriveToValve(smach.State):
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
 
-        move_state = rospy.get_param('move_arm_status')
+        move_arm_state = rospy.get_param('move_arm_status')
 
-        # Preset the out move counter to 0, override if necessary
-        userdata.move_counter_out = 0
-
-        if move_state == 'success':
+        if move_arm_state == 'success':
             prc = subprocess.Popen("rosrun mbzirc_c2_auto drive2valve.py", shell=True)
             prc.wait()
             smach_state = rospy.get_param('smach_state')
-            
+
             if smach_state == 'valvepos':
                 return 'atValveDrive'
             else:
@@ -75,12 +72,7 @@ class DriveToValve(smach.State):
 
 
         else:
-            if userdata.move_counter_in < userdata.max_retries:
-                userdata.move_counter_out = userdata.move_counter_in + 1
-                return 'moveStuck'
-
-            else:
-                return 'moveFailed'
+            return 'stowArmFailed'
 
 
 
@@ -212,7 +204,7 @@ class MoveToValve(smach.State):
                 if userdata.move_counter_in < userdata.max_retries:
                     userdata.move_counter_out = userdata.move_counter_in + 1
                     return 'moveStuck'
-    
+
                 else:
                     return 'moveFailed'
 
