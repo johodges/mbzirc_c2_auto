@@ -212,22 +212,53 @@ class drive2valve():
             rospy.sleep(1)
             self.wp = self.wp+1
         else:
-            update_rot()
-            rospy.loginfo("Setting initial estimate of valve location.")
-            valve = rospy.get_param('valve')
-            ugv_pos = rospy.get_param('ugv_position')
-            val_loc = [valve[0]-1,valve[1]]
-            val_glo = np.dot(self.R,val_loc)
-            self.x_val_glo = val_glo[0]+ugv_pos[0]
-            self.y_val_glo = val_glo[1]+ugv_pos[1]
-            self.goal.target_pose.header.stamp = rospy.Time.now()
-            self.goal.target_pose.pose = Pose(Point(self.x_val_glo,self.y_val_glo,0), Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
-            self.goal.target_pose.header.frame_id = 'odom'
-            self.move_base.send_goal(self.goal)
-            print "Moving to intial estimate of valve location."
-            wait_for_finish(100)
-            self.flag = 1
-            
+            if self.flag == 0:
+                update_rot()
+                rospy.loginfo("Setting initial estimate of valve location.")
+                valve = rospy.get_param('valve')
+                ugv_pos = rospy.get_param('ugv_position')
+                val_loc = [valve[0]-1,valve[1]]
+                val_glo = np.dot(self.R,val_loc)
+                self.x_val_glo = val_glo[0]+ugv_pos[0]
+                self.y_val_glo = val_glo[1]+ugv_pos[1]
+                self.goal.target_pose.header.stamp = rospy.Time.now()
+                self.goal.target_pose.pose = Pose(Point(self.x_val_glo,self.y_val_glo,0), Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
+                self.goal.target_pose.header.frame_id = 'odom'
+                self.move_base.send_goal(self.goal)
+                print "Moving to intial estimate of valve location."
+                wait_for_finish(100)
+                self.flag = 1
+
+            if self.flag == 2:
+                xA = bearing.data[1]
+                print "Distance to board: ", xA
+                camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
+                camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
+                camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
+                camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
+                valve_y = (1-self.v_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                valve_z = (1-self.v_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
+                if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/camera"):
+                    t = self.tftree.getLatestCommonTime("/base_link", "/camera")
+                    posi, quat = self.tftree.lookupTransform("/base_link", "/camera", t)
+                    print posi, quat
+                tf_x = posi[0]
+                tf_y = posi[1]
+                tf_z = posi[2]
+                print "TF: ", posi
+                valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
+                print "Valve in local coordinates: ", valve
+                valve = valve+[tf_x,tf_y,tf_z]
+                print "Valve in global coordinates: ", valve
+                rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
+                # Set the current position of the end effector with respect to the base
+                rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
+                rospy.set_param('stow_position',[float(tf_x), float(tf_y), float(tf_z)])
+                rospy.set_param('current_joint_state',[0,0,0,0,0,0])
+                rospy.set_param('ugv_position',[self.x0,self.y0,0,self.X0,self.Y0,self.Z0,self.W0])
+                rospy.set_param('smach_state','valvepos')
+                rospy.signal_shutdown('Ending node.')
+
             if self.flag == 1:
                 rospy.sleep(1)
                 self.ct_move = 0
@@ -257,8 +288,8 @@ class drive2valve():
                     obj_loc = np.array([[x_loc],[y_loc]])
                     po = 1
                     back_it_up(0.25,(x_loc-po))
-                    rospy.set_param('smach_state','valvepos')
-                    rospy.signal_shutdown('Ending node.')
+                    rospy.sleep(1)
+                    self.flag = 2
                 else:
                     back_it_up(-0.25,1)
 
