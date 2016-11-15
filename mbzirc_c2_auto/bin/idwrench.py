@@ -86,7 +86,7 @@ class idwrench():
 if __name__ == '__main__':
 
 
-    rospy.set_param('smach_state','armTest')
+    #rospy.set_param('smach_state','armTest')
 
     try:
         idwrench()
