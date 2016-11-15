@@ -30,6 +30,59 @@ import rospy
 import smach
 import subprocess
 
+class DriveToValve(smach.State):
+    """Moves the arm to stow position and centers the base of the
+       UGV in front of the valve.
+
+    Outcomes
+    --------
+        atValveDrive : at the ready position
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
+
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['atValveDrive',
+                                       'moveStuck',
+                                       'moveFailed'])
+
+    def execute(self, userdata):
+        stow_pos = rospy.get_param('stow_position')
+        rospy.set_param('ee_position', [float(stow_pos[0]),
+                                        float(stow_pos[1]),
+                                        float(stow_pos[2])])
+
+        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        prc.wait()
+
+        move_state = rospy.get_param('move_arm_status')
+
+        # Preset the out move counter to 0, override if necessary
+        userdata.move_counter_out = 0
+
+        if move_state == 'success':
+            prc = subprocess.Popen("rosrun mbzirc_c2_auto drive2valve.py", shell=True)
+            prc.wait()
+            smach_state = rospy.get_param('smach_state')
+            
+            if smach_state == 'valvepos':
+                return 'atValveDrive'
+            else:
+                return 'moveFailed'
+
+
+        else:
+            if userdata.move_counter_in < userdata.max_retries:
+                userdata.move_counter_out = userdata.move_counter_in + 1
+                return 'moveStuck'
+
+            else:
+                return 'moveFailed'
+
+
+
 class MoveToValveReady(smach.State):
     """Moves the arm in front of valve for detection
 
@@ -120,6 +173,7 @@ class MoveToValve(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['atValve',
+                                       'centerValve',
                                        'moveStuck',
                                        'moveFailed'],
                              input_keys=['move_counter_in',
@@ -131,32 +185,35 @@ class MoveToValve(smach.State):
         valve_ID = rospy.get_param('valve_ID')
         valve_ID_ready_pos = rospy.get_param('valve')
 
-        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
-        valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+valve_ID[1]
-        valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+valve_ID[2]
-
-        rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
-                                        float(valve_ID_ready_pos[1]),
-                                        float(valve_ID_ready_pos[2])])
-
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
-
-        move_state = rospy.get_param('move_arm_status')
-
-        # Preset the out move counter to 0, override if necessary
-        userdata.move_counter_out = 0
-
-        if move_state == 'success':
+        if np.pow(valve_ID[1]*valve_ID[1]+valve_ID[2]*valve_ID[2],0.5) < 0.1:
             return 'atValve'
-
         else:
-            if userdata.move_counter_in < userdata.max_retries:
-                userdata.move_counter_out = userdata.move_counter_in + 1
-                return 'moveStuck'
+            valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+            valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+valve_ID[1]
+            valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+valve_ID[2]
+
+            rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
+                                            float(valve_ID_ready_pos[1]),
+                                            float(valve_ID_ready_pos[2])])
+
+            prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+            prc.wait()
+
+            move_state = rospy.get_param('move_arm_status')
+
+            # Preset the out move counter to 0, override if necessary
+            userdata.move_counter_out = 0
+
+            if move_state == 'success':
+                return 'centerValve'
 
             else:
-                return 'moveFailed'
+                if userdata.move_counter_in < userdata.max_retries:
+                    userdata.move_counter_out = userdata.move_counter_in + 1
+                    return 'moveStuck'
+    
+                else:
+                    return 'moveFailed'
 
 
 

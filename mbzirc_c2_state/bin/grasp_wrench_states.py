@@ -111,7 +111,9 @@ class MoveToWrenchReady(smach.State):
         wrench_ready_pos = rospy.get_param('wrench')
 
         # Set the ready position 40 cm away from the wrenches
-        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.4
+        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.5
+        wrench_ready_pos[1] = wrench_ready_pos[1]
+        wrench_ready_pos[2] = wrench_ready_pos[2]
 
         rospy.set_param('ee_position', [float(wrench_ready_pos[0]),
                                         float(wrench_ready_pos[1]),

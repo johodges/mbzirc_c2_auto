@@ -172,6 +172,11 @@ def main():
 
         # Define the OPERATE_VALVE State Machine
         with sm_valve:
+            smach.StateMachine.add('DRIVE_TO_VALVE', DriveToValve(),
+                                   transitions={'atValveDrive' : 'MOVE_VALVE_READY',
+                                                'moveStuck' : 'valveIDFailed',
+                                                'moveFailed' : 'valveIDFailed'})
+
             smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
                                    transitions={'atValveReady' : 'ID_VALVE',
                                                 'moveStuck' : 'MOVE_VALVE_READY',
@@ -186,6 +191,7 @@ def main():
 
             smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
                                    transitions={'atValve' : 'MOVE_TO_OPERATE',
+                                                'centerValve' : 'ID_VALVE',
                                                 'moveStuck' : 'MOVE_TO_VALVE',
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'move_counter_in' : 'move_counter',

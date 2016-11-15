@@ -439,8 +439,9 @@ class orient():
 
                 # Set the current position of the end effector with respect to the base
                 rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
+                rospy.set_param('stow_position',[float(tf_x), float(tf_y), float(tf_z)])
                 rospy.set_param('current_joint_state',[0,0,0,0,0,0])
-
+                rospy.set_param('ugv_position',[self.x0,self.y0,0,self.X0,self.Y0,self.Z0,self.W0])
                 rospy.set_param('smach_state','oriented')
 
                 rospy.signal_shutdown('Ending node.')
@@ -452,7 +453,7 @@ class orient():
                 wait_for_finish(100)
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
-                vw_c = (valve+wrenc)/2
+                vw_c = wrenc #(valve+wrenc)/2
                 vw_t = 960
                 vw_off = (vw_c-vw_t)
                 # print "Target Center: ", vw_t, "Current Center: ", vw_c
