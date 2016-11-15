@@ -110,7 +110,7 @@ def main():
                                                 'valveStuck'])
 
         # Define userdata for the state machines
-        sm_nav.userdata.test_arm = True
+        sm_nav.userdata.test_arm = False
 
         sm_wrench.userdata.move_counter = 0
         sm_wrench.userdata.max_move_retries = 1
