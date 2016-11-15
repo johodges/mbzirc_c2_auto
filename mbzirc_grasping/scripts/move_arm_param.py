@@ -77,7 +77,10 @@ class move_arm_param():
         self.target_pose.pose.position.z = ee_pos[2]
 
         # Get current joint position to use for planning
-        cjs = rospy.get_param('current_joint_state')
+        try:
+            cjs = rospy.get_param('current_joint_state')
+        except:
+            cjs = [0,0,0,0,0,0]
         jt = RobotState()
         jt.joint_state.header.frame_id = '/base_link'
         jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
