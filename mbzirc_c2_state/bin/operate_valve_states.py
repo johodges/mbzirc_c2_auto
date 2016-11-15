@@ -100,7 +100,8 @@ class MoveToValveReady(smach.State):
 
         valve_ID_ready_pos = rospy.get_param('valve')
 
-        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.5
+        valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.1
 
         rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
                                         float(valve_ID_ready_pos[1]),
@@ -181,7 +182,7 @@ class MoveToValve(smach.State):
         if np.power(valve_ID[1]*valve_ID[1]+valve_ID[2]*valve_ID[2],0.5) < 0.01:
             return 'atValve'
         else:
-            valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+            valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.5
             valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.5*valve_ID[1]
             valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.5*valve_ID[2]
 
