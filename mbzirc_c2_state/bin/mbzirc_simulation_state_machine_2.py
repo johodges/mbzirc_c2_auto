@@ -70,7 +70,7 @@ def main():
 
         # Create the sub SMACH state machine for navigation
         sm_nav = smach.StateMachine(outcomes=['readyToOrient',
-                                              'moveArm'])
+                                              'testingArmOnly'])
 
         # Create the sub SMACH state machine for orienting
         sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench'])
@@ -90,6 +90,29 @@ def main():
                                                 'lostWrench',
                                                 'valveStuck'])
 
+        # Add containers to the state
+        smach.StateMachine.add('NAVIGATE', sm_nav,
+                               transitions={'readyToOrient' : 'ORIENT',
+                                            'testingArmOnly' : 'success'})
+
+        smach.StateMachine.add('ORIENT', sm_orient,
+                               transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
+
+        smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
+                               transitions={'readyToOperate' : 'OPERATE_VALVE',
+                                            'testingArm' : 'success',
+                                            'failedToMove' : 'failure',
+                                            'droppedWrench' : 'failure',
+                                            'wrenchIDFailed' : 'failure'})
+
+        smach.StateMachine.add('OPERATE_VALVE', sm_valve,
+                               transitions={'valveOperated' : 'success',
+                                            'failedToMove' : 'failure',
+                                            'failedToStowArm' : 'failure',
+                                            'valveIDFailed' : 'failure',
+                                            'lostWrench' : 'failure',
+                                            'valveStuck' : 'failure'})
+
         # Define userdata for the state machines
         sm_nav.userdata.test_arm = False
 
@@ -106,7 +129,7 @@ def main():
         with sm_nav:
             smach.StateMachine.add('FINDBOARD', FindBoard(),
                                    transitions={'atBoard' : 'readyToOrient',
-                                                'skipNav' : 'moveArm'},
+                                                'skipNav' : 'testingArmOnly'},
                                    remapping={'test_arm_in' : 'test_arm'})
 
         # Define the ORIENT State Machine
@@ -157,7 +180,7 @@ def main():
 
         # Define the OPERATE_VALVE State Machine
         with sm_valve:
-            smach.StateMachine.add('STOW_ARM', DriveToValve(),
+            smach.StateMachine.add('STOW_ARM', StowArm(),
                                    transitions={'armStowed' : 'DRIVE_TO_VALVE',
                                                 'stowArmFailed' : 'failedToStowArm'})
 
@@ -183,7 +206,7 @@ def main():
                                                 'moveForward' : 'MOVE_TO_OPERATE'},
                                    remapping={'valve_centered_in' : 'valve_centered'})
 
-            smach.StateMachine.add('SERVO_TO_VALVE', MoveToOperate(),
+            smach.StateMachine.add('SERVO_TO_VALVE', ServoToValve(),
                                    transitions={'moveSuccess' : 'ID_VALVE',
                                                 'moveFailed' : 'failedToMove'})
 
@@ -196,29 +219,6 @@ def main():
                                    transitions={'wrenchFell' : 'lostWrench',
                                                 'cantTurnValve' : 'valveStuck',
                                                 'turnedValve' : 'valveOperated'})
-
-        # Add containers to the state
-        smach.StateMachine.add('NAVIGATE', sm_nav,
-                               transitions={'readyToOrient' : 'ORIENT',
-                                            'moveArm' : 'GRAB_WRENCH'})
-
-        smach.StateMachine.add('ORIENT', sm_orient,
-                               transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
-
-        smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
-                               transitions={'readyToOperate' : 'OPERATE_VALVE',
-                                            'testingArm' : 'success',
-                                            'failedToMove' : 'failure',
-                                            'droppedWrench' : 'failure',
-                                            'wrenchIDFailed' : 'failure'})
-
-        smach.StateMachine.add('OPERATE_VALVE', sm_valve,
-                               transitions={'valveOperated' : 'success',
-                                            'failedToMove' : 'failure',
-                                            'failedToStowArm' : 'failure',
-                                            'valveIDFailed' : 'failure',
-                                            'lostWrench' : 'failure',
-                                            'valveStuck' : 'failure'})
 
 
     # Create the introspection server
