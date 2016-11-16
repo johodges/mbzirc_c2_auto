@@ -1,25 +1,34 @@
 #!/usr/bin/env python
 
-# import roslib
+""" mbzirc_simulation_state_machine.py - Version 1.0 2016-10-12
+
+    This program node defines the state machine for Challenge 2
+
+    Author: Alan Lattimer (alattimer at jensenhughes dot com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.5
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details at:
+
+    http://www.gnu.org/licenses/gpl.html
+
+"""
+
 import rospy
 import smach
 import smach_ros
-# import time
-# import os
-# import subprocess
 from navigate_states import *
 from orient_states import *
 from grasp_wrench_states import *
 from operate_valve_states import *
-# from geometry_msgs.msg import Twist
-# import math
-# import actionlib
 from control_msgs.msg import *
 from trajectory_msgs.msg import *
-# from sensor_msgs.msg import JointState
-
-# JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint',
-#                'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
 
 # *************************************************************************
 # State classes are defined in files associated with the sub-state machine
@@ -46,34 +55,6 @@ from trajectory_msgs.msg import *
 #   RotateValve
 #
 # *************************************************************************
-
-# class FindBoard(smach.State):
-#     """Searches for and then navigates to the board
-
-#     Outcomes
-#     --------
-#       atBoard : at the board location
-
-#     """
-
-#     def __init__(self):
-#         smach.State.__init__(self,
-#                              outcomes=['atBoard'])
-
-#     def execute(self, userdata):
-
-#         rospy.loginfo('Searching for board')
-#         a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
-#         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
-
-#         b.wait()
-#         rospy.loginfo('Searching for board')
-#         a.kill()
-
-#         return 'atBoard'
-
-
-
 
 def main():
     """Defines the state machines for Smach
@@ -118,6 +99,7 @@ def main():
 
         sm_valve.userdata.move_counter = 0
         sm_valve.userdata.max_move_retries = 1
+        sm_valve.userdata.valve_centered = False
         sm_valve.userdata.valve_turned = False
 
         # Define the NAVIGATE State Machine
@@ -175,9 +157,12 @@ def main():
 
         # Define the OPERATE_VALVE State Machine
         with sm_valve:
+            smach.StateMachine.add('STOW_ARM', DriveToValve(),
+                                   transitions={'armStowed' : 'DRIVE_TO_VALVE',
+                                                'stowArmFailed' : 'failedToStowArm'})
+
             smach.StateMachine.add('DRIVE_TO_VALVE', DriveToValve(),
                                    transitions={'atValveDrive' : 'MOVE_VALVE_READY',
-                                                'stowArmFailed' : 'failedToStowArm',
                                                 'moveFailed' : 'failedToMove'})
 
             smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
@@ -189,19 +174,19 @@ def main():
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_VALVE', IDValve(),
-                                   transitions={'valveCenter' : 'MOVE_TO_VALVE',
-                                                'valveOffCenter' : 'ID_VALVE',
-                                                'valveNotFound' : 'valveIDFailed',
-                                                'moveFailed' : 'failedToMove'})
+                                   transitions={'valveLocated' : 'MOVE_TO_VALVE',
+                                                'valveNotFound' : 'valveIDFailed'},
+                                   remapping={'valve_centered_out' : 'valve_centered'})
 
             smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
-                                   transitions={'atValve' : 'MOVE_TO_OPERATE',
-                                                'centerValve' : 'ID_VALVE',
-                                                'moveStuck' : 'MOVE_TO_VALVE',
-                                                'moveFailed' : 'failedToMove'},
-                                   remapping={'move_counter_in' : 'move_counter',
-                                              'max_retries' : 'max_move_retries',
-                                              'move_counter_out' : 'move_counter'})
+                                   transitions={'servoArm' : 'SERVO_TO_VALVE',
+                                                'moveForward' : 'MOVE_TO_OPERATE'},
+                                   remapping={'valve_centered_in' : 'valve_centered'})
+
+            smach.StateMachine.add('SERVO_TO_VALVE', MoveToOperate(),
+                                   transitions={'moveSuccess' : 'ID_VALVE',
+                                                'moveFailed' : 'failedToMove'})
+
 
             smach.StateMachine.add('MOVE_TO_OPERATE', MoveToOperate(),
                                    transitions={'wrenchFell' : 'lostWrench',
