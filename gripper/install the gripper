@@ -6,7 +6,7 @@ git clone https://github.com/ros-drivers/rosserial.git
 cd ~/catkin_ws
 catkin_make
 
-//Next, run the rosserial client application that forwards your Arduino messages to the rest of ROS. Make sure to use the correct serial port
+//Next, run the rosserial client application that forwards your Arduino messages to the rest of ROS. Make sure to use the correct serial port (i.e. ttyUSB*)
 
-rosrun rosserial_python serial_node.py /dev/ttyUSB0
+rosrun rosserial_python serial_node.py /dev/ttyUSB1
 
