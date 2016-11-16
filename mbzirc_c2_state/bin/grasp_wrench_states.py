@@ -37,6 +37,8 @@ class MoveToReady(smach.State):
     Outcomes
     --------
         atReady : at the ready position
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
 
     """
 
@@ -45,11 +47,11 @@ class MoveToReady(smach.State):
                              outcomes=['atReady',
                                        'moveStuck',
                                        'moveFailed'],
-                             input_keys=['move_counter_in'],
+                             input_keys=['move_counter_in',
+                                         'max_retries'],
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        max_retries = 5
 
         if userdata.move_counter_in == 0:
             curr_pos = rospy.get_param('ee_position')
@@ -71,7 +73,7 @@ class MoveToReady(smach.State):
             return 'atReady'
 
         else:
-            if userdata.move_counter_in < max_retries:
+            if userdata.move_counter_in < userdata.max_retries:
                 userdata.move_counter_out = userdata.move_counter_in + 1
                 return 'moveStuck'
 
@@ -87,6 +89,9 @@ class MoveToWrenchReady(smach.State):
     Outcomes
     --------
         atWrenchReady : at location to determine correct wrench
+        moveToOperate
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
 
     """
 
@@ -97,16 +102,18 @@ class MoveToWrenchReady(smach.State):
                                        'moveStuck',
                                        'moveFailed'],
                              input_keys=['move_counter_in',
+                                         'max_retries',
                                          'got_wrench'],
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        max_retries = 5
 
         wrench_ready_pos = rospy.get_param('wrench')
 
         # Set the ready position 40 cm away from the wrenches
-        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.4
+        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.5
+        wrench_ready_pos[1] = wrench_ready_pos[1]
+        wrench_ready_pos[2] = wrench_ready_pos[2]
 
         rospy.set_param('ee_position', [float(wrench_ready_pos[0]),
                                         float(wrench_ready_pos[1]),
@@ -120,16 +127,17 @@ class MoveToWrenchReady(smach.State):
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
 
+
         if move_state == 'success':
             if userdata.got_wrench is True:
-                return 'atWrenchReady'
+                return 'moveToOperate'
 
             else:
-                return 'moveToOperate'
+                return 'atWrenchReady'
 
 
         else:
-            if userdata.move_counter_in < max_retries:
+            if userdata.move_counter_in < userdata.max_retries:
                 userdata.move_counter_out = userdata.move_counter_in + 1
                 return 'moveStuck'
 
@@ -151,13 +159,15 @@ class IDWrench(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['wrenchFound',
+                                       'armTest',
                                        'wrenchNotFound'])
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench.py", shell=True)
         prc.wait()
 
-        return rospy.get_param('smach_state')
+        ret_state = rospy.get_param('smach_state')
+        return ret_state
 
 
 
@@ -168,6 +178,8 @@ class MoveToWrench(smach.State):
     Outcomes
     --------
         atWrench : in front of wrench
+        moveStuck : move failed but still retrying
+        moveFailed : move failed too many times
 
     """
 
@@ -176,11 +188,11 @@ class MoveToWrench(smach.State):
                              outcomes=['atWrench',
                                        'moveStuck',
                                        'moveFailed'],
-                             input_keys=['move_counter_in'],
+                             input_keys=['move_counter_in',
+                                         'max_retries'],
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
-        max_retries = 5
 
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
@@ -194,7 +206,7 @@ class MoveToWrench(smach.State):
             return 'atWrench'
 
         else:
-            if userdata.move_counter_in < max_retries:
+            if userdata.move_counter_in < userdata.max_retries:
                 userdata.move_counter_out = userdata.move_counter_in + 1
                 return 'moveStuck'
 

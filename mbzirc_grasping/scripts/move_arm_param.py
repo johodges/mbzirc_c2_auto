@@ -18,6 +18,7 @@ import rospy
 import sys
 import moveit_commander
 from geometry_msgs.msg import PoseArray, PoseStamped
+from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryActionResult
 from actionlib_msgs.msg import *
@@ -42,6 +43,8 @@ class move_arm_param():
 
         # Initialize the move_group API
         moveit_commander.roscpp_initialize(sys.argv)
+        robot = moveit_commander.RobotCommander()
+        scene = moveit_commander.PlanningSceneInterface()
 
         # Initialize the move group for the ur5_arm
         self.arm = moveit_commander.MoveGroupCommander("ur5_arm")
@@ -73,31 +76,45 @@ class move_arm_param():
         self.target_pose.pose.position.y = ee_pos[1]
         self.target_pose.pose.position.z = ee_pos[2]
 
+        # Get current joint position to use for planning
+        try:
+            cjs = rospy.get_param('current_joint_state')
+        except:
+            cjs = [0,0,0,0,0,0]
+        jt = RobotState()
+        jt.joint_state.header.frame_id = '/base_link'
+        jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
+        jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
+
         # Set the start state to the current state
-        self.arm.set_start_state_to_current_state()
+        self.arm.set_start_state(jt)
 
         # Set the goal pose of the end effector to the stored pose
         self.arm.set_pose_target(self.target_pose, end_effector_link)
 
         # Plan the trajectory to the goal
         traj = self.arm.plan()
+        traj_pts = len(traj.joint_trajectory.points)
+
+        # Update current joint position for use in planning next time
+        rospy.set_param('current_joint_state',traj.joint_trajectory.points[traj_pts-1].positions)
 
         if traj is not None:
             # Execute the planned trajectory
             self.arm.execute(traj)
 
             # Pause for a second
-            rospy.sleep(1.0)
+            # rospy.sleep(1.0)
             self.flag = 1
-
+            #rospy.set_param('current_joint_state',jt)
     # callback_feedback is used to store the feedback topic into the class to be
     # referenced by the other callback routines.
     def callback(self, data):
         if self.flag == 1:
             self.status = data.status_list[0].status
-            
+
             if self.status == 3:
-                rospy.sleep(5)
+                # rospy.sleep(5)
                 rospy.set_param('move_arm_status','success')
                 self.flag = 2
             else:
@@ -106,17 +123,17 @@ class move_arm_param():
                     self.flag = 2
                 else:
                     self.ct = self.ct + 1
-                    rospy.sleep(0.5)
+                    # rospy.sleep(0.5)
         if self.flag == 2:
             self.cleanup()
             rospy.signal_shutdown('Ending node.')
 
     def cleanup(self):
         rospy.loginfo("Stopping the robot")
-    
+
         # Stop any current arm movement
         self.arm.stop()
-        
+
         #Shut down MoveIt! cleanly
         rospy.loginfo("Shutting down Moveit!")
         moveit_commander.roscpp_shutdown()

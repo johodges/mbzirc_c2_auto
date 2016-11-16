@@ -795,6 +795,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- Spawn the sensor arch link -->
   <link name="sensor_arch_mount_link">
     <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="20.0"/>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <inertia ixx="4.18" ixy="0.0" ixz="0.0" iyy="4.18" iyz="0.0" izz="7.20"/>
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://husky_description/meshes/accessories/510_mm_sensor_arch.dae"/>

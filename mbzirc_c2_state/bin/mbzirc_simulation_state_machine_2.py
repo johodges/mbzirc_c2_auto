@@ -88,13 +88,15 @@ def main():
     with sm:
 
         # Create the sub SMACH state machine for navigation
-        sm_nav = smach.StateMachine(outcomes=['readyToOrient'])
+        sm_nav = smach.StateMachine(outcomes=['readyToOrient',
+                                              'moveArm'])
 
         # Create the sub SMACH state machine for orienting
         sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench'])
 
         # Create the sub SMACH state machine for grabbing wrench
         sm_wrench = smach.StateMachine(outcomes=['readyToOperate',
+                                                 'testingArm',
                                                  'failedToMove',
                                                  'droppedWrench',
                                                  'wrenchIDFailed'])
@@ -102,21 +104,28 @@ def main():
         # Create the sub SMACH state machine operating the valve
         sm_valve = smach.StateMachine(outcomes=['valveOperated',
                                                 'failedToMove',
+                                                'failedToStowArm',
                                                 'valveIDFailed',
                                                 'lostWrench',
                                                 'valveStuck'])
 
         # Define userdata for the state machines
+        sm_nav.userdata.test_arm = False
+
         sm_wrench.userdata.move_counter = 0
+        sm_wrench.userdata.max_move_retries = 1
         sm_wrench.userdata.have_wrench = False
 
         sm_valve.userdata.move_counter = 0
+        sm_valve.userdata.max_move_retries = 1
         sm_valve.userdata.valve_turned = False
 
         # Define the NAVIGATE State Machine
         with sm_nav:
             smach.StateMachine.add('FINDBOARD', FindBoard(),
-                                   transitions={'atBoard' : 'readyToOrient'})
+                                   transitions={'atBoard' : 'readyToOrient',
+                                                'skipNav' : 'moveArm'},
+                                   remapping={'test_arm_in' : 'test_arm'})
 
         # Define the ORIENT State Machine
         with sm_orient:
@@ -130,6 +139,7 @@ def main():
                                                 'moveStuck' : 'MOVE_TO_READY',
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_WRENCH_READY', MoveToWrenchReady(),
@@ -139,10 +149,12 @@ def main():
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'got_wrench' : 'have_wrench',
                                               'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_WRENCH', IDWrench(),
                                    transitions={'wrenchFound' : 'MOVE_TO_WRENCH',
+                                                'armTest' : 'testingArm',
                                                 'wrenchNotFound' : 'wrenchIDFailed'})
 
             smach.StateMachine.add('MOVE_TO_WRENCH', MoveToWrench(),
@@ -150,6 +162,7 @@ def main():
                                                 'moveStuck' : 'MOVE_TO_WRENCH',
                                                 'moveFailed' : 'failedToMove'},
                                    remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_TO_GRASP', MoveToGrasp(),
@@ -162,19 +175,33 @@ def main():
 
         # Define the OPERATE_VALVE State Machine
         with sm_valve:
+            smach.StateMachine.add('DRIVE_TO_VALVE', DriveToValve(),
+                                   transitions={'atValveDrive' : 'MOVE_VALVE_READY',
+                                                'stowArmFailed' : 'failedToStowArm',
+                                                'moveFailed' : 'failedToMove'})
+
             smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
                                    transitions={'atValveReady' : 'ID_VALVE',
                                                 'moveStuck' : 'MOVE_VALVE_READY',
-                                                'moveFailed' : 'failedToMove'})
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_VALVE', IDValve(),
-                                   transitions={'valveFound' : 'MOVE_TO_VALVE',
-                                                'valveNotFound' : 'valveIDFailed'})
+                                   transitions={'valveCenter' : 'MOVE_TO_VALVE',
+                                                'valveOffCenter' : 'ID_VALVE',
+                                                'valveNotFound' : 'valveIDFailed',
+                                                'moveFailed' : 'failedToMove'})
 
             smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
                                    transitions={'atValve' : 'MOVE_TO_OPERATE',
+                                                'centerValve' : 'ID_VALVE',
                                                 'moveStuck' : 'MOVE_TO_VALVE',
-                                                'moveFailed' : 'failedToMove'})
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('MOVE_TO_OPERATE', MoveToOperate(),
                                    transitions={'wrenchFell' : 'lostWrench',
@@ -187,13 +214,15 @@ def main():
 
         # Add containers to the state
         smach.StateMachine.add('NAVIGATE', sm_nav,
-                               transitions={'readyToOrient' : 'ORIENT'})
+                               transitions={'readyToOrient' : 'ORIENT',
+                                            'moveArm' : 'GRAB_WRENCH'})
 
         smach.StateMachine.add('ORIENT', sm_orient,
                                transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
 
         smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
                                transitions={'readyToOperate' : 'OPERATE_VALVE',
+                                            'testingArm' : 'success',
                                             'failedToMove' : 'failure',
                                             'droppedWrench' : 'failure',
                                             'wrenchIDFailed' : 'failure'})
@@ -201,6 +230,7 @@ def main():
         smach.StateMachine.add('OPERATE_VALVE', sm_valve,
                                transitions={'valveOperated' : 'success',
                                             'failedToMove' : 'failure',
+                                            'failedToStowArm' : 'failure',
                                             'valveIDFailed' : 'failure',
                                             'lostWrench' : 'failure',
                                             'valveStuck' : 'failure'})

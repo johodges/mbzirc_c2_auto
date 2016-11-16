@@ -84,28 +84,40 @@ class move2op():
             mn = min(circles[0,:,0])
             idx = np.argwhere(circles[0,:,0] == mn)
             i = circles[0,:][idx][0][0]
-
             val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
-        ee_position = rospy.get_param('ee_position')
-        valve = rospy.get_param('valve')
-        xA = valve[0]-ee_position[0]
-        print "Valve in pixels: ", val_loc
-        camera_y_mx = xA*np.tan(self.camera_fov_h/2)
-        camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
-        camera_z_mx = xA*np.tan(self.camera_fov_v/2)
-        camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-        print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
-        valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
-        valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
-        self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
-        print "Valve in m: ", self.valve_id
-        rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])]) 
+            ee_position = rospy.get_param('ee_position')
+            valve = rospy.get_param('valve')
+            xA = valve[0]-ee_position[0]
+            print "Valve in pixels: ", val_loc
+            camera_y_mx = xA*np.tan(self.camera_fov_h/2)
+            camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
+            camera_z_mx = xA*np.tan(self.camera_fov_v/2)
+            camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
+            print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
+            valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+            valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
+            self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
+            print "Valve in m: ", self.valve_id
+            rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
+            if np.power(valve_y*valve_y+valve_z*valve_z,0.5) < 0.01:
+                rospy.set_param('smach_state','valveCenter')
+            else:
+                rospy.set_param('smach_state','valveOffCenter')
+                valve_ID_ready_pos = rospy.get_param('valve')
+                ee_position = rospy.get_param('ee_position')
+                valve_ID_ready_pos[0] = valve[0]
+                valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.5*self.valve_id[1]
+                valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.5*self.valve_id[2]
 
-        if random.random() < 0.1:
-            rospy.set_param('smach_state','valveNotFound')
+                rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
+                                                float(valve_ID_ready_pos[1]),
+                                                float(valve_ID_ready_pos[2])])
+                rospy.set_param('valve', [float(valve_ID_ready_pos[0]),
+                                                float(valve_ID_ready_pos[1]),
+                                                float(valve_ID_ready_pos[2])])
         else:
-            rospy.set_param('smach_state','valveFound')
-        rospy.sleep(10)
+            rospy.set_param('smach_state','valveNotFound')
+
         rospy.signal_shutdown('Ending node.')
 
 if __name__ == '__main__':
