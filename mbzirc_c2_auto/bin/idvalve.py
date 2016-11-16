@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-""" move2grasp.py - Version 1.0 2016-10-12
+""" idvalve.py - Version 1.0 2016-10-12
 
-    This software chooses the left most wrench in an RGB image and outputs an
-    estimate of its 3D location in space relative to the camera [x,y,z]
-    Made by Jonathan Hodges
+    This program locates the center of the valve and updates the coordinates for moving
+    arm to the correct location.
+
+    Author: Jonathan Hodges, Virginia Tech
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,11 +22,11 @@
 """
 
 import rospy
-import rospkg
-import actionlib
-from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
+# import rospkg
+# import actionlib
+# from actionlib_msgs.msg import *
+# from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
+# from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from sensor_msgs.msg import Image
 import cv2
 import cv2.cv as cv
@@ -33,16 +34,16 @@ from cv_bridge import CvBridge, CvBridgeError
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
-from decimal import *
-import tf
-import math
-import random
+# from decimal import *
+# import tf
+# import math
+# import random
 
 class move2op():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('idvalve', anonymous=True)
-        
+	rospy.init_node('idvalve', anonymous=True, log_level=rospy.DEBUG)
+
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
@@ -81,30 +82,40 @@ class move2op():
         circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=500)
 
         if circles is not None:
+            # Determine the center of the valve in the image
             mn = min(circles[0,:,0])
             idx = np.argwhere(circles[0,:,0] == mn)
             i = circles[0,:][idx][0][0]
             val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
+
             ee_position = rospy.get_param('ee_position')
             valve = rospy.get_param('valve')
             xA = valve[0]-ee_position[0]
-            print "Valve in pixels: ", val_loc
+            rospy.logdebug("Valve in pixels: %s", " ".join(str(x) for x in val_loc))
+
+            # Find camera dimensions wrt the base coordinate system
             camera_y_mx = xA*np.tan(self.camera_fov_h/2)
             camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
             camera_z_mx = xA*np.tan(self.camera_fov_v/2)
             camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-            print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
+            rospy.logdebug("Camera ymn/ymx: ", str(camera_y_mn), str(camera_y_mx))
+            rospy.logdebug("Camera zmn/zmx: ", str(camera_z_mn), str(camera_z_mx))
+
+            # Convert the valve pixel loacation
             valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
             valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
+
             self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
-            print "Valve in m: ", self.valve_id
+            rospy.logdebug("Valve in m: %s", " ".join(str(x) for x in self.valve_id))
             rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
-            if np.power(valve_y*valve_y+valve_z*valve_z,0.5) < 0.01:
+
+            if np.power(valve_y*valve_y+valve_z*valve_z,0.5) < 0.003:
+                # Valve is centered no other action required
                 rospy.set_param('smach_state','valveCenter')
             else:
+                # Valve not centered, publish new move parameters
                 rospy.set_param('smach_state','valveOffCenter')
                 valve_ID_ready_pos = rospy.get_param('valve')
-                ee_position = rospy.get_param('ee_position')
                 valve_ID_ready_pos[0] = valve[0]
                 valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.5*self.valve_id[1]
                 valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.5*self.valve_id[2]
@@ -112,9 +123,10 @@ class move2op():
                 rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
                                                 float(valve_ID_ready_pos[1]),
                                                 float(valve_ID_ready_pos[2])])
+
                 rospy.set_param('valve', [float(valve_ID_ready_pos[0]),
-                                                float(valve_ID_ready_pos[1]),
-                                                float(valve_ID_ready_pos[2])])
+                                          float(valve_ID_ready_pos[1]),
+                                          float(valve_ID_ready_pos[2])])
         else:
             rospy.set_param('smach_state','valveNotFound')
 
@@ -123,7 +135,7 @@ class move2op():
 if __name__ == '__main__':
     try:
         move2op()
-#        rospy.spin()
+       rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("idvalve finished.")
 
