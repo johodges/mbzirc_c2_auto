@@ -14,7 +14,7 @@
 <!-->
 <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
 <include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
-<-->
+
 <node name="findbox" pkg="mbzirc_c2_auto" type="findbox.py" />
 <node name="autonomous" pkg="mbzirc_c2_auto" type="autonomous.py" />
 <node name="find_wrench" pkg="mbzirc_c2_auto" type="wrench_detect.py" />
@@ -22,7 +22,7 @@
 <node name="image_view" pkg="image_view" type="image_view">
   <remap from="image" to="/image_topic_2"/>
 </node>
-
+<-->
 <node name="board" pkg="mbzirc_c2_auto" type="panel.sh" />
 
 </launch>
