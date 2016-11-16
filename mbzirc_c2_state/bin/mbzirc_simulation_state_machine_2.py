@@ -189,8 +189,10 @@ def main():
                                               'move_counter_out' : 'move_counter'})
 
             smach.StateMachine.add('ID_VALVE', IDValve(),
-                                   transitions={'valveFound' : 'MOVE_TO_VALVE',
-                                                'valveNotFound' : 'valveIDFailed'})
+                                   transitions={'valveCenter' : 'MOVE_TO_VALVE',
+                                                'valveOffCenter' : 'ID_VALVE',
+                                                'valveNotFound' : 'valveIDFailed',
+                                                'moveFailed' : 'failedToMove'})
 
             smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
                                    transitions={'atValve' : 'MOVE_TO_OPERATE',

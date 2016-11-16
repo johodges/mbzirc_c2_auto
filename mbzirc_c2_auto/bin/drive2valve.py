@@ -286,7 +286,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 1
+                    po = 0.75
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2

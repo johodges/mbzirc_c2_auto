@@ -142,12 +142,21 @@ class IDValve(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['valveFound',
-                                       'valveNotFound'])
+                             outcomes=['valveCenter',
+                                       'valveOffCenter',
+                                       'valveNotFound',
+                                       'moveFailed'])
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
         prc.wait()
+
+        if rospy.get_param('smach_state') == 'valveOffCenter':
+            prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+            prc.wait()
+            move_state = rospy.get_param('move_arm_status')
+            if move_state != 'success':
+                rospy.set_param('smach_state','moveFailed')
 
         return rospy.get_param('smach_state')
 
@@ -175,29 +184,22 @@ class MoveToValve(smach.State):
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
+        
+        valve = rospy.get_param('valve')
+        ee_position = rospy.get_param('ee_position')
+        diff = valve[0]-ee_position[0]
+        forward_dist = (valve[0]-ee_position[0])*0.2
 
-        valve_ID = rospy.get_param('valve_ID')
-        valve_ID_ready_pos = rospy.get_param('valve')
-
-        if np.power(valve_ID[1]*valve_ID[1]+valve_ID[2]*valve_ID[2],0.5) < 0.01:
-            return 'atValve'
-        else:
-            valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.5
-            valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.5*valve_ID[1]
-            valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.5*valve_ID[2]
-
-            rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
-                                            float(valve_ID_ready_pos[1]),
-                                            float(valve_ID_ready_pos[2])])
+        if diff > 0.1:
+            rospy.set_param('ee_position', [float(ee_position[0]+forward_dist),
+                                            float(ee_position[1]),
+                                            float(ee_position[2])])
 
             prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
             prc.wait()
-
             move_state = rospy.get_param('move_arm_status')
-
             # Preset the out move counter to 0, override if necessary
             userdata.move_counter_out = 0
-
             if move_state == 'success':
                 return 'centerValve'
 
@@ -208,6 +210,8 @@ class MoveToValve(smach.State):
 
                 else:
                     return 'moveFailed'
+        else:
+            return 'atValve'
 
 
 
