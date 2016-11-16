@@ -54,7 +54,7 @@
 <xacro:property name="link1Height" value="0.1"/>
 <xacro:property name="link1Length" value="0.2"/>
 <xacro:property name="link1Width" value="0.02"/>
-<xacro:property name="link1Mass" value="3.5"/>
+<xacro:property name="link1Mass" value="2.9"/>
 
 <xacro:property name="link2Height" value="0.12"/>
 <xacro:property name="link2Length" value="0.02"/>
@@ -77,13 +77,13 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://mybot_description/meshes/gripper_assem.STL"/>
+      <mesh filename="package://mybot_description/meshes/link1.DAE"/>
     </geometry>
   </collision>
   <visual>
    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-<mesh filename="package://mybot_description/meshes/gripper_assem.STL"/>
+<mesh filename="package://mybot_description/meshes/link1.DAE"/>
     </geometry>
     <material name="white"/>
   </visual>
@@ -100,7 +100,7 @@
   <child link="link2"/>
 </joint>
 
-<!--link name='link2'>
+<link name='link2'>
   <collision>
     <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
     <geometry>
@@ -119,7 +119,7 @@
     <mass value="${link2Mass}"/>
     <box_inertia m="${link2Mass}" x="${link2Length}" y="${link2Width}" z="${link2Height}"/>
   </inertial>
-</link-->
+</link>
 
 <joint name="left_tip_hinge" type="revolute">
   <parent link="link2"/>

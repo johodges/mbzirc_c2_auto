@@ -114,13 +114,13 @@
 
 <link name='base'>
   <collision> 
-    <origin xyz="0 -0.012 -0.063" rpy="0 0 ${PI/2}"/> 
+    <origin xyz="0 0 0" rpy="0 0 0"/> 
     <geometry> 
       <mesh filename="package://mybot_description/meshes/base.DAE"/>
     </geometry> 
   </collision>
   <visual> 
-  <origin xyz="0 -0.012 -0.063" rpy="0 0 ${PI/2}"/> 
+  <origin xyz="0 0 0" rpy="0 0 0"/> 
     <geometry> 
 <mesh filename="package://mybot_description/meshes/base.DAE"/>
     </geometry> 
@@ -143,13 +143,13 @@
   <collision> 
     <origin xyz="0 0 0" rpy="0 0 0"/> 
     <geometry> 
-     <mesh filename="package://mybot_description/meshes/link1.DAE"/>
+      <mesh filename="package://mybot_description/meshes/link1.DAE"/>
     </geometry> 
   </collision>
   <visual> 
    <origin xyz="0 0 0" rpy="0 0 0"/> 
     <geometry> 
-     <mesh filename="package://mybot_description/meshes/link1.DAE"/>
+<mesh filename="package://mybot_description/meshes/link1.DAE"/>
     </geometry> 
     <material name="white"/>
   </visual>
