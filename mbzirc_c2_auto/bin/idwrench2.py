@@ -10,19 +10,12 @@
 
 import rospy
 import rospkg
-#import actionlib
-#from actionlib_msgs.msg import *
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
-#from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image
 import cv2
-#import cv2.cv as cv
 from cv_bridge import CvBridge, CvBridgeError
-#import matplotlib.pyplot as plt
-#from rospy_tutorials.msg import Floats
 import numpy as np
-#from decimal import *
 import tf
 import math
 from scipy.cluster import vq
@@ -209,7 +202,6 @@ class idwrench():
 
             # Sort circles by x-axis
             circs = circs[circs[:,0].argsort()]
-            print circs
             return circs
 
         # This subroutine determines the length and area of each segmented object
@@ -295,7 +287,7 @@ class idwrench():
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        img=cv2.imread('/home/jonathan/wrenchID/2.jpg',1); # Image to read
+        #img=cv2.imread('/home/jonathan/wrenchID/2.jpg',1); # Image to read
         # Determine ideal limits for brightness/contrast adjustment
         lims = stretchlim(img,self.lim_type)
         # Adjust the brightness/contrast of the RGB image based on limits
