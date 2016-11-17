@@ -3,6 +3,7 @@
 
   <xacro:include filename="$(find ur_description)/urdf/ur.transmission.xacro" />
   <xacro:include filename="$(find ur_description)/urdf/ur.gazebo.xacro" />
+  <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
 
   <property name="pi" value="3.14159265" />
   <property name="stl_scale" value="0.001" />
@@ -425,6 +426,17 @@
        </link>
 
     </xacro:if>
+
+    <xacro:if value="$(arg ur5_mbzirc_gripper_enabled)">
+
+      <joint name="${prefix}mbzirc_gripper_joint" type="fixed">
+        <origin xyz="0.0 ${wrist_3_length} 0.0" rpy="0.0 0.0 0.0" />
+        <parent link="${prefix}wrist_3_link" />
+        <child link="mbzirc_gripper_base" />
+      </joint>
+
+    </xacro:if>
+
 
   </xacro:macro>
 </robot>
