@@ -1,0 +1,20 @@
+<launch>
+  <node pkg="arm_nav_correct" name="base_visual" type="base_visual.py" output="screen">
+
+    <rosparam>
+       ee_position: [0.9, 0.0, 0.4]
+       arm_group_name: ur5_arm
+       transition_group_state: transition
+       work_group_state: work
+       reference_frame: map
+       allow_replanning: True
+       position_tolerance: .01
+       orientation_tolerance: .08
+       cartestian_path: True
+       cp_max_attempts: 100
+       workface_offset: 1.0
+       use_sim_time: False
+    </rosparam>
+
+  </node>
+</launch>
