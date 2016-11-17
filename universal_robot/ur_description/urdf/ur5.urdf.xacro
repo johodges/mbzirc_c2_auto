@@ -429,10 +429,12 @@
 
     <xacro:if value="$(arg ur5_mbzirc_gripper_enabled)">
 
-      <joint name="${prefix}mbzirc_gripper_joint" type="fixed">
+      <xacro:gripper prefix="ur5_arm_gripper_"/>
+
+      <joint name="ur5_arm_gripper_wrist_3_link_base_link_joint" type="fixed">
         <origin xyz="0.0 ${wrist_3_length} 0.0" rpy="0.0 0.0 0.0" />
         <parent link="${prefix}wrist_3_link" />
-        <child link="mbzirc_gripper_base" />
+        <child link="ur5_arm_gripper_base_link" />
       </joint>
 
     </xacro:if>

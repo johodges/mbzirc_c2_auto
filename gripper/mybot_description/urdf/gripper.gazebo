@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="mybot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <gazebo reference="link2">
+  <gazebo reference="ur5_arm_gripper_link_2">
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
@@ -13,7 +13,7 @@
     <minDepth>0.00</minDepth>
   </gazebo>
 
-  <gazebo reference="left_tip">
+  <gazebo reference="ur5_arm_gripper_left_tip">
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
@@ -25,7 +25,7 @@
     <minDepth>0.00</minDepth>
   </gazebo>
 
-  <gazebo reference="right_tip">
+  <gazebo reference="ur5_arm_gripper_right_tip">
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
@@ -39,7 +39,7 @@
 
 <gazebo>
   <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-    <robotNamespace>/mybot</robotNamespace>
+    <robotNamespace>/gripper</robotNamespace>
   </plugin>
 </gazebo>
 
@@ -63,8 +63,8 @@
   <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
     <alwaysOn>true</alwaysOn>
     <updateRate>100</updateRate>
-    <leftJoint>left_tip_hinge</leftJoint>
-    <rightJoint>right_tip_hinge</rightJoint>
+    <leftJoint>ur5_arm_gripper_link_2_left_tip_join</leftJoint>
+    <rightJoint>ur5_arm_gripper_link_2_right_tip_joint</rightJoint>
     <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
     <wheelDiameter>${2*wheelRadius}</wheelDiameter>
     <torque>20</torque>
@@ -75,7 +75,7 @@
   </plugin>
 </gazebo>
 
-<gazebo reference="camera">
+<gazebo reference="ur5_arm_gripper_camera">
   <material>Gazebo/Black</material>
   <sensor type="camera" name="camera1">
     <update_rate>30.0</update_rate>
