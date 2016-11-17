@@ -187,4 +187,4 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-catkin_install_python(PROGRAMS bin/state_machine_simple.py bin/mbzirc_template.py bin/mbzirc_template_data_share.py bin/mbzirc_simulation_state_machine.py bin/mbzirc_simulation_state_machine_2.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS bin/mbzirc_simulation_state_machine.py  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
