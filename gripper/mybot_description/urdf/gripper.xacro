@@ -2,6 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="stl_scale" value="0.001" />
 
   <xacro:property name="chassisHeight" value="0.05"/>
   <xacro:property name="chassisLength" value="0.15"/>
@@ -43,7 +44,6 @@
   <xacro:property name="cameraMass" value="0.05"/>
 
   <xacro:include filename="$(find mybot_description)/urdf/gripper.gazebo" />
-  <xacro:include filename="$(find mybot_description)/urdf/materials.xacro" />
   <xacro:include filename="$(find mybot_description)/urdf/macros.xacro" />
 
   <xacro:macro name="gripper" params="prefix">
@@ -57,14 +57,13 @@
        <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
          <geometry>
-           <mesh filename="package://mybot_description/meshes/base_link.dae"/>
+           <mesh filename="package://mybot_description/meshes/base_link.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
          </geometry>
-         <material name="white"/>
        </visual>
        <collision>
          <origin xyz="0 0 0" rpy="0 0 0"/>
          <geometry>
-           <mesh filename="package://mybot_description/meshes/base_link.stl"/>
+           <mesh filename="package://mybot_description/meshes/base_link.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
          </geometry>
        </collision>
      </link>
@@ -84,14 +83,13 @@
       <visual>
        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://mybot_description/meshes/link_1.dae"/>
+          <mesh filename="package://mybot_description/meshes/link_1.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
-        <material name="white"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://mybot_description/meshes/link_1.stl"/>
+          <mesh filename="package://mybot_description/meshes/link_1.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
       </collision>
     </link>
@@ -111,14 +109,13 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
         <geometry>
-          <mesh filename="package://mybot_description/meshes/link_2.dae"/>
+          <mesh filename="package://mybot_description/meshes/link_2.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
-        <material name="white"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
         <geometry>
-          <mesh filename="package://mybot_description/meshes/link_2.stl"/>
+          <mesh filename="package://mybot_description/meshes/link_2.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
       </collision>
     </link>
@@ -141,14 +138,13 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://mybot_description/meshes/tip.dae"/>
+          <mesh filename="package://mybot_description/meshes/tip.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
-        <material name="white"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://mybot_description/meshes/tip.stl"/>
+          <mesh filename="package://mybot_description/meshes/tip.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
       </collision>
     </link>
@@ -171,14 +167,13 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 ${PI} 0" />
         <geometry>
-          <mesh filename="package://mybot_description/meshes/tip.dae"/>
+          <mesh filename="package://mybot_description/meshes/tip.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
-        <material name="white"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 ${PI} 0" />
         <geometry>
-          <mesh filename="package://mybot_description/meshes/tip.stl"/>
+          <mesh filename="package://mybot_description/meshes/tip.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
         </geometry>
       </collision>
     </link>
@@ -200,7 +195,6 @@
         <geometry>
           <box size="${cameraSize*2} ${cameraSize} ${cameraSize/2}"/>
         </geometry>
-        <material name="black"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>

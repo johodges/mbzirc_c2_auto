@@ -150,7 +150,22 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
       <gazebo reference="ur5_arm_ee_link">
         <selfCollide>true</selfCollide>
       </gazebo>
-      <gazebo reference="mbzirc_gripper_base">
+      <gazebo reference="ur5_arm_gripper_base_link">
+        <selfCollide>true</selfCollide>
+      </gazebo>
+      <gazebo reference="ur5_arm_gripper_camera">
+        <selfCollide>true</selfCollide>
+      </gazebo>
+      <gazebo reference="ur5_arm_gripper_link_1">
+        <selfCollide>true</selfCollide>
+      </gazebo>
+      <gazebo reference="ur5_arm_gripper_link_2">
+        <selfCollide>true</selfCollide>
+      </gazebo>
+      <gazebo reference="ur5_arm_gripper_left_tip">
+        <selfCollide>true</selfCollide>
+      </gazebo>
+      <gazebo reference="ur5_arm_gripper_right_tip">
         <selfCollide>true</selfCollide>
       </gazebo>
     </xacro:if>

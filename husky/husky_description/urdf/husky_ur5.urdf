@@ -29,6 +29,100 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 -->
 <robot name="husky" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Included URDF/XACRO Files -->
+  <gazebo reference="ur5_arm_gripper_link_2">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_left_tip">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_right_tip">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <robotNamespace>/gripper</robotNamespace>
+    </plugin>
+  </gazebo>
+  <!--gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <alwaysOn>true</alwaysOn>
+    <updateRate>100</updateRate>
+    <leftJoint>left_wheel_hinge</leftJoint>
+    <rightJoint>right_wheel_hinge</rightJoint>
+    <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
+    <wheelDiameter>${2*wheelRadius}</wheelDiameter>
+    <torque>20</torque>
+    <commandTopic>cmd_vel</commandTopic>
+    <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <robotBaseFrame>footprint</robotBaseFrame>
+  </plugin>
+</gazebo -->
+  <gazebo>
+    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>100</updateRate>
+      <leftJoint>ur5_arm_gripper_link_2_left_tip_joint</leftJoint>
+      <rightJoint>ur5_arm_gripper_link_2_right_tip_joint</rightJoint>
+      <wheelSeparation>0.125</wheelSeparation>
+      <wheelDiameter>0.1</wheelDiameter>
+      <torque>20</torque>
+      <commandTopic>gripper/cmd_vel</commandTopic>
+      <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>footprint</robotBaseFrame>
+    </plugin>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_camera">
+    <material>Gazebo/Black</material>
+    <sensor name="camera1" type="camera">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.5708</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+      </camera>
+      <plugin filename="libgazebo_ros_camera.so" name="camera_controller">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>mybot/camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
   <!-- Inertia parameters -->
   <!-- This mass might be incorrect -->
   <!-- Kinematic model -->
@@ -64,6 +158,100 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- manually measured -->
   <!-- manually measured -->
   <!-- manually measured -->
+  <gazebo reference="ur5_arm_gripper_link_2">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_left_tip">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_right_tip">
+    <kp>10000.0</kp>
+    <kd>100.0</kd>
+    <mu1>10.0</mu1>
+    <mu2>1.0</mu2>
+    <fdir1>1 1 1</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+  </gazebo>
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <robotNamespace>/gripper</robotNamespace>
+    </plugin>
+  </gazebo>
+  <!--gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <alwaysOn>true</alwaysOn>
+    <updateRate>100</updateRate>
+    <leftJoint>left_wheel_hinge</leftJoint>
+    <rightJoint>right_wheel_hinge</rightJoint>
+    <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
+    <wheelDiameter>${2*wheelRadius}</wheelDiameter>
+    <torque>20</torque>
+    <commandTopic>cmd_vel</commandTopic>
+    <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <robotBaseFrame>footprint</robotBaseFrame>
+  </plugin>
+</gazebo -->
+  <gazebo>
+    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>100</updateRate>
+      <leftJoint>ur5_arm_gripper_link_2_left_tip_joint</leftJoint>
+      <rightJoint>ur5_arm_gripper_link_2_right_tip_joint</rightJoint>
+      <wheelSeparation>0.125</wheelSeparation>
+      <wheelDiameter>0.1</wheelDiameter>
+      <torque>20</torque>
+      <commandTopic>gripper/cmd_vel</commandTopic>
+      <odometryTopic>mybot/odom_diffdrive</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>footprint</robotBaseFrame>
+    </plugin>
+  </gazebo>
+  <gazebo reference="ur5_arm_gripper_camera">
+    <material>Gazebo/Black</material>
+    <sensor name="camera1" type="camera">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.5708</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+      </camera>
+      <plugin filename="libgazebo_ros_camera.so" name="camera_controller">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>mybot/camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
   <!-- Base Size -->
   <!-- Wheel Mounting Positions -->
   <!-- Wheel Properties -->
@@ -112,7 +300,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- Can be modified with environment variables in /etc/ros/setup.bash -->
   <link name="imu_link"/>
   <joint name="imu_joint" type="fixed">
-    <origin rpy="0 -1.5708 3.14159265359" xyz="0.19 0 0.149"/>
+    <origin rpy="0 -1.57079632679 3.14159265359" xyz="0.19 0 0.149"/>
     <parent link="base_link"/>
     <child link="imu_link"/>
   </joint>
@@ -123,7 +311,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -139,8 +327,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     </collision>
   </link>
   <gazebo reference="front_left_wheel_link">
-    <mu1 value="0.025"/>
-    <mu2 value="0.025"/>
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <fdir1 value="1 0 0"/>
@@ -164,7 +352,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -180,8 +368,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     </collision>
   </link>
   <gazebo reference="front_right_wheel_link">
-    <mu1 value="0.025"/>
-    <mu2 value="0.025"/>
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <fdir1 value="1 0 0"/>
@@ -205,7 +393,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -221,8 +409,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     </collision>
   </link>
   <gazebo reference="rear_left_wheel_link">
-    <mu1 value="0.025"/>
-    <mu2 value="0.025"/>
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <fdir1 value="1 0 0"/>
@@ -246,7 +434,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -262,8 +450,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     </collision>
   </link>
   <gazebo reference="rear_right_wheel_link">
-    <mu1 value="0.025"/>
-    <mu2 value="0.025"/>
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <fdir1 value="1 0 0"/>
@@ -391,7 +579,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <joint name="ur5_arm_shoulder_pan_joint" type="revolute">
     <parent link="ur5_arm_base_link"/>
     <child link="ur5_arm_shoulder_link"/>
-    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.089159"/>
+    <origin rpy="0.0 0.0 1.5707" xyz="0.0 0.0 0.089159"/>
+    <!-- <origin xyz="0.0 0.0 ${shoulder_height}" rpy="0.0 0.0 0.0" /> -->
     <axis xyz="0 0 1"/>
     <limit effort="150.0" lower="-3.14159265" upper="3.14159265" velocity="3.15"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -419,7 +608,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <joint name="ur5_arm_shoulder_lift_joint" type="revolute">
     <parent link="ur5_arm_shoulder_link"/>
     <child link="ur5_arm_upper_arm_link"/>
-    <origin rpy="0.0 1.570796325 0.0" xyz="0.0 0.13585 0.0"/>
+    <!-- Test arm forward -->
+    <!-- <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 ${pi / 4} 0.0" /> -->
+    <!-- Stow position flat -->
+    <!-- <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 -1.5707 0.0" /> -->
+    <!-- Stow position up -->
+    <origin rpy="0.0 -1.122 0.0" xyz="0.0 0.13585 0.0"/>
     <axis xyz="0 1 0"/>
     <limit effort="150.0" lower="-3.14159265" upper="3.14159265" velocity="3.15"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -447,7 +641,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <joint name="ur5_arm_elbow_joint" type="revolute">
     <parent link="ur5_arm_upper_arm_link"/>
     <child link="ur5_arm_forearm_link"/>
-    <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.1197 0.425"/>
+    <!-- Test arm forward -->
+    <!-- <origin xyz="0.0 ${elbow_offset} ${upper_arm_length}" rpy="0.0 ${pi / 4} 0.0" /> -->
+    <!-- Stow position -->
+    <origin rpy="0.0 2.6927 0.0" xyz="0.0 -0.1197 0.425"/>
     <axis xyz="0 1 0"/>
     <limit effort="150.0" lower="-3.14159265" upper="3.14159265" velocity="3.15"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -475,7 +672,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <joint name="ur5_arm_wrist_1_joint" type="revolute">
     <parent link="ur5_arm_forearm_link"/>
     <child link="ur5_arm_wrist_1_link"/>
-    <origin rpy="0.0 1.570796325 0.0" xyz="0.0 0.0 0.39225"/>
+    <!-- Test arm forward -->
+    <!-- <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 -1.5707 0.0" /> -->
+    <!-- Stow position flat -->
+    <!-- <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 -1.122 0.0" /> -->
+    <!-- Stow position up -->
+    <origin rpy="0.0 -1.5707 0.0" xyz="0.0 0.0 0.39225"/>
     <axis xyz="0 1 0"/>
     <limit effort="28.0" lower="-3.14159265" upper="3.14159265" velocity="3.2"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -503,7 +705,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <joint name="ur5_arm_wrist_2_joint" type="revolute">
     <parent link="ur5_arm_wrist_1_link"/>
     <child link="ur5_arm_wrist_2_link"/>
-    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.093 0.0"/>
+    <origin rpy="0.0 0.0 -1.5707" xyz="0.0 0.093 0.0"/>
+    <!-- <origin xyz="0.0 ${wrist_1_length} 0.0" rpy="0.0 0.0 0.0" /> -->
     <axis xyz="0 0 1"/>
     <limit effort="28.0" lower="-3.14159265" upper="3.14159265" velocity="3.2"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -532,6 +735,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <parent link="ur5_arm_wrist_2_link"/>
     <child link="ur5_arm_wrist_3_link"/>
     <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.09465"/>
+    <!-- <origin xyz="0.0 0.0 ${wrist_2_length}" rpy="0.0 0.0 0.0" /> -->
     <axis xyz="0 1 0"/>
     <limit effort="28.0" lower="-3.14159265" upper="3.14159265" velocity="3.2"/>
     <dynamics damping="0.0" friction="0.0"/>
@@ -642,74 +846,181 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <parent link="ur5_arm_wrist_3_link"/>
     <child link="ur5_arm_tool0"/>
   </joint>
-  <joint name="ur5_arm_camera_mount_joint" type="fixed">
-    <origin rpy="0.0 0.0 1.570796325" xyz="0.0 0.0823 0.0"/>
+  <link name="ur5_arm_gripper_base_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="2.7"/>
+      <inertia ixx="0.0065025" ixy="0" ixz="0" iyy="0.005085" iyz="0" izz="0.005085"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/base_link.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ur5_arm_gripper_base_link_link_1_joint" type="fixed">
+    <parent link="ur5_arm_gripper_base_link"/>
+    <child link="ur5_arm_gripper_link_1"/>
+    <origin rpy="0 0 1.57079632679" xyz="0 0.005 -0.07"/>
+  </joint>
+  <link name="ur5_arm_gripper_link_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="2.9"/>
+      <inertia ixx="0.00251333333333" ixy="0" ixz="0" iyy="0.0120833333333" iyz="0" izz="0.0120833333333"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/link_1.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/link_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ur5_arm_gripper_link_1_link_2_joint" type="fixed">
+    <origin rpy="0 0 1.57079632679" xyz="0.104 0 0"/>
+    <parent link="ur5_arm_gripper_link_1"/>
+    <child link="ur5_arm_gripper_link_2"/>
+  </joint>
+  <link name="ur5_arm_gripper_link_2">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="2.2"/>
+      <inertia ixx="0.00271333333333" ixy="0" ixz="0" iyy="0.00271333333333" iyz="0" izz="0.00271333333333"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/link_2.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/link_2.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ur5_arm_gripper_link_2_left_tip_joint" type="revolute">
+    <parent link="ur5_arm_gripper_link_2"/>
+    <child link="ur5_arm_gripper_left_tip"/>
+    <origin rpy="0 0 -1.57079632679" xyz="0.0125 0 0.00025"/>
+    <axis rpy="0 0 0" xyz="0 0 1"/>
+    <limit effort="100" lower="-0.037" upper="0.6" velocity="5"/>
+    <joint_properties damping="0.0" friction="10.0"/>
+  </joint>
+  <link name="ur5_arm_gripper_left_tip">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="2.07"/>
+      <inertia ixx="0.01568025" ixy="0" ixz="0" iyy="0.01595625" iyz="0" izz="0.01595625"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/tip.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/tip.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ur5_arm_gripper_link_2_right_tip_joint" type="revolute">
+    <parent link="ur5_arm_gripper_link_2"/>
+    <child link="ur5_arm_gripper_right_tip"/>
+    <origin rpy="0 0 1.57079632679" xyz="-0.0125 0 0.00025"/>
+    <axis rpy="0 0 0" xyz="0 0 1"/>
+    <limit effort="100" lower="-0.6" upper="0.037" velocity="5"/>
+    <joint_properties damping="0.0" friction="10.0"/>
+  </joint>
+  <link name="ur5_arm_gripper_right_tip">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="2.07"/>
+      <inertia ixx="0.01568025" ixy="0" ixz="0" iyy="0.01595625" iyz="0" izz="0.01595625"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 3.14159265359 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/tip.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 3.14159265359 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://mybot_description/meshes/tip.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ur5_arm_gripper_base_link_camera_joint" type="fixed">
+    <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
+    <parent link="ur5_arm_gripper_base_link"/>
+    <child link="ur5_arm_gripper_camera"/>
+  </joint>
+  <link name="ur5_arm_gripper_camera">
+    <inertial>
+      <mass value="0.05"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <inertia ixx="3.25520833333e-06" ixy="0" ixz="0" iyy="1.10677083333e-05" iyz="0" izz="1.10677083333e-05"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.025 0.0125"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.0125 0.0125"/>
+      </geometry>
+    </collision>
+  </link>
+  <transmission name="left_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="ur5_arm_gripper_link_2_left_tip_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="$left_Motor">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="right_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="ur5_arm_gripper_link_2_right_tip_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="$right_Motor">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <joint name="ur5_arm_gripper_wrist_3_link_base_link_joint" type="fixed">
+    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0823 0.0"/>
     <parent link="ur5_arm_wrist_3_link"/>
-    <child link="ur5_arm_camera_mount_link"/>
+    <child link="ur5_arm_gripper_base_link"/>
   </joint>
-  <link name="ur5_arm_camera_mount_link">
-    <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/camera_mount.dae" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/camera_mount.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-  </link>
-  <joint name="ur5_arm_camera_joint" type="fixed">
-    <origin rpy="0.0 0.29984756549263 0.0" xyz=".056433755002348 0.0 0.069206449979048"/>
-    <parent link="ur5_arm_camera_mount_link"/>
-    <child link="ur5_arm_camera_link"/>
-  </joint>
-  <link name="ur5_arm_camera_link">
-    <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="-0.0295 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/camera.dae" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="-0.0295 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/camera.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-  </link>
-  <link name="ur5_arm_camera_optical_frame"/>
-  <joint name="ur5_arm_camera_optical_joint" type="fixed">
-    <origin rpy="-1.5708 0.0 -1.5708" xyz="0.0 0.0 0.0"/>
-    <parent link="ur5_arm_camera_link"/>
-    <child link="ur5_arm_camera_optical_frame"/>
-  </joint>
-  <joint name="ur5_arm_laser_pointer_joint" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="0.157 0.0 0.0"/>
-    <parent link="ur5_arm_camera_mount_link"/>
-    <child link="ur5_arm_laser_pointer_link"/>
-  </joint>
-  <link name="ur5_arm_laser_pointer_link">
-    <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="-0.157 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/laser_pointer.dae" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="-0.157 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/laser_pointer.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-  </link>
   <!-- Join arm -->
   <joint name="ur5_arm_base" type="fixed">
     <parent link="top_plate_link"/>
     <child link="ur5_arm_base_link"/>
-    <origin rpy="0.0 0.0 -1.57" xyz="0.3058 0 0.0065"/>
+    <origin rpy="0.0 0.0 -1.57079632679" xyz="0.3058 0 0.0065"/>
   </joint>
   <!-- Spawn LIDAR if laser_enabled = "true" -->
   <link name="base_laser">
@@ -719,14 +1030,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
       <inertia ixx="0.00307156543804" ixy="0.0" ixz="0.0" iyy="0.00312849041527" iyz="0.0" izz="0.00196432421427"/>
     </inertial>
     <visual>
-      <origin rpy="-3.14159 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <!-- Origin of this mesh is the focal point of the LIDAR. -->
         <mesh filename="package://lms1xx/meshes/sick-lms1xx.dae"/>
       </geometry>
     </visual>
     <collision>
-      <origin rpy="-3.14159 0 0" xyz="0 0 -0.05"/>
+      <origin rpy="0 0 0" xyz="0 0 -0.05"/>
       <geometry>
         <box size="0.105 0.1 0.1"/>
       </geometry>
@@ -766,14 +1077,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   </gazebo>
   <link name="base_laser_mount">
     <visual>
-      <origin rpy="3.14159 0 -1.570795" xyz="0 0 0"/>
+      <origin rpy="0 -3.14159 -1.570795" xyz="0 0 0"/>
       <geometry>
         <!-- Origin of this mesh is the base of the bracket. -->
         <mesh filename="package://husky_description/meshes/accessories/lms1xx_mount.dae"/>
       </geometry>
     </visual>
     <collision>
-      <origin rpy="3.14159 0 -1.570795" xyz="0 0 .0585"/>
+      <origin rpy="0 -3.14159 -1.570795" xyz="0 0 .0585"/>
       <geometry>
         <box size=".1 .108 .117"/>
       </geometry>
@@ -781,7 +1092,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   </link>
   <joint name="base_laser_joint" type="fixed">
     <!-- This offset is from the base of the bracket to the LIDAR's focal point. -->
-    <origin rpy="3.14159 0 0" xyz="-0.0352 0 -0.0566"/>
+    <origin rpy="0 0 0" xyz="-0.0352 0 -0.0566"/>
     <parent link="base_laser_mount"/>
     <child link="base_laser"/>
   </joint>
@@ -795,11 +1106,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- Spawn the sensor arch link -->
   <link name="sensor_arch_mount_link">
     <origin rpy="0 0 0" xyz="0 0 0"/>
-    <inertial>
-      <mass value="20.0"/>
-      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
-      <inertia ixx="4.18" ixy="0.0" ixz="0.0" iyy="4.18" iyz="0.0" izz="7.20"/>
-    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://husky_description/meshes/accessories/510_mm_sensor_arch.dae"/>
@@ -820,7 +1126,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   </joint>
   <!-- Attach the camera mount to the sensor arch -->
   <joint name="camera_mount_joint" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+    <origin rpy="0.0 0.0 3.14159265359" xyz="0.0 0.0 0.0"/>
     <parent link="sensor_arch_mount_link"/>
     <child link="camera_mount_link"/>
   </joint>
@@ -842,33 +1148,33 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
       </geometry>
     </collision>
   </link>
-  <joint name="kinectv2_frame_joint" type="fixed">
-    <origin rpy="0.0 0.0 3.14159265359" xyz="0.0 0.095 0.11"/>
+  <joint name="camera_link_joint" type="fixed">
+    <origin rpy="0.0 0.0 0.0" xyz="0.028 -0.096 0.112"/>
     <parent link="camera_mount_link"/>
     <child link="camera_link"/>
+  </joint>
+  <link name="kinect2_link"/>
+  <joint name="kinect2_link_joint" type="fixed">
+    <origin rpy="-1.57079632679 0 -1.57079632679" xyz="0.0 0.0 0.0"/>
+    <parent link="camera_link"/>
+    <child link="kinect2_link"/>
   </joint>
   <!-- Create kinect reference frame -->
   <!-- Add mesh for kinectv2 -->
   <link name="camera_link">
     <visual>
-      <origin rpy="0 0 -1.570795" xyz="0.0 0.095 -0.04"/>
+      <origin rpy="0 0 -1.57079632679" xyz="-0.028 0.096 -0.042"/>
       <geometry>
         <mesh filename="package://husky_description/meshes/accessories/kinectv2.dae"/>
       </geometry>
     </visual>
     <collision>
-      <origin rpy="0 0 -1.570795" xyz="0.0 0.095 -0.04"/>
+      <origin rpy="0 0 -1.57079632679" xyz="-0.028 0.096 -0.042"/>
       <geometry>
         <mesh filename="package://husky_description/meshes/accessories/kinectv2.stl"/>
       </geometry>
     </collision>
   </link>
-  <link name="camera_optical_frame"/>
-  <joint name="camera_optical_joint" type="fixed">
-    <origin rpy="-1.57079632679 0 -1.57079632679" xyz="0 0 0"/>
-    <parent link="camera_link"/>
-    <child link="camera_optical_frame"/>
-  </joint>
   <!-- Spawn Primesense Carmine 1.09 if primesense_enabled = "true" -->
 </robot>
 
