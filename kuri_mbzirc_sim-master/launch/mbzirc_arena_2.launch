@@ -1,14 +1,24 @@
+<?xml version="1.0"?>
 <launch>
-  <arg name="paused" default="false"/>
-  <arg name="debug" default="false"/>
-  <arg name="gui" default="true"  />
-  <arg name="headless" default="false"/>
 
-  <include file="$(find kuri_mbzirc_sim)/launch/mbzirc_arena.launch" >
-    <arg name="paused" default="$(arg paused)"/>
-    <arg name="debug" default="$(arg debug)"/>
-    <arg name="gui" default="$(arg gui)"  />
+  <arg name="laser_enabled" default="true"/>
+  <arg name="ur5_enabled" default="false"/>
+  <arg name="ur5_camera_enabled" default="true"/>
+  <arg name="ur5_mbzirc_gripper_enabled" default="true" />
+  <arg name="kinect_enabled" default="false"/>
+  <arg name="kinectv2_enabled" default="true"/>
+  <arg name="primesense_enabled" default="false"/>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find kuri_mbzirc_sim)/launch/mbzirc_arena.launch">
     <arg name="world_name" default="$(find kuri_mbzirc_sim)/gazebo_models/world/mbzirc_arena_task_2.world"/>
-    <arg name="headless" default="$(arg headless)"/>
+    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
+    <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>
+    <arg name="ur5_camera_enabled" value="$(arg ur5_camera_enabled)"/>
+    <arg name="ur5_mbzirc_gripper_enabled" value="$(arg ur5_mbzirc_gripper_enabled)" />
+    <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>
+    <arg name="kinectv2_enabled" value="$(arg kinectv2_enabled)"/>
+    <arg name="primesense_enabled" value="$(arg primesense_enabled)"/>
   </include>
+
 </launch>
