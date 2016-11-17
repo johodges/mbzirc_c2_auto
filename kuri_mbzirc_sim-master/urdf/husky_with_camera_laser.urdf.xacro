@@ -4,7 +4,7 @@
   <xacro:arg name="kinect_enabled" default="false" />
   <xacro:arg name="gripper_enabled" default="false" />
 
-  <!-- use effor controller -->
+  <!-- use effort controller -->
   <xacro:arg name="use_position_interface" default="false" />
   <xacro:arg name="use_effort_interface" default="true" />
 
