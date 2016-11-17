@@ -287,7 +287,7 @@ class idwrench():
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        #img=cv2.imread('/home/jonathan/wrenchID/2.jpg',1); # Image to read
+        img=cv2.imread('/home/jonathan/wrenchID/2.jpg',1); # Image to read
         # Determine ideal limits for brightness/contrast adjustment
         lims = stretchlim(img,self.lim_type)
         # Adjust the brightness/contrast of the RGB image based on limits
@@ -315,29 +315,25 @@ class idwrench():
 	self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
         self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
         self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
+        ee_position = rospy.get_param('ee_position')
+        wrench_position = rospy.get_param('wrench')
+        xA = wrench_position[0]-ee_position[0]
+        row = int(round(circles[wrench_ind,1]))
+        col = int(round(circles[wrench_ind,0]))
+        self.wrench_id_px = np.array([row,col],dtype=np.float32)
+        camera_y_mx = xA*np.tan(self.camera_fov_h/2)
+        camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
+        camera_z_mx = xA*np.tan(self.camera_fov_v/2)
+        camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
+        # Convert the wrench pixel location to m
+        wrenc_y = (1-col/(sz[1]/2))*(camera_y_mx-camera_y_mn)+camera_y_mn
+        wrenc_z = (1-row/(sz[0]/2))*(camera_z_mx-camera_z_mn)+camera_z_mn
+        self.wrench_id_m = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
+        rospy.set_param('wrench_ID',[float(self.wrench_id_px[0]), 
+            float(self.wrench_id_px[1])])
+        rospy.set_param('wrench_ID_m',[float(self.wrench_id_m[0]), 
+            float(self.wrench_id_m[1]), float(self.wrench_id_m[2])])
 
-        """
-            xA = 0.6
-            print "ID wrench in pixels: ", wrench
-            camera_y_mx = xA*np.tan(self.camera_fov_h/2)
-            camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
-            camera_z_mx = xA*np.tan(self.camera_fov_v/2)
-            camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-            print "Camera ymn/ymx: ", camera_y_mn, camera_y_mx
-            wrenc_y = (wrench[1]-1080)/(2160-0)*(camera_y_mx-camera_y_mn)+camera_y_mn
-            wrenc_z = (wrench[0]-1920)/(3840-0)*(camera_z_mx-camera_z_mn)+camera_z_mn
-            self.wrench_id = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-            print "ID wrench in m: ", self.wrench_id
-            rospy.set_param('wrench_ID',[float(self.wrench_id[0]), float(self.wrench_id[1]), float(self.wrench_id[2])]) 
-            rospy.set_param('smach_state','wrenchFound')
-            rospy.signal_shutdown('Ending node.')
-        else:
-            self.ct = self.ct+1
-            if self.ct > 100:
-                rospy.set_param('smach_state','wrenchNotFound')
-                rospy.signal_shutdown('Ending node.')
-            rospy.sleep(0.1)
-        """
 if __name__ == '__main__':
     try:
         idwrench()
