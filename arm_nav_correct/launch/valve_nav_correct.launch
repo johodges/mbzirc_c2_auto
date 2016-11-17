@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="arm_nav_correct" name="valve_nav_correct" type="valve_nav_correct.py" output="screen">
+  <node pkg="arm_nav_correct" name="valve_nav_correct" type="arm_correction.py" output="screen">
 
     <rosparam>
        arm_offset: .4572
