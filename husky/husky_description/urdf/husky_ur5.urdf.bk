@@ -98,9 +98,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- Interial link stores the robot's inertial information -->
   <link name="inertial_link">
     <inertial>
-      <mass value="33.455"/>
+      <mass value="60"/>
       <origin xyz="-0.08748 -0.00085 0.09947"/>
-      <inertia ixx="0.6022" ixy="-0.02364" ixz="-0.1197" iyy="1.7386" iyz="-0.001544" izz="2.0296" />
+      <inertia ixx="1.08995475113" ixy="-0.0427873303" ixz="-0.2166515837" iyy="3.14678733031" iyz="-0.00279457012" izz="3.67348416289"/>
     </inertial>
   </link>
   <joint name="inertial_joint" type="fixed">
@@ -123,7 +123,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -164,7 +164,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -205,7 +205,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -246,7 +246,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     <inertial>
       <mass value="2.637"/>
       <origin xyz="0 0 0"/>
-      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.02467" iyz="0" izz="0.04411"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -795,11 +795,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <!-- Spawn the sensor arch link -->
   <link name="sensor_arch_mount_link">
     <origin rpy="0 0 0" xyz="0 0 0"/>
-    <!--<inertial>
+    <inertial>
       <mass value="20.0"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
       <inertia ixx="4.18" ixy="0.0" ixz="0.0" iyy="4.18" iyz="0.0" izz="7.20"/>
-    </inertial>-->
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://husky_description/meshes/accessories/510_mm_sensor_arch.dae"/>
