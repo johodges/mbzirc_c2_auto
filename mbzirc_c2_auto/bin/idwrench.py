@@ -37,7 +37,7 @@ class idwrench():
     def __init__(self):
         # Name this node, it must be unique
 	rospy.init_node('idwrench', anonymous=True)
-        
+
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
@@ -54,11 +54,12 @@ class idwrench():
         rospy.Subscriber("/wrench_centroids", numpy_msg(Floats), self.callback_wrench, queue_size=1)
 
     def shutdown(self):
-        rospy.sleep(1)
+        rospy.sleep(0.0001)
 
     # callback_wrench is used to store the wrench topic into the class to be
     # referenced by the other callback routines.
     def callback_wrench(self, data):
+
         if np.shape(data.data)[0] > 6:
             tmp = np.reshape(data.data,(np.size(data.data)/2,2))
             self.wrench = tmp[tmp[:,0].argsort()]
@@ -75,20 +76,22 @@ class idwrench():
             wrenc_z = (1-self.left_wrench[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
             self.wrench_id = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
             print "Left wrench in m: ", self.wrench_id
-            rospy.set_param('wrench_ID',[float(self.wrench_id[0]), float(self.wrench_id[1]), float(self.wrench_id[2])]) 
+            rospy.set_param('wrench_ID',[float(self.wrench_id[0]), float(self.wrench_id[1]), float(self.wrench_id[2])])
             rospy.set_param('smach_state','wrenchFound')
-            self.flag = 1
         else:
             rospy.set_param('smach_state','wrenchNotFound')
-            self.flag = 1
-        if self.flag == 1:
-            rospy.signal_shutdown('Ending node.')
+
+        rospy.signal_shutdown('Ending node.')
 
 if __name__ == '__main__':
+
+
+    #rospy.set_param('smach_state','armTest')
+
     try:
         idwrench()
         print "I'm done!"
-#        rospy.spin()
+        rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("idwrench finished.")
 

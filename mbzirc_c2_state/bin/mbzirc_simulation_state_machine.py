@@ -1,140 +1,234 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('smach_tutorials')
+""" mbzirc_simulation_state_machine.py - Version 1.0 2016-10-12
+
+    This program node defines the state machine for Challenge 2
+
+    Author: Alan Lattimer (alattimer at jensenhughes dot com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.5
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details at:
+
+    http://www.gnu.org/licenses/gpl.html
+
+"""
+
 import rospy
 import smach
 import smach_ros
-import time
-from geometry_msgs.msg import Twist
-import math
-import actionlib
+from navigate_states import *
+from orient_states import *
+from grasp_wrench_states import *
+from operate_valve_states import *
 from control_msgs.msg import *
 from trajectory_msgs.msg import *
-from sensor_msgs.msg import JointState
 
-JOINT_NAMES = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
+# *************************************************************************
+# State classes are defined in files associated with the sub-state machine
+#
+# navigation_states.py
+#   FindBoard
+#
+# orient_states.py
+#   Orient
+#
+# grasp_wrench_states.py
+#   MoveToReady
+#   MoveToReadyWreanch
+#   IDWrench
+#   MoveToWrench
+#   MoveToGrasp
+#   GraspWrench
+#
+# operate_valve_states.py
+#   MoveToValveReady
+#   IDValve
+#   MoveToValve
+#   MoveToOperate
+#   RotateValve
+#
+# *************************************************************************
 
-# define states
-class FindBoard(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, 
-				outcomes=['atBoard'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Searching for board')
-
-	twist = Twist()
-	twist.linear.x = 0.5
-	twist.linear.y = 0
-        twist.linear.z = 0
-        twist.angular.x = 0
-        twist.angular.y = 0
-        twist.angular.z = 0
-	pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
-	for x in range(0, 380000):
-		pub.publish(twist)
-
-        return 'atBoard'
-
-class Orient(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, 
-				outcomes=['oriented'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Orienting')
-        
-	twist = Twist()
-	twist.linear.x = 0
-	twist.linear.y = 0
-        twist.linear.z = 0
-        twist.angular.x = 0
-        twist.angular.y = 0
-        twist.angular.z = 0.5
-	pub = rospyPublisher = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
-	for x in range(0, 33500):
-		pub.publish(twist)
-
-        return 'oriented'
-
-class Grasp(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, 
-				outcomes=['graspedWrench'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Grasping wrench')
-
-	client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-
-	q = [-2.13237, -1.78783, -1.91733, -2.57803, -0.561577 - (math.pi / 2.0), 3.14159]
-	print "Waiting for ur5_arm server..."
-        client.wait_for_server()
-        print "Connected to ur5_arm server"
-        g = FollowJointTrajectoryGoal()
-	g.trajectory = JointTrajectory()
-    	g.trajectory.joint_names = JOINT_NAMES
-    	g.trajectory.points = [JointTrajectoryPoint(positions=q, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
-	client.send_goal(g)
-	try:
-		client.wait_for_result()
-	except KeyboardInterrupt:
-		client.cancel_goal()
-		raise
-
-        return 'graspedWrench'
-
-class UseWrench(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, 
-				outcomes=['succeeded'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Opening valve')
-
-	client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-
-	q = [-0.94455, -1.489, -2.24215, -2.55204, 0.626246 - (math.pi / 2.0), 3.14159]
-	print "Waiting for ur5_arm server..."
-        client.wait_for_server()
-        print "Connected to ur5_arm server"
-        g = FollowJointTrajectoryGoal()
-	g.trajectory = JointTrajectory()
-    	g.trajectory.joint_names = JOINT_NAMES
-    	g.trajectory.points = [JointTrajectoryPoint(positions=q, velocities=[0]*6, time_from_start=rospy.Duration(2.0))]
-	client.send_goal(g)
-	try:
-		client.wait_for_result()
-	except KeyboardInterrupt:
-		client.cancel_goal()
-		raise
-        
-	return 'succeeded'
-
-# main
 def main():
+    """Defines the state machines for Smach
+    """
+
     rospy.init_node('mbzirc_simulation_state_machine', anonymous=True)
 
     # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['success'])
+    sm = smach.StateMachine(outcomes=['success', 'failure'])
 
     # Open the container
     with sm:
-        # Add states to the container
-        smach.StateMachine.add('FINDBOARD', FindBoard(), 
-                               transitions={'atBoard':'ORIENT',})
 
-        smach.StateMachine.add('ORIENT', Orient(), 
-                               transitions={'oriented':'GRASP'})
+        # Create the sub SMACH state machine for navigation
+        sm_nav = smach.StateMachine(outcomes=['readyToOrient',
+                                              'testingArmOnly'])
 
-        smach.StateMachine.add('GRASP', Grasp(), 
-                               transitions={'graspedWrench':'USEWRENCH'})
+        # Create the sub SMACH state machine for orienting
+        sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench'])
 
-        smach.StateMachine.add('USEWRENCH', UseWrench(), 
-                               transitions={'succeeded':'success'})
+        # Create the sub SMACH state machine for grabbing wrench
+        sm_wrench = smach.StateMachine(outcomes=['readyToOperate',
+                                                 'testingArm',
+                                                 'failedToMove',
+                                                 'droppedWrench',
+                                                 'wrenchIDFailed'])
 
+        # Create the sub SMACH state machine operating the valve
+        sm_valve = smach.StateMachine(outcomes=['valveOperated',
+                                                'failedToMove',
+                                                'failedToStowArm',
+                                                'valveIDFailed',
+                                                'lostWrench',
+                                                'valveStuck'])
+
+        # Add containers to the state
+        smach.StateMachine.add('NAVIGATE', sm_nav,
+                               transitions={'readyToOrient' : 'ORIENT',
+                                            'testingArmOnly' : 'success'})
+
+        smach.StateMachine.add('ORIENT', sm_orient,
+                               transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
+
+        smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
+                               transitions={'readyToOperate' : 'OPERATE_VALVE',
+                                            'testingArm' : 'success',
+                                            'failedToMove' : 'failure',
+                                            'droppedWrench' : 'failure',
+                                            'wrenchIDFailed' : 'failure'})
+
+        smach.StateMachine.add('OPERATE_VALVE', sm_valve,
+                               transitions={'valveOperated' : 'success',
+                                            'failedToMove' : 'failure',
+                                            'failedToStowArm' : 'failure',
+                                            'valveIDFailed' : 'failure',
+                                            'lostWrench' : 'failure',
+                                            'valveStuck' : 'failure'})
+
+        # Define userdata for the state machines
+        sm_nav.userdata.test_arm = False
+
+        sm_wrench.userdata.move_counter = 0
+        sm_wrench.userdata.max_move_retries = 1
+        sm_wrench.userdata.have_wrench = False
+
+        sm_valve.userdata.move_counter = 0
+        sm_valve.userdata.max_move_retries = 1
+        sm_valve.userdata.valve_centered = False
+        sm_valve.userdata.valve_turned = False
+
+        # Define the NAVIGATE State Machine
+        with sm_nav:
+            smach.StateMachine.add('FINDBOARD', FindBoard(),
+                                   transitions={'atBoard' : 'readyToOrient',
+                                                'skipNav' : 'testingArmOnly'},
+                                   remapping={'test_arm_in' : 'test_arm'})
+
+        # Define the ORIENT State Machine
+        with sm_orient:
+            smach.StateMachine.add('ORIENT_HUSKY', Orient(),
+                                   transitions={'oriented' : 'readyToGrabWrench'})
+
+        # Define the GRAB_WRENCH State Machine
+        with sm_wrench:
+            smach.StateMachine.add('MOVE_TO_READY', MoveToReady(),
+                                   transitions={'atReady' : 'MOVE_WRENCH_READY',
+                                                'moveStuck' : 'MOVE_TO_READY',
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
+
+            smach.StateMachine.add('MOVE_WRENCH_READY', MoveToWrenchReady(),
+                                   transitions={'atWrenchReady' : 'ID_WRENCH',
+                                                'moveToOperate' : 'readyToOperate',
+                                                'moveStuck' : 'MOVE_WRENCH_READY',
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'got_wrench' : 'have_wrench',
+                                              'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
+
+            smach.StateMachine.add('ID_WRENCH', IDWrench(),
+                                   transitions={'wrenchFound' : 'MOVE_TO_WRENCH',
+                                                'armTest' : 'testingArm',
+                                                'wrenchNotFound' : 'wrenchIDFailed'})
+
+            smach.StateMachine.add('MOVE_TO_WRENCH', MoveToWrench(),
+                                   transitions={'atWrench' : 'MOVE_TO_GRASP',
+                                                'moveStuck' : 'MOVE_TO_WRENCH',
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
+
+            smach.StateMachine.add('MOVE_TO_GRASP', MoveToGrasp(),
+                                   transitions={'readyToGrasp' : 'GRASP_WRENCH'})
+
+            smach.StateMachine.add('GRASP_WRENCH', GraspWrench(),
+                                   transitions={'wrenchGrasped' : 'MOVE_WRENCH_READY',
+                                                'gripFailure' : 'droppedWrench'},
+                                   remapping={'got_wrench' : 'have_wrench'})
+
+        # Define the OPERATE_VALVE State Machine
+        with sm_valve:
+            smach.StateMachine.add('STOW_ARM', StowArm(),
+                                   transitions={'armStowed' : 'DRIVE_TO_VALVE',
+                                                'stowArmFailed' : 'failedToStowArm'})
+
+            smach.StateMachine.add('DRIVE_TO_VALVE', DriveToValve(),
+                                   transitions={'atValveDrive' : 'MOVE_VALVE_READY',
+                                                'moveFailed' : 'failedToMove'})
+
+            smach.StateMachine.add('MOVE_VALVE_READY', MoveToValveReady(),
+                                   transitions={'atValveReady' : 'ID_VALVE',
+                                                'moveStuck' : 'MOVE_VALVE_READY',
+                                                'moveFailed' : 'failedToMove'},
+                                   remapping={'move_counter_in' : 'move_counter',
+                                              'max_retries' : 'max_move_retries',
+                                              'move_counter_out' : 'move_counter'})
+
+            smach.StateMachine.add('ID_VALVE', IDValve(),
+                                   transitions={'valveLocated' : 'MOVE_TO_VALVE',
+                                                'valveNotFound' : 'valveIDFailed'},
+                                   remapping={'valve_centered_out' : 'valve_centered'})
+
+            smach.StateMachine.add('MOVE_TO_VALVE', MoveToValve(),
+                                   transitions={'servoArm' : 'SERVO_TO_VALVE',
+                                                'moveForward' : 'MOVE_TO_OPERATE'},
+                                   remapping={'valve_centered_in' : 'valve_centered'})
+
+            smach.StateMachine.add('SERVO_TO_VALVE', ServoToValve(),
+                                   transitions={'moveSuccess' : 'ID_VALVE',
+                                                'moveFailed' : 'failedToMove'})
+
+
+            smach.StateMachine.add('MOVE_TO_OPERATE', MoveToOperate(),
+                                   transitions={'wrenchFell' : 'lostWrench',
+                                                'wrenchOnValve' : 'ROTATE_VALVE'})
+
+            smach.StateMachine.add('ROTATE_VALVE', RotateValve(),
+                                   transitions={'wrenchFell' : 'lostWrench',
+                                                'cantTurnValve' : 'valveStuck',
+                                                'turnedValve' : 'valveOperated'})
+
+
+    # Create the introspection server
+    sis = smach_ros.IntrospectionServer('mbzirc_server', sm, '/CHALLENGE_TWO')
+    sis.start()
     # Execute SMACH plan
     outcome = sm.execute()
+
+    rospy.spin()
+    sis.stop()
 
 
 if __name__ == '__main__':

@@ -104,7 +104,7 @@ class move_arm_param():
             self.arm.execute(traj)
 
             # Pause for a second
-            rospy.sleep(1.0)
+            # rospy.sleep(1.0)
             self.flag = 1
             #rospy.set_param('current_joint_state',jt)
     # callback_feedback is used to store the feedback topic into the class to be
@@ -112,9 +112,9 @@ class move_arm_param():
     def callback(self, data):
         if self.flag == 1:
             self.status = data.status_list[0].status
-            
+
             if self.status == 3:
-                rospy.sleep(5)
+                # rospy.sleep(5)
                 rospy.set_param('move_arm_status','success')
                 self.flag = 2
             else:
@@ -123,17 +123,17 @@ class move_arm_param():
                     self.flag = 2
                 else:
                     self.ct = self.ct + 1
-                    rospy.sleep(0.5)
+                    # rospy.sleep(0.5)
         if self.flag == 2:
             self.cleanup()
             rospy.signal_shutdown('Ending node.')
 
     def cleanup(self):
         rospy.loginfo("Stopping the robot")
-    
+
         # Stop any current arm movement
         self.arm.stop()
-        
+
         #Shut down MoveIt! cleanly
         rospy.loginfo("Shutting down Moveit!")
         moveit_commander.roscpp_shutdown()
