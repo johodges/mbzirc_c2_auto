@@ -208,7 +208,7 @@ class MoveToValve(smach.State):
         diff = valve[0]-ee_position[0]
         forward_dist = (valve[0]-ee_position[0])*0.2
 
-        if diff > 0.1:
+        if diff > 0.3:
             rospy.set_param('ee_position', [float(ee_position[0]+forward_dist),
                                             float(ee_position[1]),
                                             float(ee_position[2])])

@@ -98,8 +98,8 @@ class move2op():
             camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
             camera_z_mx = xA*np.tan(self.camera_fov_v/2)
             camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-            rospy.logdebug("Camera ymn/ymx: ", str(camera_y_mn), str(camera_y_mx))
-            rospy.logdebug("Camera zmn/zmx: ", str(camera_z_mn), str(camera_z_mx))
+            rospy.logdebug("Camera ymn/ymx: %s %s", str(camera_y_mn), str(camera_y_mx))
+            rospy.logdebug("Camera zmn/zmx: %s %s", str(camera_z_mn), str(camera_z_mx))
 
             # Convert the valve pixel loacation
             valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
@@ -108,17 +108,19 @@ class move2op():
             self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
             rospy.logdebug("Valve in m: %s", " ".join(str(x) for x in self.valve_id))
             rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
-
-            if np.power(valve_y*valve_y+valve_z*valve_z,0.5) < 0.003:
+            err = np.power(valve_y*valve_y+valve_z*valve_z,0.5)
+            if err < 0.01:
                 # Valve is centered no other action required
                 rospy.set_param('smach_state','valveCenter')
+                rospy.logdebug("*****************************************************")
+                rospy.logdebug("We are centered! error %s", str(err))
             else:
                 # Valve not centered, publish new move parameters
                 rospy.set_param('smach_state','valveOffCenter')
                 valve_ID_ready_pos = rospy.get_param('valve')
                 valve_ID_ready_pos[0] = valve[0]
-                valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.5*self.valve_id[1]
-                valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.5*self.valve_id[2]
+                valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.25*self.valve_id[1]
+                valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.25*self.valve_id[2]
 
                 rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
                                                 float(valve_ID_ready_pos[1]),

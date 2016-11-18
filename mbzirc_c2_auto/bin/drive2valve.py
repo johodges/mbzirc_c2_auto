@@ -245,7 +245,7 @@ class drive2valve():
                 wait_for_finish(100)
                 valve = self.v_c[0]
                 vw_c = valve #(valve+wrenc)/2
-                vw_t = 960
+                vw_t = 800
                 vw_off = (vw_c-vw_t)
                 update_rot()
 
@@ -266,7 +266,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.75
+                    po = 1
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2
