@@ -42,12 +42,12 @@ class idwrench():
         self.canny_param = [100, 30] # Canny edge detection thresholds
         self.p2crop = 2 # Portion of image to crop for circle detection
 
-        self.d_mu = 22.2 # Diameter of correct wrench in pixels
-        self.d_sig = 3.6 # Uncertainty in diameter
+        self.d_mu = 22.9 # Diameter of correct wrench in pixels
+        self.d_sig = 3.8 # Uncertainty in diameter
         self.l_mu = 417 # Length of correct wrench in pixels 
-        self.l_sig = 15.1 # Uncertainty in length
-        self.a_mu = 13116 # Area of correct wrench in pixels
-        self.a_sig = 1142 # Uncertainty in area
+        self.l_sig = 14.0 # Uncertainty in length
+        self.a_mu = 13074 # Area of correct wrench in pixels
+        self.a_sig = 1048 # Uncertainty in area
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 
         # Hardware Parameters
@@ -66,6 +66,7 @@ class idwrench():
 	self.id_pub = rospy.Publisher("/wrench_id_image",Image,queue_size = 1)
         self.binary_pub = rospy.Publisher("/wrench_binary_image",Image,queue_size = 1)
         self.prob_pub = rospy.Publisher("/wrench_prob_image",Image,queue_size = 1)
+        self.probid_pub = rospy.Publisher("/wrench_prob_id_image",Image,queue_size = 1)
 	self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
 
     # shutdown runs when this node dies
@@ -302,18 +303,23 @@ class idwrench():
         # shown and one image with only the best match shown.
         def visualize_probability(img, vote_result, n, circs, cnt):
             img_kmeans = img.copy()
+            print circs
             # Visualize the probabilities
             for i in range(self.n_wr):
                 c = int(round(vote_result[i]*255))
                 cv2.circle(img_kmeans,(int(circs[i,0]),int(circs[i,1])), 
                     int(circs[i,2]), (0,c,255-c), 2, cv2.CV_AA)
                 cv2.drawContours(img_kmeans, cnt[i], -1, (0,c,255-c), 3)
+            img_kmeans_id = img_kmeans.copy()
             # Visualize the best match
             img_id = img.copy()
             cv2.circle(img_id,(int(circs[n,0]),int(circs[n,1])), 
                 int(circs[n,2]), (0,255,0), 2, cv2.CV_AA)
             cv2.drawContours(img_id, cnt[n], -1, (0,255,0), 3)
-            return img_kmeans, img_id
+            cv2.circle(img_kmeans_id,(int(circs[n,0]),int(circs[n,1])), 
+                int(circs[n,2]), (255,0,0), 2, cv2.CV_AA)
+            cv2.drawContours(img_kmeans_id, cnt[n], -1, (255,0,0), 3)
+            return img_kmeans, img_id, img_kmeans_id
 
         # Convert ROS image to opencv image
         try:
@@ -347,11 +353,12 @@ class idwrench():
             # Vote using the three parameters to determine correct wrench
             vote_result, wrench_ind = voting(params)
             # Visualize the probabilities and the best match
-            img_kmeans, img_id = visualize_probability(img, vote_result, wrench_ind,
-                circles, contours)
+            img_kmeans, img_id, img_kmeans_id = visualize_probability(img, vote_result,
+                wrench_ind, circles, contours)
             # Publish results
             self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
             self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
+            self.probid_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans_id, "bgr8"))
             self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
             ee_position = rospy.get_param('ee_position')
             wrench_position = rospy.get_param('wrench')

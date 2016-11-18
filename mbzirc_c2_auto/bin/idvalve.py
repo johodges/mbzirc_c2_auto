@@ -135,7 +135,7 @@ class move2op():
 if __name__ == '__main__':
     try:
         move2op()
-       rospy.spin()
+        rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("idvalve finished.")
 
