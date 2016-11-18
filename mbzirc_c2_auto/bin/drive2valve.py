@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-""" orient.py - Version 1.0 2016-10-12
+""" drive2valve.py - Version 1.0 2016-10-12
 
-    This software uses a LIDAR scan to move around a box looking for wrenches.
-    Made by Jonathan Hodges
+    This program moves the husky in front of the valve
+
+    Author: Jonathan Hodges, Virginia Tech
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,17 +21,17 @@
 """
 
 import rospy
-import rospkg
+# import rospkg
 import actionlib
-from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
+# from actionlib_msgs.msg import *
+from geometry_msgs.msg import Pose, Point, Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
-from decimal import *
+# from decimal import *
 import tf
-import math
+# import math
 
 class drive2valve():
     # A few key tasks are achieved in the initializer function:
@@ -270,7 +271,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.75
+                    po = 1.0
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2
