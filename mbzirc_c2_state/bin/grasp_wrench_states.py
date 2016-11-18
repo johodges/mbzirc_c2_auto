@@ -111,9 +111,9 @@ class MoveToWrenchReady(smach.State):
         wrench_ready_pos = rospy.get_param('wrench')
 
         # Set the ready position 40 cm away from the wrenches
-        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.5
-        wrench_ready_pos[1] = wrench_ready_pos[1]
-        wrench_ready_pos[2] = wrench_ready_pos[2]
+        wrench_ready_pos[0] = wrench_ready_pos[0] - 0.6
+        wrench_ready_pos[1] = wrench_ready_pos[1] - 0.05
+        wrench_ready_pos[2] = 0.3 #wrench_ready_pos[2] - 0.05
 
         rospy.set_param('ee_position', [float(wrench_ready_pos[0]),
                                         float(wrench_ready_pos[1]),
@@ -163,7 +163,7 @@ class IDWrench(smach.State):
                                        'wrenchNotFound'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench.py", shell=True)
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench2.py", shell=True)
         prc.wait()
 
         ret_state = rospy.get_param('smach_state')

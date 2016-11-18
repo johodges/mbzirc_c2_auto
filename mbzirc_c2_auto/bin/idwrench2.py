@@ -30,24 +30,24 @@ class idwrench():
         rospy.on_shutdown(self.shutdown)
 
         # Define parameters
-        self.lim_type = 1
+        self.lim_type = 0
         self.n_wr = 6
         self.segment_median_value = 3
-        self.segment_area_threshold = 3
-        self.segment_kernel_sz = 16
+        self.segment_area_threshold = 30
+        self.segment_kernel_sz = 8
 
         # Tweaking parameters - Need to adjust for different distances from camera
         self.area_min_thresh = 3000 # Minimum contour area to be a wrench
-        self.max_circ_diam = 100 # Maximum circle diameter considered
+        self.max_circ_diam = 200 # Maximum circle diameter considered
         self.canny_param = [100, 30] # Canny edge detection thresholds
         self.p2crop = 2 # Portion of image to crop for circle detection
 
-        self.d_mu = 21 # Diameter of correct wrench in pixels
-        self.d_sig = self.d_mu*0.1 # Uncertainty in diameter
-        self.l_mu = 375 # Length of correct wrench in pixels 
-        self.l_sig = self.l_mu*0.1 # Uncertainty in length
-        self.a_mu = 11500 # Area of correct wrench in pixels
-        self.a_sig = self.a_mu*0.1 # Uncertainty in area
+        self.d_mu = 22.2 # Diameter of correct wrench in pixels
+        self.d_sig = 3.6 # Uncertainty in diameter
+        self.l_mu = 417 # Length of correct wrench in pixels 
+        self.l_sig = 15.1 # Uncertainty in length
+        self.a_mu = 13116 # Area of correct wrench in pixels
+        self.a_sig = 1142 # Uncertainty in area
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 
         # Hardware Parameters
@@ -76,6 +76,30 @@ class idwrench():
     # the correct wrench.
     def callback(self, data):
 
+        # This subroutine crops the RGB image to remove the gripper and the edge of
+        # the box if it is visible.
+        def detect_box_edge(img):
+            sz = np.shape(img)
+            img = img[0:sz[0]*69/96,0:sz[1]]
+            sz = np.shape(img)
+            img_edge = cv2.Canny(img,self.canny_param[0],self.canny_param[1])
+            nnz = np.zeros([sz[1],1])
+            kernel = np.ones((1,5), np.uint8)
+            img_edge2 = cv2.dilate(img_edge, kernel, iterations=2)
+            for i in range(0,sz[1]):
+                tmp = np.count_nonzero(img_edge2[:,i])
+                if tmp:
+                    nnz[i,0] = tmp
+            ind = nnz[:,0].argsort()
+            col = ind[sz[1]-1]
+            mx = nnz[col,0]
+            if mx >= 0.9*sz[0]:
+                col = ind[sz[1]-1]
+            else:
+                col = sz[1]
+            img = img[0:sz[0],0:col]
+            return img
+
         # This subroutine computes the limits to be used in the brightness/contrast
         # adjustment routine. The flag denotes whether to fix the upper limit based
         # on the highest one percent of the data or not. 0 = Dynamic fix, 1 = Fixed
@@ -100,7 +124,7 @@ class idwrench():
                     while val < one_perc:
                         val = val+hist[254-j]
                         j = j + 1
-                    lims[i,1] = 254-j
+                    lims[i,1] = 254-j+20
                 if flag == 1:
                     lims[i,1] = 255
             return lims
@@ -183,6 +207,15 @@ class idwrench():
             # Detect the circles using a hough transform
             circles = cv2.HoughCircles(img_gray_hou, cv2.cv.CV_HOUGH_GRADIENT,1,1,
                 np.array([]),self.canny_param[0],self.canny_param[1],0,self.max_circ_diam)
+            #img_hou_all = img_gray_hou.copy()
+            #center_x = circles[0,:,0]
+            #center_y = circles[0,:,1]
+            #radius = circles[0,:,2]
+            #for n in range(len(circles[0,:,1])):
+            #    cv2.circle(img_hou_all,(center_x[n],center_y[n]), radius[n],
+            #        (0,0,244), 2, cv2.CV_AA)
+            #cv2.imshow('All Circles',img_hou_all)
+            #cv2.waitKey(0)
             # Establish matrix of features to use for quanitzation
             z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
             # Run K-means to determine centers and to which group each point belongs.
@@ -287,53 +320,64 @@ class idwrench():
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        img=cv2.imread('/home/jonathan/wrenchID/2.jpg',1); # Image to read
-        # Determine ideal limits for brightness/contrast adjustment
-        lims = stretchlim(img,self.lim_type)
-        # Adjust the brightness/contrast of the RGB image based on limits
-        img_adj = np.copy(imadjust(img,lims))
-        # Remove Background from adjusted brightness/contrast image
-        img_remove = np.copy(back_ground_remove(img_adj))
-        # Convert the image to binary
-        img_seg, img_gray = image_segmentation(img_remove,
-            self.segment_median_value,self.segment_area_threshold,self.segment_kernel_sz)
-        sz = np.shape(img)
-        # Crop image for circle detection
-        img_gray_hou = np.copy(img_gray[0:sz[0]/self.p2crop, 0:sz[1]]) 
-        # Detect circles
-        circles = detect_circle(img_gray_hou)
-        # Detect geometry
-        params, contours = detect_geometry(img_seg)
-        # Store circle diameters in feature matrix
-        params[:,5:] = circles[:,2:]
-        # Vote using the three parameters to determine correct wrench
-        vote_result, wrench_ind = voting(params)
-        # Visualize the probabilities and the best match
-        img_kmeans, img_id = visualize_probability(img, vote_result, wrench_ind,
-            circles, contours)
-        # Publish results
-	self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
-        self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
-        self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
-        ee_position = rospy.get_param('ee_position')
-        wrench_position = rospy.get_param('wrench')
-        xA = wrench_position[0]-ee_position[0]
-        row = int(round(circles[wrench_ind,1]))
-        col = int(round(circles[wrench_ind,0]))
-        self.wrench_id_px = np.array([row,col],dtype=np.float32)
-        camera_y_mx = xA*np.tan(self.camera_fov_h/2)
-        camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
-        camera_z_mx = xA*np.tan(self.camera_fov_v/2)
-        camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
-        # Convert the wrench pixel location to m
-        wrenc_y = (1-col/(sz[1]/2))*(camera_y_mx-camera_y_mn)+camera_y_mn
-        wrenc_z = (1-row/(sz[0]/2))*(camera_z_mx-camera_z_mn)+camera_z_mn
-        self.wrench_id_m = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-        rospy.set_param('wrench_ID',[float(self.wrench_id_px[0]), 
-            float(self.wrench_id_px[1])])
-        rospy.set_param('wrench_ID_m',[float(self.wrench_id_m[0]), 
-            float(self.wrench_id_m[1]), float(self.wrench_id_m[2])])
-
+        try:
+            #img=cv2.imread('/home/jonathan/frame0000.jpg',1); # Image to read
+            # Crop image to remove gripper and edge of box
+            img_crop = np.copy(detect_box_edge(img))
+            img = img_crop.copy()
+            # Determine ideal limits for brightness/contrast adjustment
+            lims = stretchlim(img,self.lim_type)
+            # Adjust the brightness/contrast of the RGB image based on limits
+            img_adj = np.copy(imadjust(img,lims))
+            # Remove Background from adjusted brightness/contrast image
+            img_remove = np.copy(back_ground_remove(img_adj))
+            # Convert the image to binary
+            img_seg, img_gray = image_segmentation(img_remove,
+                self.segment_median_value,self.segment_area_threshold,self.segment_kernel_sz)
+            sz = np.shape(img)
+            # Crop image for circle detection
+            img_gray_hou = np.copy(img_gray[0:sz[0]/self.p2crop, 0:sz[1]]) 
+            # Detect circles
+            circles = detect_circle(img_gray_hou)
+            # Detect geometry
+            params, contours = detect_geometry(img_seg)
+            # Store circle diameters in feature matrix
+            params[:,5:] = circles[:,2:]
+            print params
+            # Vote using the three parameters to determine correct wrench
+            vote_result, wrench_ind = voting(params)
+            # Visualize the probabilities and the best match
+            img_kmeans, img_id = visualize_probability(img, vote_result, wrench_ind,
+                circles, contours)
+            # Publish results
+            self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
+            self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
+            self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
+            ee_position = rospy.get_param('ee_position')
+            wrench_position = rospy.get_param('wrench')
+            xA = wrench_position[0]-ee_position[0]
+            row = int(round(circles[wrench_ind,1]))
+            col = int(round(circles[wrench_ind,0]))
+            self.wrench_id_px = np.array([row,col],dtype=np.float32)
+            camera_y_mx = xA*np.tan(self.camera_fov_h/2)
+            camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
+            camera_z_mx = xA*np.tan(self.camera_fov_v/2)
+            camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
+            # Convert the wrench pixel location to m
+            wrenc_y = (1-col/(sz[1]/2))*(camera_y_mx-camera_y_mn)+camera_y_mn
+            wrenc_z = (1-row/(sz[0]/2))*(camera_z_mx-camera_z_mn)+camera_z_mn
+            self.wrench_id_m = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
+            rospy.set_param('wrench_ID',[float(self.wrench_id_px[0]), 
+                float(self.wrench_id_px[1])])
+            rospy.set_param('wrench_ID_m',[float(self.wrench_id_m[0]), 
+                float(self.wrench_id_m[1]), float(self.wrench_id_m[2])])
+            rospy.set_param('smach_state','wrenchFound')
+            rospy.signal_shutdown('Ending node.')
+        except:
+            self.ct = self.ct+1
+            if self.ct > 100:
+                rospy.set_param('smach_state','wrenchNotFound')
+                rospy.signal_shutdown('Ending node.')
 if __name__ == '__main__':
     try:
         idwrench()
