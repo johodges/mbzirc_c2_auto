@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    valve_correcton.py - Version 0.1 2016-11-03
+    arm_nav_correcton.py - Version 0.1 2016-11-03
 
     Luan Cong Doan _ CMS Lab
     luandoan@vt.edu
@@ -27,12 +27,12 @@ import moveit_commander
 from geometry_msgs.msg import PoseArray, PoseStamped
 from copy import deepcopy
 
-class ValveCorrection:
+class WrenchCorrection:
     def __init__(self):
         #Give the node a name
-        rospy.init_node("valve_correction", anonymous=False)
+        rospy.init_node("wrench_correction", anonymous=False)
         
-        rospy.loginfo("Starting node Valve navigation correction")
+        rospy.loginfo("Starting node Wrench navigation correction")
         
         rospy.on_shutdown(self.cleanup)
 
@@ -74,13 +74,13 @@ class ValveCorrection:
         target_pose = PoseStamped()
         target_pose.header.frame_id = self.reference_frame
         target_pose.header.stamp = rospy.Time.now()
-        target_pose.pose.position.x = valve_pose.position.x
-        target_pose.pose.position.y = valve_pose.position.y
-        target_pose.pose.position.z = valve_pose.position.z
-        target_pose.pose.orientation.x = valve_pose.orientation.x
-        target_pose.pose.orientation.y = valve_pose.orientation.y
-        target_pose.pose.orientation.z = valve_pose.orientation.z
-        target_pose.pose.orientation.w = valve_pose.orientation.w
+        target_pose.pose.position.x = wrench_pose.position.x
+        target_pose.pose.position.y = wrench_pose.position.y
+        target_pose.pose.position.z = wrench_pose.position.z
+        #target_pose.pose.orientation.x = wrench_pose.orientation.x
+        #target_pose.pose.orientation.y = wrench_pose.orientation.y
+        #target_pose.pose.orientation.z = wrench_pose.orientation.z
+        #target_pose.pose.orientation.w = wrench_pose.orientation.w
 
         # Set the start state to the current state
         self.arm.set_start_state_to_current_state()
@@ -98,10 +98,10 @@ class ValveCorrection:
              # Pause for a second
             rospy.sleep(1)
                 
-            rospy.loginfo("Successfully updated position of valve " + str(self.location))
+            rospy.loginfo("Successfully updated position of wrench " + str(self.location))
                 
         else:
-            rospy.loginfo("Unable to update position of valve " + str(self.location))
+            rospy.loginfo("Unable to update position of wrench " + str(self.location))
 
     def cleanup(self):
         rospy.loginfo("Stopping the robot")
@@ -117,6 +117,6 @@ class ValveCorrection:
 
 if __name__ == "__main__":
   try:
-    ValveCorrection()
+    WrenchCorrection()
   except KeyboardInterrupt:
-      print "Shutting down ValveCorrection node."
+      print "Shutting down WrenchCorrection node."

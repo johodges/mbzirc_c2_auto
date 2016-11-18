@@ -70,9 +70,9 @@ class WrenchCorrection()
         self.target_pose = PoseStamped()
         self.target_pose.header.frame_id = reference_frame
         self.target_pose.header.stamp = rospy.Time.now()
-        self.target_pose.pose.position.x = locations.point.x
-        self.target_pose.pose.position.y = locations.point.y
-        self.target_pose.pose.position.z = locations.point.z
+        self.target_pose.pose.position.x = locations.position[0]
+        self.target_pose.pose.position.y = locations.position[1]
+        self.target_pose.pose.position.z = locations.position[2]
 
 	# Set the start state to the current state
 	try:

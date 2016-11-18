@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-    arm_wrech_cor.py - Version 0.1 2016-11-09
-    Use inverse kinemtatics to move the end effector to reach the position of the wrench.
+    grasp.py - Version 0.1 2015-11-05
+    Use inverse kinemtatics to move the end effector to grab the wrench.
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -23,7 +23,12 @@ import roslib
 roslib.load_manifest("rosparam")
 import rosparam
 
-def callback(data):
+def main():
+	rospy.init_node("move_arm", anonymous=False)
+
+	rospy.set_param('arm_prefix', 'ur5_arm_')
+	rospy.set_param('reference_frame', '/base_link')
+
 	rospy.loginfo("Moving arm to desired position")
 
 	# Initialize the move_group API
@@ -37,6 +42,7 @@ def callback(data):
 
         # Initialize Necessary Variables
         reference_frame = rospy.get_param("~reference_frame", "/base_link")
+	#reference_frame = "ee_link"
 
         # Set the ur5_arm reference frame accordingly
         arm.set_pose_reference_frame(reference_frame)
@@ -52,9 +58,10 @@ def callback(data):
         target_pose = PoseStamped()
         target_pose.header.frame_id = reference_frame
         target_pose.header.stamp = rospy.Time.now()
-        target_pose.pose.position.x = data.position[0]
-        target_pose.pose.position.y = data.position[1]
-        target_pose.pose.position.z = data.position[2]
+	valve = rospy.get_param('valve')
+        target_pose.pose.position.x = valve[0]
+        target_pose.pose.position.y = valve[1] + 0.06
+        target_pose.pose.position.z = valve[2] + 0.35
 
 	# Set the start state to the current state
         arm.set_start_state_to_current_state()
@@ -76,15 +83,5 @@ def callback(data):
                 
         else:
             rospy.loginfo("Unable to reach")
-
-def main():
-	rospy.init_node("move_arm", anonymous=False)
-
-	rospy.set_param('arm_prefix', 'ur5_arm_')
-	rospy.set_param('reference_frame', '/base_link')
-
-	rospy.Subscriber("/locations", JointState, callback)
-
-	rospy.spin()
 
 if __name__ == '__main__': main()
