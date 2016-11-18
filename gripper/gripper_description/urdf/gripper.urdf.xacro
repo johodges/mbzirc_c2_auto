@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+
+<robot xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:xacro="http://playerstage.sourceforge.net/gazebo/xmlschema/#xacro"
+       name="gripper">
+
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="stl_scale" value="0.001" />
+
+  <xacro:property name="baseHeight" value="0.15"/>
+  <xacro:property name="baseLength" value="0.01"/>
+  <xacro:property name="baseWidth" value="0.08"/>
+  <xacro:property name="baseMass" value="2.7"/>
+
+  <xacro:property name="link1Height" value="0.1"/>
+  <xacro:property name="link1Length" value="0.2"/>
+  <xacro:property name="link1Width" value="0.02"/>
+  <xacro:property name="link1Mass" value="2.9"/>
+
+  <xacro:property name="link2Height" value="0.12"/>
+  <xacro:property name="link2Length" value="0.02"/>
+  <xacro:property name="link2Width" value="0.02"/>
+  <xacro:property name="link2Mass" value="2.2"/>
+
+  <xacro:property name="tipHeight" value="0.3"/>
+  <xacro:property name="tipLength" value="0.05"/>
+  <xacro:property name="tipWidth" value="0.03"/>
+  <xacro:property name="tipMass" value="2.07"/>
+
+  <xacro:property name="cameraSize" value="0.025"/>
+  <xacro:property name="cameraMass" value="0.05"/>
+
+  <xacro:property name="chassisHeight" value="0.05"/>
+  <xacro:property name="chassisLength" value="0.15"/>
+  <xacro:property name="chassisWidth" value="0.1"/>
+  <xacro:property name="chassisMass" value="0"/>
+
+  <xacro:property name="wheelWidth" value="0.025"/>
+  <xacro:property name="wheelRadius" value="0.05"/>
+  <xacro:property name="wheelPos" value="-0.15"/>
+  <xacro:property name="wheelMass" value="2.5"/>
+
+  <xacro:include filename="$(find gripper_gazebo)/urdf/gripper.gazebo.xacro" />
+
+  <macro name="box_inertia" params="m x y z">
+    <inertia  ixx="${m*(y*y+z*z)/12}" ixy = "0" ixz = "0"
+      iyy="${m*(x*x+z*z)/12}" iyz = "0"
+      izz="${m*(x*x+z*z)/12}"
+    />
+  </macro>
+
+  <xacro:gripper prefix="ur5_arm_gripper_" />
+
+  <xacro:macro name="gripper" params="prefix">
+
+    <link name='${prefix}base_link'>
+       <inertial>
+         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <mass value="${baseMass}"/>
+         <box_inertia m="${baseMass}" x="${baseLength}" y="${baseWidth}" z="${baseHeight}"/>
+       </inertial>
+       <visual>
+         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+           <mesh filename="package://gripper_description/meshes/base_link.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+         </geometry>
+       </visual>
+       <collision>
+         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+           <mesh filename="package://gripper_description/meshes/base_link.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+         </geometry>
+       </collision>
+     </link>
+
+     <joint name="${prefix}base_link_link_1_joint" type="fixed">
+       <parent link="${prefix}base_link"/>
+       <child link="${prefix}link_1"/>
+       <origin xyz="0 0.005 -0.07" rpy="0 0 ${PI/2}"/>
+     </joint>
+
+    <link name='${prefix}link_1'>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${link1Mass}"/>
+        <box_inertia m="${link1Mass}" x="${link1Length}" y="${link1Width}" z="${link1Height}"/>
+      </inertial>
+      <visual>
+       <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/link_1.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/link_1.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}link_1_link_2_joint" type="fixed">
+      <origin xyz="0.104 0 0" rpy="0 0 ${PI/2}"/>
+      <parent link="${prefix}link_1"/>
+      <child link="${prefix}link_2"/>
+    </joint>
+
+    <link name='${prefix}link_2'>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${link2Mass}"/>
+        <box_inertia m="${link2Mass}" x="${link2Length}" y="${link2Width}" z="${link2Height}"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/link_2.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/link_2.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}link_2_left_tip_joint" type="revolute">
+      <parent link="${prefix}link_2"/>
+      <child link="${prefix}left_tip"/>
+      <origin xyz="0.0125 0 0.00025" rpy="0 0 -${PI/2}" />
+      <axis xyz="0 0 1" rpy="0 0 0" />
+      <limit effort="100" velocity="5" lower="-0.037" upper="0.6" />
+      <joint_properties damping="0.0" friction="10.0"/>
+    </joint>
+
+    <link name='${prefix}left_tip'>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${tipMass}"/>
+        <box_inertia m="${tipMass}" x="${tipLength}" y="${tipWidth}" z="${tipHeight}"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/tip.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/tip.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}link_2_right_tip_joint" type="revolute">
+      <parent link="${prefix}link_2"/>
+      <child link="${prefix}right_tip"/>
+      <origin xyz="-0.0125 0 0.00025" rpy="0 0 ${PI/2}" />
+      <axis xyz="0 0 1" rpy="0 0 0" />
+      <limit effort="100" velocity="5" lower="-0.6" upper="0.037" />
+      <joint_properties damping="0.0" friction="10.0"/>
+    </joint>
+
+    <link name='${prefix}right_tip'>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${tipMass}"/>
+        <box_inertia m="${tipMass}" x="${tipLength}" y="${tipWidth}" z="${tipHeight}"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${PI} 0" />
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/tip.dae" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${PI} 0" />
+        <geometry>
+          <mesh filename="package://gripper_description/meshes/tip.stl" scale="${stl_scale} ${stl_scale} ${stl_scale}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}base_link_camera_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}camera_link"/>
+    </joint>
+
+    <link name="${prefix}camera_link">
+      <inertial>
+        <mass value="${cameraMass}" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <box_inertia m="${cameraMass}" x="${cameraSize*2}" y="${cameraSize}" z="${cameraSize/2}" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${cameraSize*2} ${cameraSize} ${cameraSize/2}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${cameraSize*2} ${cameraSize/2} ${cameraSize/2}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}camera_optical_frame"/>
+    <joint name="${prefix}camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+      <parent link="${prefix}camera_link"/>
+      <child link="${prefix}camera_optical_frame"/>
+    </joint>
+
+    <transmission name="${prefix}left_tip_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}link_2_left_tip_joint">
+        <hardwareInterface>EffortJointInterface</hardwareInterface>
+     </joint>
+      <actuator name="${prefix}left_tip_motor">
+        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="${prefix}right_tip_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}link_2_right_tip_joint">
+        <hardwareInterface>EffortJointInterface</hardwareInterface>
+     </joint>
+      <actuator name="${prefix}right_tip_motor">
+        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+  </xacro:macro>
+</robot>
