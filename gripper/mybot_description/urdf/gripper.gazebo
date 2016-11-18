@@ -1,7 +1,16 @@
 <?xml version="1.0"?>
 <robot name="mybot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <gazebo reference="base">
+  <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="link1">
+  <material>Gazebo/Black</material>
+  </gazebo>
+
   <gazebo reference="link2">
+  <material>Gazebo/Black</material>
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
@@ -14,6 +23,7 @@
   </gazebo>
 
   <gazebo reference="left_tip">
+  <material>Gazebo/Black</material>
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
@@ -26,6 +36,7 @@
   </gazebo>
 
   <gazebo reference="right_tip">
+  <material>Gazebo/Black</material>
     <kp>10000.0</kp>
     <!-- kp and kd for rubber -->
     <kd>100.0</kd>
