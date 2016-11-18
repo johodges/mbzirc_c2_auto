@@ -122,6 +122,11 @@ class MoveToValveReady(smach.State):
                                         float(valve_ID_ready_pos[1]),
                                         float(valve_ID_ready_pos[2])])
 
+        rospy.loginfo("Moving to Valve Ready at: %s",
+                      " ".join(str(x) for x in valve_ID_ready_pos))
+
+        # rospy.spin()
+
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
 
@@ -140,6 +145,8 @@ class MoveToValveReady(smach.State):
 
             else:
                 return 'moveFailed'
+
+
 
 
 
