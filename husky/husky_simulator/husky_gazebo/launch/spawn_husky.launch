@@ -25,9 +25,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 -->
 <launch>
 
-  <arg name="laser_enabled" default="true"/>
+  <arg name="laser_enabled" default="false"/>
   <arg name="ur5_enabled" default="false"/>
   <arg name="ur5_camera_enabled" default="false"/>
+  <arg name="ur5_mbzirc_gripper_enabled" default="false" />
   <arg name="kinect_enabled" default="false"/>
   <arg name="kinectv2_enabled" default="false"/>
   <arg name="primesense_enabled" default="false"/>
@@ -36,6 +37,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     laser_enabled:=$(arg laser_enabled)
     ur5_enabled:=$(arg ur5_enabled)
     ur5_camera_enabled:=$(arg ur5_camera_enabled)
+    ur5_mbzirc_gripper_enabled:=$(arg ur5_mbzirc_gripper_enabled)
     kinect_enabled:=$(arg kinect_enabled)
     kinectv2_enabled:=$(arg kinectv2_enabled)
     primesense_enabled:=$(arg primesense_enabled)
@@ -63,6 +65,21 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
   <!-- Include ros_control configuration for ur5, only used in simulation -->
   <group if="$(arg ur5_camera_enabled)">
+
+    <!-- Load UR5 controllers -->
+    <rosparam command="load" file="$(find husky_control)/config/control_ur5.yaml" />
+    <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="arm_controller --shutdown-timeout 3"/>
+
+    <!-- Fake Calibration -->
+    <node pkg="rostopic" type="rostopic" name="fake_joint_calibration" args="pub calibrated std_msgs/Bool true" />
+
+    <!-- Stow the arm -->
+    <node pkg="husky_control" type="stow_ur5" name="stow_ur5"/>
+
+  </group>
+
+  <!-- Include ros_control configuration for ur5, only used in simulation -->
+  <group if="$(arg ur5_mbzirc_gripper_enabled)">
 
     <!-- Load UR5 controllers -->
     <rosparam command="load" file="$(find husky_control)/config/control_ur5.yaml" />

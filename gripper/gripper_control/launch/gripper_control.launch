@@ -1,0 +1,22 @@
+<launch>
+
+  <rosparam command="load" file="$(find gripper_control)/config/gripper_control.yaml" />
+
+  <!-- load the controllers -->
+
+  <node name="controller_spawner"
+    pkg="controller_manager"
+    type="spawner" respawn="false"
+    output="screen" ns="/gripper"
+    args="joint_state_controller
+      righttip_effort_controller
+      lefttip_effort_controller"
+  />
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find gripper_description)/urdf/gripper.urdf.xacro'" />
+    <remap from="/joint_states" to="/gripper/joint_states" />
+  </node>
+
+</launch>

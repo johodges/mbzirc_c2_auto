@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>  
+ <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+	 command="$(find xacro)/xacro.py '$(find gripper_description)/urdf/gripper.urdf.xacro'" />
+
+  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /> -->
+
+  <!-- Load truck control information -->
+  <include file="$(find gripper_control)/launch/gripper_control.launch"/>
+
+  <!-- Spawn robot in gazebo -->
+  <node name="spawn_gripper_model" pkg="gazebo_ros" type="spawn_model"
+	args="-unpause -urdf -param robot_description -model mobile_base"/>
+</launch>
