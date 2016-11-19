@@ -127,52 +127,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
       </gazebo>
     </xacro:if>
 
-    <xacro:if value="$(arg ur5_mbzirc_gripper_enabled)">
-      <!--Remove when https://github.com/ros-industrial/universal_robot/pull/168 is resolved -->
-      <gazebo reference="ur5_arm_shoulder_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_upper_arm_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_forearm_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_wrist_1_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_wrist_3_link">
-       <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_wrist_2_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_ee_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_base_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_link_1">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_link_2">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_left_tip">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_right_tip">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_camera_link">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-      <gazebo reference="ur5_arm_gripper_camera_optical_frame">
-        <selfCollide>true</selfCollide>
-      </gazebo>
-    </xacro:if>
-
     <xacro:if value="$(arg kinect_enabled)">
       <xacro:kinect_camera_gazebo prefix="camera"/>
     </xacro:if>
