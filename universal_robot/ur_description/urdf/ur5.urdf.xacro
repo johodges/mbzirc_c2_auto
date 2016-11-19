@@ -104,8 +104,7 @@
     <joint name="${prefix}shoulder_pan_joint" type="revolute">
       <parent link="${prefix}base_link" />
       <child link = "${prefix}shoulder_link" />
-      <origin xyz="0.0 0.0 ${shoulder_height}" rpy="0.0 0.0 1.5707" />
-      <!-- <origin xyz="0.0 0.0 ${shoulder_height}" rpy="0.0 0.0 0.0" /> -->
+      <origin xyz="0.0 0.0 ${shoulder_height}" rpy="0.0 0.0 0.0" />
       <axis xyz="0 0 1" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/>
@@ -138,12 +137,7 @@
     <joint name="${prefix}shoulder_lift_joint" type="revolute">
       <parent link="${prefix}shoulder_link" />
       <child link = "${prefix}upper_arm_link" />
-      <!-- Test arm forward -->
-      <!-- <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 ${pi / 4} 0.0" /> -->
-      <!-- Stow position flat -->
-      <!-- <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 -1.5707 0.0" /> -->
-      <!-- Stow position up -->
-      <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 -1.122 0.0" />
+      <origin xyz="0.0 ${shoulder_offset} 0.0" rpy="0.0 ${pi / 2.0} 0.0" />
       <axis xyz="0 1 0" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/>
@@ -176,10 +170,7 @@
     <joint name="${prefix}elbow_joint" type="revolute">
       <parent link="${prefix}upper_arm_link" />
       <child link = "${prefix}forearm_link" />
-      <!-- Test arm forward -->
-      <!-- <origin xyz="0.0 ${elbow_offset} ${upper_arm_length}" rpy="0.0 ${pi / 4} 0.0" /> -->
-      <!-- Stow position -->
-      <origin xyz="0.0 ${elbow_offset} ${upper_arm_length}" rpy="0.0 2.6927 0.0" />
+      <origin xyz="0.0 ${elbow_offset} ${upper_arm_length}" rpy="0.0 0.0 0.0" />
       <axis xyz="0 1 0" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/>
@@ -212,12 +203,7 @@
     <joint name="${prefix}wrist_1_joint" type="revolute">
       <parent link="${prefix}forearm_link" />
       <child link = "${prefix}wrist_1_link" />
-      <!-- Test arm forward -->
-      <!-- <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 -1.5707 0.0" /> -->
-      <!-- Stow position flat -->
-      <!-- <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 -1.122 0.0" /> -->
-      <!-- Stow position up -->
-      <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 -1.5707 0.0" />
+      <origin xyz="0.0 0.0 ${forearm_length}" rpy="0.0 ${pi / 2.0} 0.0" />
       <axis xyz="0 1 0" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
@@ -250,8 +236,7 @@
     <joint name="${prefix}wrist_2_joint" type="revolute">
       <parent link="${prefix}wrist_1_link" />
       <child link = "${prefix}wrist_2_link" />
-      <origin xyz="0.0 ${wrist_1_length} 0.0" rpy="0.0 0.0 -1.5707" />
-      <!-- <origin xyz="0.0 ${wrist_1_length} 0.0" rpy="0.0 0.0 0.0" /> -->
+      <origin xyz="0.0 ${wrist_1_length} 0.0" rpy="0.0 0.0 0.0" />
       <axis xyz="0 0 1" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
@@ -285,7 +270,6 @@
       <parent link="${prefix}wrist_2_link" />
       <child link = "${prefix}wrist_3_link" />
       <origin xyz="0.0 0.0 ${wrist_2_length}" rpy="0.0 0.0 0.0" />
-      <!-- <origin xyz="0.0 0.0 ${wrist_2_length}" rpy="0.0 0.0 0.0" /> -->
       <axis xyz="0 1 0" />
       <xacro:unless value="${joint_limited}">
         <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
