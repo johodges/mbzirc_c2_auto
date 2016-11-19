@@ -25,10 +25,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 -->
 <robot name="husky" xmlns:xacro="http://ros.org/wiki/xacro">
 <!-- <robot name="husky_robot_gazebo" xmlns:xacro="http://ros.org/wiki/xacro"> -->
-  <xacro:arg name="laser_enabled" default="false" />
+  <xacro:arg name="laser_enabled" default="true" />
   <xacro:arg name="ur5_enabled" default="false" />
   <xacro:arg name="ur5_camera_enabled" default="false" />
-  <xacro:arg name="ur5_mbzirc_gripper_enabled" default="false" />
   <xacro:arg name="kinect_enabled" default="false" />
   <xacro:arg name="kinectv2_enabled" default="false" />
   <xacro:arg name="primesense_enabled" default="false"/>
