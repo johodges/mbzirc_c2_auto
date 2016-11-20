@@ -86,6 +86,8 @@ class move_arm_param():
         jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
         jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
 
+        crs = robot.get_current_state()
+
         # Set the start state to the current state
         self.arm.set_start_state(jt)
 
@@ -101,7 +103,7 @@ class move_arm_param():
 
         if traj is not None:
             # Execute the planned trajectory
-            self.arm.execute(traj)
+            self.move_succeeded = self.arm.execute(traj)
 
             # Pause for a second
             # rospy.sleep(1.0)
@@ -113,17 +115,21 @@ class move_arm_param():
         if self.flag == 1:
             self.status = data.status_list[0].status
 
-            if self.status == 3:
+            if self.move_succeeded:
                 # rospy.sleep(5)
+                rospy.loginfo('Successful Arm Move')
                 rospy.set_param('move_arm_status','success')
                 self.flag = 2
             else:
-                if self.ct > 10:
-                    rospy.set_param('move_arm_status','failure')
-                    self.flag = 2
-                else:
-                    self.ct = self.ct + 1
-                    # rospy.sleep(0.5)
+                rospy.loginfo('Arm Move Failed')
+                rospy.set_param('move_arm_status','failure')
+                self.flag = 2
+                # if self.ct > 10:
+                #     rospy.set_param('move_arm_status','failure')
+                #     self.flag = 2
+                # else:
+                #     self.ct = self.ct + 1
+                #     # rospy.sleep(0.5)
         if self.flag == 2:
             self.cleanup()
             rospy.signal_shutdown('Ending node.')
