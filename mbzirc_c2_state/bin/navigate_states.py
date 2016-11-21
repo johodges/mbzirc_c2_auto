@@ -44,6 +44,7 @@ class FindBoard(smach.State):
 
         rospy.loginfo('Searching for board')
         a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+        rospy.sleep(0.1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
         b.wait()

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="world_name" default="worlds/empty.world"/>
+  <arg name="laser_enabled" default="true"/>
+  <arg name="ur5_enabled" default="true"/>
+  <arg name="ur5_camera_enabled" default="false"/>
+  <arg name="kinect_enabled" default="false"/>
+  <arg name="kinectv2_enabled" default="false"/>
+  <arg name="primesense_enabled" default="false"/>
+  <arg name="paused" default="false"/>
+  <include file="$(find mbzirc_c2_auto)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <include file="$(find mbzirc_c2_auto)/launch/h-playpen-spawn.launch">
+    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
+    <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>
+    <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>
+    <arg name="ur5_camera_enabled" value="$(arg ur5_camera_enabled)"/>
+    <arg name="kinectv2_enabled" value="$(arg kinectv2_enabled)"/>
+    <arg name="primesense_enabled" value="$(arg primesense_enabled)"/>
+  </include>
+
+</launch>

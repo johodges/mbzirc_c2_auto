@@ -283,7 +283,7 @@ class orient():
             # A flag of 1 means we should check for wrenches
             if self.flag == 1:
                 # Check if we see wrenches
-                if np.shape(self.wrench)[0] > 6:
+                if np.shape(self.wrench)[0] > 3:
                     # print "We found wrenches!"
                     rospy.loginfo("We found wrenches!")
                     self.ct_wrench = self.ct_wrench+1
@@ -470,7 +470,7 @@ class orient():
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                offset = -0.1
+                offset = -0.2
                 wrenc_y = (1-self.w_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
                 wrenc_z = (1-self.w_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 # Check if we are centered between valve and wrenches
