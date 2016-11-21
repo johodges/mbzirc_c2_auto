@@ -94,10 +94,10 @@ class move2op():
             rospy.logdebug("Valve in pixels: %s", " ".join(str(x) for x in val_loc))
 
             # Find camera dimensions wrt the base coordinate system
-            camera_y_mx = xA*np.tan(self.camera_fov_h/2)
-            camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
-            camera_z_mx = xA*np.tan(self.camera_fov_v/2)
-            camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
+            camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
+            camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
+            camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
+            camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
             rospy.logdebug("Camera ymn/ymx: %s %s", str(camera_y_mn), str(camera_y_mx))
             rospy.logdebug("Camera zmn/zmx: %s %s", str(camera_z_mn), str(camera_z_mx))
 
