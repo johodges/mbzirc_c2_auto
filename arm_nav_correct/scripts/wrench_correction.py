@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    arm_nav_correcton.py - Version 0.1 2016-11-03
+    wrench_correcton.py - Version 0.1 2016-11-03
 
     Luan Cong Doan _ CMS Lab
     luandoan@vt.edu
@@ -20,103 +20,132 @@
 
     http://www.gnu.org/licenses/gpl.html
 """
-
 import rospy
 import sys
 import moveit_commander
 from geometry_msgs.msg import PoseArray, PoseStamped
-from copy import deepcopy
+from sensor_msgs.msg import JointState
+from moveit_msgs.msg import RobotState
+from control_msgs.msg import FollowJointTrajectoryActionResult
+from actionlib_msgs.msg import *
+import roslib
+roslib.load_manifest("rosparam")
+import rosparam
+import locations
 
-class WrenchCorrection:
+class WrenchCorrection()
     def __init__(self):
-        #Give the node a name
-        rospy.init_node("wrench_correction", anonymous=False)
-        
-        rospy.loginfo("Starting node Wrench navigation correction")
-        
-        rospy.on_shutdown(self.cleanup)
+	rospy.init_node('wrench_correction', anonymous=False)
+	rospy.on_shutdown(self.cleanup) 	# shutdown function when executing done
+	self.flag = 0
+	self.ct = 0
 
-        # Initialize the move_group API
+	rospy.Subscriber("move_group/status", GoalStatusArray, self.callback, queue_size=1)
+	
+	rospy.loginfo("Wrench Correction step")
+
+	# Initialize the move_group API
         moveit_commander.roscpp_initialize(sys.argv)
 
         # Initialize the move group for the ur5_arm
         self.arm = moveit_commander.MoveGroupCommander("ur5_arm")
 
         # Get the name of the end-effector link
-        end_effector_link = self.arm.get_end_effector_link()
+        self.end_effector_link = self.arm.get_end_effector_link()
 
         # Initialize Necessary Variables
         self.reference_frame = rospy.get_param("~reference_frame", "/base_link")
-        self.location = rospy.get_param("~location", 1)
-        self.error_y = rospy.get_param("~error_y", 0)
-        self.error_z = rospy.get_param("~error_z", 0)
 
         # Set the ur5_arm reference frame accordingly
         self.arm.set_pose_reference_frame(self.reference_frame)
 
-        # Allow replanning to increase the odds of a solution
-        self.arm.allow_replanning(True)
+	# Allow replanning to increase the odds of a solution
+        arm.allow_replanning(True)
 
         # Allow some leeway in position (meters) and orientation (radians)
-        self.arm.set_goal_position_tolerance(0.0001)
-        self.arm.set_goal_orientation_tolerance(0.0001)
+        arm.set_goal_position_tolerance(0.01)
+        arm.set_goal_orientation_tolerance(0.01)
         
-        # Get the current pose
-        start_pose = self.arm.get_current_pose(end_effector_link).pose
-        
-        # Adjust start_pose based on camera feedback
-        wrench_pose = deepcopy(start_pose)
-        wrench_pose.position.y += self.error_y
-        wrench_pose.position.z += self.error_z
+        #Set the target pose from the input
+        self.target_pose = PoseStamped()
+        self.target_pose.header.frame_id = reference_frame
+        self.target_pose.header.stamp = rospy.Time.now()
+        self.target_pose.pose.position.x = locations.point.x
+        self.target_pose.pose.position.y = locations.point.y
+        self.target_pose.pose.position.z = locations.point.z
 
-        #Move the end effecor to the x, y, z positon
-        #Set the target pose to the wrench location in the base_link frame
-        target_pose = PoseStamped()
-        target_pose.header.frame_id = self.reference_frame
-        target_pose.header.stamp = rospy.Time.now()
-        target_pose.pose.position.x = wrench_pose.position.x
-        target_pose.pose.position.y = wrench_pose.position.y
-        target_pose.pose.position.z = wrench_pose.position.z
-        #target_pose.pose.orientation.x = wrench_pose.orientation.x
-        #target_pose.pose.orientation.y = wrench_pose.orientation.y
-        #target_pose.pose.orientation.z = wrench_pose.orientation.z
-        #target_pose.pose.orientation.w = wrench_pose.orientation.w
+	# Set the start state to the current state
+	try:
+	    cjs = rospy.get_param('current_joint_state')
+	except:
+	    cjs = [0, 0, 0, 0, 0, 0]
 
-        # Set the start state to the current state
-        self.arm.set_start_state_to_current_state()
+	jt = RobotState()	# Get current state from Robot State
+        jt.joint_state.header.frame_id = '/base_link'
+        jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
+        jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
 
-        # Set the goal pose of the gripper to the stored pose
-        self.arm.set_pose_target(target_pose, gripper_link)
+	self.arm.set_start_state(jt)
+
+        # Set the goal pose of the end effector to the stored pose
+        self.arm.set_pose_target(self.target_pose, self.end_effector_link)
 
         # Plan the trajectory to the goal
-        traj = self.arm.plan()
+        traj = arm.plan()
         
         if traj is not None:
             # Execute the planned trajectory
-            self.arm.execute(traj)
-            
-             # Pause for a second
-            rospy.sleep(1)
-                
-            rospy.loginfo("Successfully updated position of wrench " + str(self.location))
+            arm.execute(traj)
+            rospy.loginfo("Moving to wrench location")
+            # Pause for a second
+            rospy.sleep(3.0)
+	    # Moving toward the wrench
+            rospy.loginfo("Approaching wrench")
+            arm.shift_pose_target(1, 0.12, end_effector_link)
+            arm.go()
+            rospy.loginfo("Moving forward 12cm")
+            rospy.sleep(3.0)
+            rospy.loginfo("Approaching successfully")    
+            rospy.loginfo("Successfully moved")
                 
         else:
-            rospy.loginfo("Unable to update position of wrench " + str(self.location))
+            rospy.loginfo("Unable to reach")
 
-    def cleanup(self):
-        rospy.loginfo("Stopping the robot")
-    
-        # Stop any current arm movement
-        self.arm.stop()
         
-        #Shut down MoveIt! cleanly
-        rospy.loginfo("Shutting down Moveit!")
-        moveit_commander.roscpp_shutdown()
-        moveit_commander.os._exit(0)
+        #plan = arm.plan()
+        #if plan is not None:
+        #    arm.execute(plan)
+        #    rospy.loginfo("Moving forward")
+        #    rospy.sleep(5.0)
+        #    rospy.loginfo("Reached the right wrench")
+        #else:
+        #    rospy.loginfo("Unable to reach the wrench")	
+def callback(self, data):
+    if self.flag ==1:
+	self.status = data.status_list[0].status
+	    if self.status ==3:
+		rospy.sleep(5)
+		rospy.set_param('move_arm_status', 'success')
+		self.flag = 2
+	    else:
+		if self.ct > 10:
+		    rospy.set_param('move_arm_status', 'failure')
+		    self.flag = 2
+	 	else:
+		    self.ct = self.ct + 1
+		    rospy.sleep(1.0)
+    if self.flag ==2:
+	self.cleanup()
+	rospy.signal_shutdown('Ending node.')
+def cleanup(self):
+    rospy.loginfo("Stopping the robot")
+    self.arm.stop()
+    # Shut down MoveIt
+    rospy.loginfo("Shutting down MoveIt")
+    moveit_commander.roscpp_shutdown()
+    moveit_commander.os._exit(0)
 
+if __name__ == '__main__':
+    WrenchCorrection
 
-if __name__ == "__main__":
-  try:
-    WrenchCorrection()
-  except KeyboardInterrupt:
-      print "Shutting down WrenchCorrection node."
+ 

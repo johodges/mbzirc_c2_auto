@@ -83,7 +83,7 @@ def main():
 	rospy.set_param('arm_prefix', 'ur5_arm_')
 	rospy.set_param('reference_frame', '/base_link')
 
-	rospy.Subscriber("/whatevertellsthearmwheretogo", JointState, callback)
+	rospy.Subscriber("/locations", JointState, callback)
 
 	rospy.spin()
 

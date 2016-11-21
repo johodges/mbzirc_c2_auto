@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-""" orient.py - Version 1.0 2016-10-12
+""" drive2valve.py - Version 1.0 2016-10-12
 
-    This software uses a LIDAR scan to move around a box looking for wrenches.
-    Made by Jonathan Hodges
+    Author: Jonathan Hodges, Virginia Tech
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,17 +19,14 @@
 """
 
 import rospy
-import rospkg
 import actionlib
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
+from geometry_msgs.msg import Pose, Point, Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
-from decimal import *
 import tf
-import math
 
 class drive2valve():
     # A few key tasks are achieved in the initializer function:
@@ -204,7 +200,7 @@ class drive2valve():
         # active goal, we set an initial goal to get our position.
         if self.wp == -1:
             rospy.loginfo("Moving backward 1m to make move to valve easier.")
-            back_it_up(-0.25,0.5)
+            back_it_up(-0.25,2)
             self.goal.target_pose.header.frame_id = 'base_link'
             self.goal.target_pose.pose = Pose(Point(-0.5,0,0), Quaternion(0,0,0,1))
             self.goal.target_pose.header.stamp = rospy.Time.now()
@@ -212,22 +208,6 @@ class drive2valve():
             rospy.sleep(1)
             self.wp = self.wp+1
         else:
-            if self.flag == 0:
-                update_rot()
-                rospy.loginfo("Setting initial estimate of valve location.")
-                valve = rospy.get_param('valve')
-                ugv_pos = rospy.get_param('ugv_position')
-                val_loc = [valve[0]-1,valve[1]]
-                val_glo = np.dot(self.R,val_loc)
-                self.x_val_glo = val_glo[0]+ugv_pos[0]
-                self.y_val_glo = val_glo[1]+ugv_pos[1]
-                self.goal.target_pose.header.stamp = rospy.Time.now()
-                self.goal.target_pose.pose = Pose(Point(self.x_val_glo,self.y_val_glo,0), Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
-                self.goal.target_pose.header.frame_id = 'odom'
-                self.move_base.send_goal(self.goal)
-                print "Moving to intial estimate of valve location."
-                wait_for_finish(100)
-                self.flag = 1
 
             if self.flag == 2:
                 xA = bearing.data[1]
@@ -265,7 +245,7 @@ class drive2valve():
                 wait_for_finish(100)
                 valve = self.v_c[0]
                 vw_c = valve #(valve+wrenc)/2
-                vw_t = 960
+                vw_t = 800
                 vw_off = (vw_c-vw_t)
                 update_rot()
 
@@ -286,7 +266,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.75
+                    po = 1
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2
@@ -303,6 +283,22 @@ class drive2valve():
                     print "Moving forward 1m and to the left-right 0.2m"
                     wait_for_finish(100)
 
+            if self.flag == 0:
+                update_rot()
+                rospy.loginfo("Setting initial estimate of valve location.")
+                valve = rospy.get_param('valve')
+                ugv_pos = rospy.get_param('ugv_position')
+                val_loc = [valve[0]-1,valve[1]]
+                val_glo = np.dot(self.R,val_loc)
+                self.x_val_glo = val_glo[0]+ugv_pos[0]
+                self.y_val_glo = val_glo[1]+ugv_pos[1]
+                self.goal.target_pose.header.stamp = rospy.Time.now()
+                self.goal.target_pose.pose = Pose(Point(self.x_val_glo,self.y_val_glo,0), Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
+                self.goal.target_pose.header.frame_id = 'odom'
+                self.move_base.send_goal(self.goal)
+                print "Moving to intial estimate of valve location."
+                wait_for_finish(100)
+                self.flag = 1
 if __name__ == '__main__':
     try:
         drive2valve()
