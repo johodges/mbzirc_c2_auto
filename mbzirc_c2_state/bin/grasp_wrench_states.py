@@ -30,6 +30,7 @@
 import rospy
 import smach
 import subprocess
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 
 class MoveToReady(smach.State):
     """Moves the arm to the ready state from the stowed state
@@ -112,7 +113,7 @@ class MoveToWrenchReady(smach.State):
 
         # Set the ready position 40 cm away from the wrenches
         wrench_ready_pos[0] = wrench_ready_pos[0] - 0.6
-        wrench_ready_pos[1] = wrench_ready_pos[1] - 0.05
+        wrench_ready_pos[1] = wrench_ready_pos[1] + 0.1
         wrench_ready_pos[2] = 0.3 #wrench_ready_pos[2] - 0.05
 
         rospy.set_param('ee_position', [float(wrench_ready_pos[0]),
@@ -131,8 +132,24 @@ class MoveToWrenchReady(smach.State):
         if move_state == 'success':
             if userdata.got_wrench is True:
                 return 'moveToOperate'
-
             else:
+                ve = 0.1
+                dist_to_move = 0.0
+                sleep_time = 0.1
+                time_to_move = abs(dist_to_move/ve)
+                twist = Twist()
+                twist.linear.x = ve
+                twist.linear.y = 0
+                twist.linear.z = 0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = 0
+                twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+                ct_move = 0
+                while ct_move*sleep_time < time_to_move:
+                    twi_pub.publish(twist)
+                    ct_move = ct_move+1
+                    rospy.sleep(sleep_time)
                 return 'atWrenchReady'
 
 
@@ -193,16 +210,110 @@ class MoveToWrench(smach.State):
                              output_keys=['move_counter_out'])
 
     def execute(self, userdata):
+        rospy.sleep(0.1)
+        wrench_id = rospy.get_param('wrench_ID_m')
+        rospy.sleep(0.1)
+        ee_position = rospy.get_param('ee_position')
+        print "wrench_id", wrench_id
+        print "ee_position", ee_position
+        # Set the ready position 40 cm away from the wrenches
+        wrench_id[0] = ee_position[0]+wrench_id[0]-0.6
+        wrench_id[1] = ee_position[1]+wrench_id[1]
+        wrench_id[2] = ee_position[2]+wrench_id[2]-0.1
 
+        rospy.set_param('ee_position', [float(wrench_id[0]),
+                                        float(wrench_id[1]),
+                                        float(wrench_id[2])])
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
-
+        ve = 0.1
+        dist_to_move = 0.28
+        sleep_time = 0.1
+        time_to_move = abs(dist_to_move/ve)
+        twist = Twist()
+        twist.linear.x = ve
+        twist.linear.y = 0
+        twist.linear.z = 0
+        twist.angular.x = 0
+        twist.angular.y = 0
+        twist.angular.z = 0
+        twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+        ct_move = 0
+        while ct_move*sleep_time < time_to_move:
+            twi_pub.publish(twist)
+            ct_move = ct_move+1
+            rospy.sleep(sleep_time)
         move_state = rospy.get_param('move_arm_status')
+        wrench_id[0] = wrench_id[0]-dist_to_move
+        rospy.set_param('wrench_ID_m',wrench_id)
+        gripper_pub = rospy.Publisher('gripper/cmd_vel', Twist, queue_size = 1)
+        twist = Twist()
+        speed = .5; turn = 1
+        x = 0; y = 0; z = 0;
+        th = 1 # To open gripper (1) use th = 1
+        twist.linear.x = x*speed;
+        twist.linear.y = y*speed;
+        twist.linear.z = z*speed;
+        twist.angular.x = 0;
+        twist.angular.y = 0;
+        twist.angular.z = th*turn
 
+        ct = 0
+        rest_time = 0.1
+        tot_time = 3
+    
+        while ct*rest_time < tot_time:
+            gripper_pub.publish(twist)
+            rospy.sleep(0.1)
+            ct = ct+1
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
 
         if move_state == 'success':
+            rospy.sleep(0.1)
+            wrench_id = rospy.get_param('wrench_ID_m')
+            wrench_id[0]
+            print "Wrench ID: ", wrench_id
+            thresh = 10
+            xA = 20
+            ee_position = [0,0,0]
+            ct = 0
+            while ee_position[0] < xA+0.461-0.148:
+                rospy.sleep(0.1)
+                prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
+                prc.wait()
+                rospy.sleep(0.1)
+                dist = rospy.get_param("wrench_ID_dist")
+                rospy.sleep(0.1)
+                wrench_id = rospy.get_param('wrench_ID_m')
+                rospy.sleep(0.1)
+                ee_position = rospy.get_param('ee_position')
+                print "wrench_id", wrench_id
+                print "ee_position", ee_position
+                dx = wrench_id[0]*0.05
+                xA = rospy.get_param('xA')
+                # Set the ready position 40 cm away from the wrenches
+                ee_position[0] = (xA + 0.461-0.20)+0.01*ct # 0.134 distance from camera to left_tip
+                ee_position[1] = ee_position[1]+wrench_id[1]*0.1
+                ee_position[2] = ee_position[2]+wrench_id[2]*0.1
+                rospy.set_param('ee_position', [float(ee_position[0]),
+                                                float(ee_position[1]),
+                                                float(ee_position[2])])
+                rospy.sleep(0.1)
+                rospy.set_param('wrench_ID_m',[wrench_id[0]-dx,wrench_id[1],wrench_id[2]])
+                rospy.sleep(0.1)
+                print "***********************************************"
+                print "New ee_position", ee_position
+                prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+                prc.wait()
+                ct = ct+1
+            print "We are close enough! Distance = ", dist
+            rospy.set_param('ee_position', [float(ee_position[0]),
+                                            float(ee_position[1]),
+                                            float(ee_position[2]+0.02)])
+            prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+            prc.wait()
+
             return 'atWrench'
 
         else:
@@ -212,8 +323,6 @@ class MoveToWrench(smach.State):
 
             else:
                 return 'moveFailed'
-
-
 
 class MoveToGrasp(smach.State):
     """Video servo to the grasp position
@@ -231,7 +340,6 @@ class MoveToGrasp(smach.State):
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto move2grasp.py", shell=True)
         prc.wait()
-
         return rospy.get_param('smach_state')
 
 
@@ -254,6 +362,24 @@ class GraspWrench(smach.State):
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
+        prc.wait()
+        ve = -0.1
+        dist_to_move = 0.5
+        sleep_time = 0.1
+        time_to_move = abs(dist_to_move/ve)
+        twist = Twist()
+        twist.linear.x = ve
+        twist.linear.y = 0
+        twist.linear.z = 0
+        twist.angular.x = 0
+        twist.angular.y = 0
+        twist.angular.z = 0
+        twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+        ct_move = 0
+        while ct_move*sleep_time < time_to_move:
+            twi_pub.publish(twist)
+            ct_move = ct_move+1
+            rospy.sleep(sleep_time)
         prc.wait()
 
         status = rospy.get_param('smach_state')

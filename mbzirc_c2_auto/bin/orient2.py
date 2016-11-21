@@ -454,39 +454,51 @@ class orient():
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
                 vw_c = wrenc #(valve+wrenc)/2
-                vw_t = 960
+                vw_t = 800
                 vw_off = (vw_c-vw_t)
                 # print "Target Center: ", vw_t, "Current Center: ", vw_c
                 update_rot()
-
+                xA = bearing.data[1]
+                yA = bearing.data[2]
+                xB = bearing.data[3]
+                yB = bearing.data[4]
+                xmn = bearing.data[5]
+                xmx = bearing.data[6]
+                ymn = bearing.data[7]
+                ymx = bearing.data[8]
+                camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
+                camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
+                camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
+                camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
+                offset = -0.1
+                wrenc_y = (1-self.w_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
+                wrenc_z = (1-self.w_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 # Check if we are centered between valve and wrenches
-                if abs(vw_off) <= 50:
+                if abs(wrenc_y+offset) <= 0.25:
                     print "Victory!"
-                    xA = bearing.data[1]
-                    yA = bearing.data[2]
-                    xB = bearing.data[3]
-                    yB = bearing.data[4]
-                    xmn = bearing.data[5]
-                    xmx = bearing.data[6]
-                    ymn = bearing.data[7]
-                    ymx = bearing.data[8]
 
                     # Calculate the object location in local coordinate system
                     x_loc = ((xmx-xmn)/2)+xmn
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 1
+                    po = 0.8
                     back_it_up(0.25,(x_loc-po))
                     self.flag = 4
                 else:
+                    q = tf.transformations.quaternion_from_euler(0,0,self.theta+bearing.data[0])
                     back_it_up(-0.25,1)
-
+                    """
                     if vw_off < 0:
                         di = -0.1
                     else:
                         di = 0.1
-                    self.goal.target_pose.pose = Pose(Point(self.x0+di*np.sin(self.yaw),self.y0-di*np.cos(self.yaw),0), Quaternion(self.X0,self.Y0,self.Z0,self.W0))
+                    self.goal.target_pose.pose = Pose(Point(self.x0+di*np.sin(self.yaw),self.y0-di*np.cos(self.yaw),0), Quaternion(q[0],q[1],q[2],q[3]))
+                    """
+                    tar_glo = np.dot(self.R,[bearing.data[1]-3,wrenc_y+offset])
+                    x_wre = tar_glo[0]+self.x0
+                    y_wre = tar_glo[1]+self.y0
+                    self.goal.target_pose.pose = Pose(Point(x_wre,y_wre,0), Quaternion(q[0],q[1],q[2],q[3]))
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.move_base.send_goal(self.goal)
                     print "Moving forward 1m and to the left-right 0.2m"

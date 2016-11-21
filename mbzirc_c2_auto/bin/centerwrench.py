@@ -12,6 +12,7 @@ import rospy
 import rospkg
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from rospy.numpy_msg import numpy_msg
+from rospy_tutorials.msg import Floats
 from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -21,10 +22,10 @@ import math
 from scipy.cluster import vq
 import scipy.stats
 
-class idwrench():
+class centerwrench():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('idwrench', anonymous=True)
+	rospy.init_node('centerwrench', anonymous=True)
         
         # Enable shutdown in rospy
         rospy.on_shutdown(self.shutdown)
@@ -38,18 +39,8 @@ class idwrench():
         self.save_flag = 1
 
         # Tweaking parameters - Need to adjust for different distances from camera
-        self.area_min_thresh = 3000 # Minimum contour area to be a wrench
         self.max_circ_diam = 100 # Maximum circle diameter considered
         self.canny_param = [100, 30] # Canny edge detection thresholds
-        self.p2crop = 3 # Portion of image to crop for circle detection
-
-        self.d_mu = 22.0 # Diameter of correct wrench in pixels
-        self.d_sig = 3.8 # Uncertainty in diameter
-        self.l_mu = 440 # Length of correct wrench in pixels 
-        self.l_sig = 14.0 # Uncertainty in length
-        self.a_mu = 16000 # Area of correct wrench in pixels
-        self.a_sig = 1048 # Uncertainty in area
-        self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 
         # Hardware Parameters
         self.camera_fov_h = 1.5708
@@ -64,15 +55,15 @@ class idwrench():
 
 	# Establish publishers and subscribers
 	self.bridge = CvBridge()
-	self.id_pub = rospy.Publisher("/wrench_id_image",Image,queue_size = 1)
-        self.binary_pub = rospy.Publisher("/wrench_binary_image",Image,queue_size = 1)
-        self.prob_pub = rospy.Publisher("/wrench_prob_image",Image,queue_size = 1)
-        self.probid_pub = rospy.Publisher("/wrench_prob_id_image",Image,queue_size = 1)
+        self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
+        self.tftree = tf.TransformListener()
 	self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
 
     # shutdown runs when this node dies
     def shutdown(self):
         rospy.sleep(1)
+    def callback_bearing(self, bearing):
+        self.xA = bearing.data[1]
 
     # callback_wrench takes the RGB image and determines the (x,y,z) location of
     # the correct wrench.
@@ -224,140 +215,24 @@ class idwrench():
             # Run K-means to determine centers and to which group each point belongs.
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
-            ret, labels, centers = cv2.kmeans(z, self.n_wr, term_crit, 100, flag)
-            print centers
-            # Find average radius within each K-means group
-            rad_kmean = np.zeros([6,1])
-            radius = circles[0,:,2]
-            for i in range(0,6):
-                locs = np.where(labels == i)
-                rad = radius[locs[0]]
-                print "i, rad: ", i, rad
-                rad_kmean[i] = np.mean(rad)
-                print "i, rad_kmean: ", i, rad_kmean[i]
-            # Store center coordinates from K-means for sorting
-            circs = np.zeros([6,3])
-            circs[:,0:2] = centers
-            circs[:,2:] = rad_kmean
-
-            # Sort circles by x-axis
-            circs = circs[circs[:,0].argsort()]
-            return circs, img_hou_all
-
-        # This subroutine determines the length and area of each segmented object
-        # in the binary image. It returns length, area, and contours sorted by
-        # column pixels.
-        def detect_geometry(img_seg):
-            # Find contours in binary image
-            cnt, hie = cv2.findContours(img_seg,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-            # Remove contours that are too small (noise) or too far to the left (valve)
-            print "Original number of contours: ", len(cnt)
-            bad_flag = 1
-            while bad_flag > 0:
-                bad_flag = 0
-                cen2 = np.zeros([len(cnt),1])
-                cnt2 = []
-                cen2 = np.zeros([20,2])
-                ct = 0
-                for c in range(0,len(cnt)):
-                    area = cv2.contourArea(cnt[c])
-                    M = cv2.moments(cnt[c])
-                    if area > self.area_min_thresh:
-                        cen2[ct,0] = int(M["m01"] / M["m00"])
-                        cen2[ct,1] = int(M["m10"] / M["m00"])
-                        cnt2.append(cnt[c])
-                        ct = ct+1
-                cen2_mn = np.mean(cen2[0:ct-1,1])
-                cen2_std = np.std(cen2[0:ct-1,1])
-                cen3 = cen2[:,1]
-                cen2 = cen3[np.nonzero(cen3)]
-                print "STD: ", cen2_std
-                if cen2_std > 300:
-                    bad_flag = 1
-                    ind = np.argsort(cen2)
-                    cnt3 = []
-                    for c in range(0,len(cnt2)):
-                        if c != ind[0]:
-                            cnt3.append(cnt2[c])
-                    cnt = cnt3
-                else:
-                    cnt = cnt2
-                    bad_flag = 0
-            print "New number of contours: ", len(cnt)
-
-            # Update parameters using only the good contours
-            cnt2 = []; hie2 = np.zeros([6,12,4]); ct = 0
-            cen2 = np.zeros([6,2]); len2 = np.zeros([6,2])
-            area2 = np.zeros([6,1])
-            for c in range(0,len(cnt)):
-                area = cv2.contourArea(cnt[c])
-                M = cv2.moments(cnt[c])
-                cen2[c,1] = int(M["m01"] / M["m00"])
-                cen2[c,0] = int(M["m10"] / M["m00"])
-                area2[c] = area
-                cnt2.append(cnt[c])
-                (hi1,hi2,len2[c,0],len2[c,1]) = cv2.boundingRect(cnt[c])
-
-            # Store all relevant features in a single matrix
-            params = np.zeros([6,6])
-            params[:,0:2] = cen2
-            params[:,2:4] = len2
-            params[:,4:] = area2.reshape((6,1))
-            # Sort contour list by x position
-            ind = np.argsort(params[:,0])
-
-            # Sort feature matrix by x position of centroid
-            params = params[params[:,0].argsort()]
-            return params, cnt
-
-        # This subroutine applies a Gaussian voting algorithm to determine which
-        # wrench is the correct one using the diameter, length, and area from each
-        # wrench
-        def voting(params):
-            votes = np.zeros([self.n_wr,3])
-            votes_ideal = np.zeros([1,3])
-            # Store the maximum possible probability for each parameter based
-            # on the Gaussian distribution
-            votes_ideal[0,0] = scipy.stats.norm(self.d_mu, self.d_sig).pdf(self.d_mu)
-            votes_ideal[0,1] = scipy.stats.norm(self.l_mu, self.l_sig).pdf(self.l_mu)
-            votes_ideal[0,2] = scipy.stats.norm(self.a_mu, self.a_sig).pdf(self.a_mu)
-            # Compute the probability for each wrench using each parameter
-            # based on the Gaussian distribution
-            for i in range(0,self.n_wr):
-                votes[i,0] = scipy.stats.norm(self.d_mu, self.d_sig).pdf(params[i,5])
-                votes[i,1] = scipy.stats.norm(self.l_mu, self.l_sig).pdf(params[i,3])
-                votes[i,2] = scipy.stats.norm(self.a_mu, self.a_sig).pdf(params[i,4])
-            # Scale the probabilities based on the maximum possible for each
-            # parameter
-            votes = votes/votes_ideal
-            vote_result = np.zeros([self.n_wr,1])
-            # Sum the probabilities based on the weight values for each parameter
-            vote_result = np.dot(votes,self.vote_wt)
-            ind = vote_result.argsort()
-            return vote_result, ind[self.n_wr-1]
-
-        # This subroutine generates an image showing the probability that each
-        # wrench is the correct one. It returns one image with all the probabilities
-        # shown and one image with only the best match shown.
-        def visualize_probability(img, vote_result, n, circs, cnt):
-            img_kmeans = img.copy()
-            print circs
-            # Visualize the probabilities
-            for i in range(self.n_wr):
-                c = int(round(vote_result[i]*255))
-                cv2.circle(img_kmeans,(int(circs[i,0]),int(circs[i,1])), 
-                    int(circs[i,2]), (0,c,255-c), 2, cv2.CV_AA)
-                cv2.drawContours(img_kmeans, cnt[i], -1, (0,c,255-c), 3)
-            img_kmeans_id = img_kmeans.copy()
-            # Visualize the best match
-            img_id = img.copy()
-            cv2.circle(img_id,(int(circs[n,0]),int(circs[n,1])), 
-                int(circs[n,2]), (0,255,0), 2, cv2.CV_AA)
-            cv2.drawContours(img_id, cnt[n], -1, (0,255,0), 3)
-            cv2.circle(img_kmeans_id,(int(circs[n,0]),int(circs[n,1])), 
-                int(circs[n,2]), (255,0,0), 2, cv2.CV_AA)
-            cv2.drawContours(img_kmeans_id, cnt[n], -1, (255,0,0), 3)
-            return img_kmeans, img_id, img_kmeans_id
+            ret = []
+            ret_old = 99999999999
+            ret_flag = 0
+            for i in range(1,self.n_wr+2):
+                ret2, labels, centers = cv2.kmeans(z, i, term_crit, 100, flag)
+                print ret2/ret_old
+                if ret2/ret_old < 0.1 and i > 2:
+                    ret_flag = 1
+                if ret_flag == 0:
+                    ret.append(ret2)
+                    ret_old = ret2
+            ret = np.asarray(ret)
+            ret_ind = np.argmin(ret)
+            k = ret_ind+1
+            print "Best number of clusters is: ", k
+            print "Best ret is: ", ret[ret_ind]
+            ret, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+            return centers, img_hou_all, k
 
         # Convert ROS image to opencv image
         try:
@@ -365,8 +240,7 @@ class idwrench():
         except CvBridgeError as e:
             print(e)
         try:
-            #img=cv2.imread('/home/jonathan/frame0000.jpg',1); # Image to read
-            cv2.imwrite('/home/jonathan/wrenchID_0_raw.png',img)
+            sz_full = np.shape(img)
             # Crop image to remove gripper and edge of box
             img_crop = detect_box_edge(img.copy())
             cv2.imwrite('/home/jonathan/wrenchID_1_crop.png',img_crop)
@@ -385,61 +259,67 @@ class idwrench():
             cv2.imwrite('/home/jonathan/wrenchID_4_gray.png',img_gray)
             cv2.imwrite('/home/jonathan/wrenchID_5_seg.png',img_seg)
             # Crop image for circle detection
-            img_gray_hou = np.copy(img_gray[0:sz[0]/self.p2crop, 0:sz[1]]) 
+            img_gray_hou = np.copy(img_gray) 
             # Detect circles
-            circles, img_all_circles = detect_circle(img_gray_hou)
+            centers, img_all_circles, k = detect_circle(img_gray_hou)
             cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
-            # Detect geometry
-            params, contours = detect_geometry(img_seg)
-            # Store circle diameters in feature matrix
-            params[:,5:] = circles[:,2:]
-            print params
-            # Vote using the three parameters to determine correct wrench
-            vote_result, wrench_ind = voting(params)
-            # Visualize the probabilities and the best match
-            img_kmeans, img_id, img_kmeans_id = visualize_probability(img_crop, vote_result,
-                wrench_ind, circles, contours)
-            cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
-            cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
-            # Publish results
-            self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
-            self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
-            self.probid_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans_id, "bgr8"))
-            self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
+            sz_circs = np.shape(centers)
+            centers = centers[centers[:,0].argsort()]
+
+            #print "Center locations: ", centers
+            #print "Original image size: ", sz_full
+            cents = centers.copy()
+            cents[:,0] = centers[:,0] - sz_full[1]/2
+            cents[:,1] = centers[:,1] - sz_full[0]/2
+            cents = np.multiply(cents,cents)
+            dist = np.zeros([k,1])
+
+            for i in range(0,k):
+                dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
+            #print "Dist: ", dist
+            dist_loc = np.argmin(dist)
+            dist_min = np.array(dist[dist_loc],dtype=np.float32)
+
+            #print "The minimum distance is: ", dist_min
+            #print "The index of minimum distance is: ", dist_loc
+            wrench_ind = centers[dist_loc,:]
+            #print "The center coordinate of the circle closest to the center is: ", wrench_ind
+
+            if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
+                t = self.tftree.getLatestCommonTime("/base_laser", "/camera")
+                posi, quat = self.tftree.lookupTransform("/base_laser", "/camera", t)
+                print posi, quat
+            tf_x = posi[0]
+            tf_y = posi[1]
+            tf_z = posi[2]
+            self.wrench_id_m = rospy.get_param('wrench_ID_m')
+
+            #print self.xA, tf_x
             ee_position = rospy.get_param('ee_position')
-            wrench_position = rospy.get_param('wrench')
-            xA = wrench_position[0]-ee_position[0]
-            row = int(round(circles[wrench_ind,1]))
-            col = int(round(circles[wrench_ind,0]))
+            xA_tf = np.array(self.xA + 0.461 - ee_position[0], dtype=np.float32)
+            rospy.set_param('xA',float(self.xA))
+            #print "xA: ", xA
+            row = int(round(wrench_ind[1]))
+            col = int(round(wrench_ind[0]))
+            #print "row/col: ", row, col
             self.wrench_id_px = np.array([row,col],dtype=np.float32)
-            camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
-            camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
-            camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
-            camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
+            print "wrench_id_px: ", self.wrench_id_px
+            camera_y_mx = xA_tf*np.arctan(self.camera_fov_h/2)
+            camera_y_mn = -1*xA_tf*np.arctan(self.camera_fov_h/2)
+            camera_z_mx = xA_tf*np.arctan(self.camera_fov_v/2)
+            camera_z_mn = -1*xA_tf*np.arctan(self.camera_fov_v/2)
             # Convert the wrench pixel location to m
-            print "Camera limits: ", camera_y_mx, camera_y_mn
-            print "Term1: ", (1-(col/1920))
-            print "Term2: ", (camera_y_mx-camera_y_mn)
-            print "Term3: ", camera_y_mn
             wrenc_y = (1-(float(col)/1920))*(camera_y_mx-camera_y_mn)+camera_y_mn
             wrenc_z = (1-(float(row)/1080))*(camera_z_mx-camera_z_mn)+camera_z_mn
-            self.wrench_id_m = np.array([xA, wrenc_y, wrenc_z],dtype=np.float32)
-            print self.wrench_id_m
+            #print "wrenc_y/z: ", wrenc_y, wrenc_z
+            self.wrench_id_m = np.array([xA_tf, wrenc_y, wrenc_z],dtype=np.float32)
+            #print "wrench_id_m: ", self.wrench_id_m
             rospy.set_param('wrench_ID',[float(self.wrench_id_px[0]), 
                 float(self.wrench_id_px[1])])
             rospy.set_param('wrench_ID_m',[float(self.wrench_id_m[0]), 
                 float(self.wrench_id_m[1]), float(self.wrench_id_m[2])])
-            rospy.set_param('smach_state','wrenchFound')
-            if self.save_flag == 1:
-                cv2.imwrite('/home/jonathan/wrenchID_0_raw.png',img)
-                cv2.imwrite('/home/jonathan/wrenchID_1_crop.png',img_crop)
-                cv2.imwrite('/home/jonathan/wrenchID_2_adj.png',img_adj)
-                cv2.imwrite('/home/jonathan/wrenchID_3_bg.png',img_remove)
-                cv2.imwrite('/home/jonathan/wrenchID_4_gray.png',img_gray)
-                cv2.imwrite('/home/jonathan/wrenchID_5_seg.png',img_seg)
-                cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
-                cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
-                cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
+            rospy.set_param('wrench_ID_dist',[float(dist_min)])
+            print "Wrench position in camera coordinates: ", self.wrench_id_m
             rospy.signal_shutdown('Ending node.')
         except:
             self.ct = self.ct+1
@@ -448,7 +328,7 @@ class idwrench():
                 rospy.signal_shutdown('Ending node.')
 if __name__ == '__main__':
     try:
-        idwrench()
+        centerwrench()
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("idwrench finished.")

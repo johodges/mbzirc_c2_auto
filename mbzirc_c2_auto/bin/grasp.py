@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     ct = 0
     rest_time = 0.1
-    tot_time = 3
+    tot_time = 1
     
     while ct*rest_time < tot_time:
         pub.publish(twist)
@@ -60,15 +60,16 @@ if __name__ == '__main__':
     th = -1
     twist.angular.z = th*turn
     ct = 0
+    tot_time = 3
 
     while ct*rest_time < tot_time:
         pub.publish(twist)
         rospy.sleep(0.1)
         ct = ct+1
 
-    if random.random() < 0.1:
-        rospy.set_param('smach_state','gripFailure')
-    else:
-        rospy.set_param('smach_state','wrenchGrasped')
+    #if random.random() < 0.1:
+    #    rospy.set_param('smach_state','gripFailure')
+    #else:
+    rospy.set_param('smach_state','wrenchGrasped')
     rospy.signal_shutdown('Ending node.')
 
