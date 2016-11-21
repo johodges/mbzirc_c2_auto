@@ -227,7 +227,7 @@ class MoveToWrench(smach.State):
         prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
         ve = 0.1
-        dist_to_move = 0.28
+        dist_to_move = 0.2
         sleep_time = 0.1
         time_to_move = abs(dist_to_move/ve)
         twist = Twist()
@@ -278,7 +278,7 @@ class MoveToWrench(smach.State):
             xA = 20
             ee_position = [0,0,0]
             ct = 0
-            while ee_position[0] < xA+0.461-0.148:
+            while ee_position[0] < xA+0.461-0.170:
                 rospy.sleep(0.1)
                 prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                 prc.wait()
@@ -293,7 +293,7 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.20)+0.01*ct # 0.134 distance from camera to left_tip
+                ee_position[0] = ee_position[0]+0.005 #(xA + 0.461-0.20)+0.005*ct # 0.134 distance from camera to left_tip
                 ee_position[1] = ee_position[1]+wrench_id[1]*0.1
                 ee_position[2] = ee_position[2]+wrench_id[2]*0.1
                 rospy.set_param('ee_position', [float(ee_position[0]),
@@ -310,7 +310,7 @@ class MoveToWrench(smach.State):
             print "We are close enough! Distance = ", dist
             rospy.set_param('ee_position', [float(ee_position[0]),
                                             float(ee_position[1]),
-                                            float(ee_position[2]+0.02)])
+                                            float(ee_position[2]+0.05)])
             prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
             prc.wait()
 
