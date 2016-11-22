@@ -470,11 +470,11 @@ class orient():
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                offset = -0.2
+                offset = -0.1
                 wrenc_y = (1-self.w_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
                 wrenc_z = (1-self.w_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 # Check if we are centered between valve and wrenches
-                if abs(wrenc_y+offset) <= 0.25:
+                if abs(wrenc_y+offset) <= 0.15:
                     print "Victory!"
 
                     # Calculate the object location in local coordinate system

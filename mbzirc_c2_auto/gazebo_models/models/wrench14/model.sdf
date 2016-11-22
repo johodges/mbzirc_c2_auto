@@ -6,9 +6,21 @@
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
-      <inertial>
+      <!-- inertial>
         <mass>0.08</mass>
         <pose>0 0 0 0 -0 0</pose>
+      </inertial -->
+      <inertial>
+        <mass>0.0847</mass>
+        <pose>0 0 0 0 0 0</pose>
+        <inertia> 
+          <ixx>1</ixx>   
+          <ixy>0.0000000</ixy>     
+          <ixz>-0.000000</ixz>        
+          <iyy>1</iyy>    
+          <iyz>-0.00000</iyz>       
+          <izz>1</izz>     
+        </inertia>
       </inertial>
       <visual name='visual'>
         <pose>0 0 0 0 -0 0</pose>

@@ -278,7 +278,9 @@ class MoveToWrench(smach.State):
             xA = 20
             ee_position = [0,0,0]
             ct = 0
-            while ee_position[0] < xA+0.461-0.170:
+            ee_position[0] = ee_position[0]+0.06
+
+            while ee_position[0] < xA+0.461-0.150:
                 rospy.sleep(0.1)
                 prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                 prc.wait()
@@ -294,8 +296,8 @@ class MoveToWrench(smach.State):
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
                 ee_position[0] = ee_position[0]+0.005 #(xA + 0.461-0.20)+0.005*ct # 0.134 distance from camera to left_tip
-                ee_position[1] = ee_position[1]+wrench_id[1]*0.1
-                ee_position[2] = ee_position[2]+wrench_id[2]*0.1
+                ee_position[1] = ee_position[1]+wrench_id[1]*0.05
+                ee_position[2] = ee_position[2]+wrench_id[2]*0.05
                 rospy.set_param('ee_position', [float(ee_position[0]),
                                                 float(ee_position[1]),
                                                 float(ee_position[2])])
@@ -308,12 +310,6 @@ class MoveToWrench(smach.State):
                 prc.wait()
                 ct = ct+1
             print "We are close enough! Distance = ", dist
-            rospy.set_param('ee_position', [float(ee_position[0]),
-                                            float(ee_position[1]),
-                                            float(ee_position[2]+0.05)])
-            prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-            prc.wait()
-
             return 'atWrench'
 
         else:
@@ -362,6 +358,12 @@ class GraspWrench(smach.State):
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
+        prc.wait()
+        ee_position = rospy.get_param('ee_position')
+        rospy.set_param('ee_position', [float(ee_position[0]),
+                                        float(ee_position[1]),
+                                        float(ee_position[2]+0.002)])
+        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         prc.wait()
         ve = -0.1
         dist_to_move = 0.5
