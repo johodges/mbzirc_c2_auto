@@ -40,7 +40,7 @@
     </include>
 
     <model name='wrench10'>
-      <pose>60.165 -23.75 0.545 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.17 -23.75 0.545 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>
@@ -80,7 +80,7 @@
     </model>
 
     <model name='wrench12'>
-      <pose>60.165 -23.55 0.535 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.17 -23.55 0.535 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>
@@ -120,7 +120,7 @@
     </model>
 
     <model name='wrench13'>
-      <pose>60.165 -23.70 0.53 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.17 -23.70 0.53 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>
@@ -160,7 +160,7 @@
     </model>
 
     <model name='wrench15'>
-      <pose>60.17 -23.60 0.52 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.175 -23.60 0.52 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>
@@ -200,7 +200,7 @@
     </model>
 
     <model name='wrench18'>
-      <pose>60.17 -23.80 0.505 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.175 -23.80 0.505 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>
@@ -240,7 +240,7 @@
     </model>
 
     <model name='wrench19'>
-      <pose>60.17 -23.65 0.50 1.7 0 -1.57079632679</pose> <static>0</static>
+      <pose>60.175 -23.65 0.50 1.7 0 -1.57079632679</pose> <static>0</static>
       <link name='link'>
         <inertial>
           <mass>0.0847</mass>

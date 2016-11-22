@@ -299,16 +299,19 @@ class idwrench():
                 (hi1,hi2,len2[c,0],len2[c,1]) = cv2.boundingRect(cnt[c])
 
             # Store all relevant features in a single matrix
-            params = np.zeros([6,6])
+            params = np.zeros([6,8])
             params[:,0:2] = cen2
             params[:,2:4] = len2
-            params[:,4:] = area2.reshape((6,1))
+            params[:,4:5] = area2.reshape((6,1))
             # Sort contour list by x position
             ind = np.argsort(params[:,0])
-
+            cnt2 = []
+            for i in range(0,len(cnt)):
+                cnt2.append(cnt[ind[i]])
             # Sort feature matrix by x position of centroid
             params = params[params[:,0].argsort()]
-            return params, cnt
+
+            return params, cnt2
 
         # This subroutine applies a Gaussian voting algorithm to determine which
         # wrench is the correct one using the diameter, length, and area from each
@@ -339,23 +342,32 @@ class idwrench():
         # This subroutine generates an image showing the probability that each
         # wrench is the correct one. It returns one image with all the probabilities
         # shown and one image with only the best match shown.
-        def visualize_probability(img, vote_result, n, circs, cnt):
+        def visualize_probability(img, vote_result, n, params, cnt):
             img_kmeans = img.copy()
-            print circs
             # Visualize the probabilities
             for i in range(self.n_wr):
                 c = int(round(vote_result[i]*255))
-                cv2.circle(img_kmeans,(int(circs[i,0]),int(circs[i,1])), 
-                    int(circs[i,2]), (0,c,255-c), 2, cv2.CV_AA)
+                #cv2.circle(img_kmeans,(int(circs[i,0]),int(circs[i,1])), 
+                #    int(circs[i,2]), (0,c,255-c), 2, cv2.CV_AA)
+                #print "d,x,y: ", params[i,5:8]
+                #print "params[i,:]: ", params[i,:]
+                cv2.circle(img_kmeans,(int(params[i,6]),int(params[i,7])), 
+                    int(params[i,5]), (0,c,255-c), 2, cv2.CV_AA)
                 cv2.drawContours(img_kmeans, cnt[i], -1, (0,c,255-c), 3)
+                #cv2.imshow('Prob',img_kmeans)
+                #cv2.waitKey(0)
             img_kmeans_id = img_kmeans.copy()
             # Visualize the best match
             img_id = img.copy()
-            cv2.circle(img_id,(int(circs[n,0]),int(circs[n,1])), 
-                int(circs[n,2]), (0,255,0), 2, cv2.CV_AA)
+            #cv2.circle(img_id,(int(circs[n,0]),int(circs[n,1])), 
+            #    int(circs[n,2]), (0,255,0), 2, cv2.CV_AA)
+            cv2.circle(img_id,(int(params[n,6]),int(params[n,7])), 
+                    int(params[n,5]), (0,255,0), 2, cv2.CV_AA)
             cv2.drawContours(img_id, cnt[n], -1, (0,255,0), 3)
-            cv2.circle(img_kmeans_id,(int(circs[n,0]),int(circs[n,1])), 
-                int(circs[n,2]), (255,0,0), 2, cv2.CV_AA)
+            #cv2.circle(img_kmeans_id,(int(circs[n,0]),int(circs[n,1])), 
+            #    int(circs[n,2]), (255,0,0), 2, cv2.CV_AA)
+            cv2.circle(img_kmeans_id,(int(params[n,6]),int(params[n,7])), 
+                    int(params[n,5]), (255,0,0), 2, cv2.CV_AA)
             cv2.drawContours(img_kmeans_id, cnt[n], -1, (255,0,0), 3)
             return img_kmeans, img_id, img_kmeans_id
 
@@ -391,14 +403,25 @@ class idwrench():
             cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
             # Detect geometry
             params, contours = detect_geometry(img_seg)
+            print "Circles: ", circles
             # Store circle diameters in feature matrix
-            params[:,5:] = circles[:,2:]
+            for i in range(0,self.n_wr):
+                x_dist = abs(circles[:,0]-params[i,0])
+                ind = x_dist.argsort()
+                ind2 = ind[0]
+                print "i: ", i
+                print "All distances: ", x_dist
+                print "Index of minimum distance: ", ind2
+                params[i,5] = circles[ind2,2]
+                params[i,6] = circles[ind2,0]
+                params[i,7] = circles[ind2,1]
+            #params[:,6:] = circles[:,2:]
             print params
             # Vote using the three parameters to determine correct wrench
             vote_result, wrench_ind = voting(params)
             # Visualize the probabilities and the best match
             img_kmeans, img_id, img_kmeans_id = visualize_probability(img_crop, vote_result,
-                wrench_ind, circles, contours)
+                wrench_ind, params, contours)
             cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
             cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
             # Publish results
@@ -409,8 +432,8 @@ class idwrench():
             ee_position = rospy.get_param('ee_position')
             wrench_position = rospy.get_param('wrench')
             xA = wrench_position[0]-ee_position[0]
-            row = int(round(circles[wrench_ind,1]))
-            col = int(round(circles[wrench_ind,0]))
+            row = int(round(params[wrench_ind,7]))
+            col = int(round(params[wrench_ind,6]))
             self.wrench_id_px = np.array([row,col],dtype=np.float32)
             camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
             camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
