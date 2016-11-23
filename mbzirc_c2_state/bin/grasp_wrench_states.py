@@ -280,7 +280,7 @@ class MoveToWrench(smach.State):
             ct = 0
             ee_position[0] = ee_position[0]+0.06
 
-            while ee_position[0] < xA+0.461-0.145:
+            while ee_position[0] < xA+0.461-0.152:
                 rospy.sleep(0.1)
                 prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                 prc.wait()
@@ -290,15 +290,20 @@ class MoveToWrench(smach.State):
                 wrench_id = rospy.get_param('wrench_ID_m')
                 rospy.sleep(0.1)
                 ee_position = rospy.get_param('ee_position')
+                rospy.sleep(0.1)
+                wrench_id_px = rospy.get_param('wrench_ID')
+                rospy.sleep(0.1)
                 print "wrench_id", wrench_id
                 print "ee_position", ee_position
+                print "************************************************"
+                print "Wrench_id_px: ", wrench_id_px
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.20)+0.008*ct # 0.134 distance from camera to left_tip   
+                ee_position[0] = (xA + 0.461-0.20)+0.005*ct # 0.134 distance from camera to left_tip   
                 #ee_position[0] = ee_position[0]+0.005 #
-                ee_position[1] = ee_position[1]+wrench_id[1]*0.05
-                ee_position[2] = ee_position[2]+wrench_id[2]*0.05
+                ee_position[1] = ee_position[1]+wrench_id[1]*0.5
+                ee_position[2] = ee_position[2]+wrench_id[2]*0.5
                 rospy.set_param('ee_position', [float(ee_position[0]),
                                                 float(ee_position[1]),
                                                 float(ee_position[2])])
@@ -359,7 +364,8 @@ class GraspWrench(smach.State):
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
-        prc.wait()
+        rospy.sleep(5)
+        #prc.wait()
         #ee_position = rospy.get_param('ee_position')
         #rospy.set_param('ee_position', [float(ee_position[0]),
         #                                float(ee_position[1]),
@@ -383,8 +389,10 @@ class GraspWrench(smach.State):
             twi_pub.publish(twist)
             ct_move = ct_move+1
             rospy.sleep(sleep_time)
-        prc.wait()
-
+        #prc.wait()
+        rospy.sleep(0.1)
+        rospy.set_param('smach_state','wrenchGrasped')
+        rospy.sleep(0.1)
         status = rospy.get_param('smach_state')
 
         if status == 'wrenchGrasped':

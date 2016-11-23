@@ -495,7 +495,7 @@ class orient():
                         di = 0.1
                     self.goal.target_pose.pose = Pose(Point(self.x0+di*np.sin(self.yaw),self.y0-di*np.cos(self.yaw),0), Quaternion(q[0],q[1],q[2],q[3]))
                     """
-                    tar_glo = np.dot(self.R,[bearing.data[1]-3,wrenc_y+offset])
+                    tar_glo = np.dot(self.R,[bearing.data[1]-2,wrenc_y+offset])
                     x_wre = tar_glo[0]+self.x0
                     y_wre = tar_glo[1]+self.y0
                     self.goal.target_pose.pose = Pose(Point(x_wre,y_wre,0), Quaternion(q[0],q[1],q[2],q[3]))
