@@ -70,6 +70,8 @@
 <xacro:property name="tipLength" value="0.05"/>
 <xacro:property name="tipWidth" value="0.03"/>
 <xacro:property name="tipMass" value="2.07"/>
+<xacro:property name="tip_close_limit" value="0.05"/> 
+<xacro:property name="tip_open_limit" value="0.6"/> 
 
 <xacro:property name="cameraSize" value="0.025"/>
 <xacro:property name="cameraMass" value="0.05"/>
@@ -129,10 +131,11 @@
 <joint name="left_tip_hinge" type="revolute">
   <parent link="link2"/>
   <child link="left_tip"/>
-<origin xyz="0.0125 0 0.00025" rpy="0 0 -${PI/2}" />
+<origin xyz="0.0125 0.001 0.0005" rpy="0 0 -${PI/2}" />
   <axis xyz="0 0 1" rpy="0 0 0" />
   <!-- limit effort="100" velocity="5" lower="-0.037" upper="0.6" / -->
-  <limit effort="100" velocity="5" lower="-0.2" upper="0.6" />
+  <!-- limit effort="100" velocity="5" lower="-0.2" upper="0.6" / -->
+  <limit effort="100" velocity="1" lower="${tip_close_limit}" upper="${tip_open_limit}" />
   <joint_properties damping="0.0" friction="10.0"/>
 </joint>
 
@@ -160,10 +163,11 @@
 <joint name="right_tip_hinge" type="revolute">
   <parent link="link2"/>
   <child link="right_tip"/>
-<origin xyz="-0.0125 0 0.00025" rpy="0 0 ${PI/2}" />
+<origin xyz="-0.0125 0.001 0.0005" rpy="0 0 ${PI/2}" />
   <axis xyz="0 0 1" rpy="0 0 0" />
   <!-- limit effort="100" velocity="5" lower="-0.6" upper="0.037" / -->
-  <limit effort="100" velocity="5" lower="-0.6" upper="0.2" />
+  <!-- limit effort="100" velocity="5" lower="-0.6" upper="0.2" / -->
+  <limit effort="100" velocity="1" lower="-${tip_open_limit}" upper="-${tip_close_limit}" />
   <joint_properties damping="0.0" friction="10.0"/>
 </joint>
 
@@ -236,5 +240,21 @@
     <mechanicalReduction>1</mechanicalReduction>
   </actuator>
 </transmission>
+
+<!--adding the gripper tag-->
+<gazebo>
+  <gripper name="gripper">
+    <grasp_check>
+      <attach_steps>2</attach_steps>
+      <detach_steps>5000</detach_steps>
+      <min_contact_count>1</min_contact_count>
+    </grasp_check>
+    <!--gripper_link>right_tip</gripper_link-->
+    <!--gripper_link>left_tip</gripper_link-->
+    <gripper_link>link2</gripper_link>
+    <palm_link>link2</palm_link>
+  </gripper>
+</gazebo>
+
 
 </robot>
