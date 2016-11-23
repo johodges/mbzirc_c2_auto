@@ -55,8 +55,9 @@
         <surface>
           <friction>
             <ode>
-              <mu>100</mu>
-              <mu2>50</mu2>
+              <mu>5</mu>
+              <mu2>5</mu2>
+              <fdir1>1 1 1</fdir1>
             </ode>
           </friction>
           <!-- bounce>
