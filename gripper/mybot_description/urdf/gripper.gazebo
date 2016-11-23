@@ -11,41 +11,44 @@
 
   <gazebo reference="link2">
   <material>Gazebo/Black</material>
-    <kp>10000.0</kp>
+    <kp>100000</kp>
     <!-- kp and kd for rubber -->
-    <kd>100.0</kd>
-    <mu1>10.0</mu1>
+    <kd>1.0</kd>
+    <mu1>1.0</mu1>
     <mu2>1.0</mu2>
-    <fdir1>1 1 1</fdir1>
+    <!--fdir1>1 1 1</fdir1-->
     <!-- is this correct? -->
-    <maxVel>1.0</maxVel>
-    <minDepth>0.00</minDepth>
+    <maxVel>0.01</maxVel>
+    <minDepth>0.001</minDepth>
+    <maxContacts>4</maxContacts>
   </gazebo>
 
   <gazebo reference="left_tip">
   <material>Gazebo/Black</material>
-    <kp>10000.0</kp>
+    <kp>10000</kp>
     <!-- kp and kd for rubber -->
-    <kd>100.0</kd>
-    <mu1>10.0</mu1>
+    <kd>10.0</kd>
+    <mu1>1.0</mu1>
     <mu2>1.0</mu2>
-    <fdir1>1 1 1</fdir1>
+    <!--fdir1>1 1 1</fdir1-->
     <!-- is this correct? -->
-    <maxVel>1.0</maxVel>
-    <minDepth>0.00</minDepth>
+    <maxVel>0.01</maxVel>
+    <minDepth>0.001</minDepth>
+    <maxContacts>2</maxContacts>
   </gazebo>
 
   <gazebo reference="right_tip">
   <material>Gazebo/Black</material>
-    <kp>10000.0</kp>
+    <kp>10000</kp>
     <!-- kp and kd for rubber -->
-    <kd>100.0</kd>
-    <mu1>10.0</mu1>
+    <kd>10.0</kd>
+    <mu1>1.0</mu1>
     <mu2>1.0</mu2>
-    <fdir1>1 1 1</fdir1>
+    <!--fdir1>1 1 1</fdir1-->
     <!-- is this correct? -->
-    <maxVel>1.0</maxVel>
-    <minDepth>0.00</minDepth>
+    <maxVel>0.01</maxVel>
+    <minDepth>0.001</minDepth>
+    <maxContacts>2</maxContacts>
   </gazebo>
 
 <gazebo>
@@ -78,7 +81,7 @@
     <rightJoint>right_tip_hinge</rightJoint>
     <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
     <wheelDiameter>${2*wheelRadius}</wheelDiameter>
-    <torque>20</torque>
+    <torque>100</torque>
     <commandTopic>gripper/cmd_vel</commandTopic>
     <odometryTopic>mybot/odom_diffdrive</odometryTopic>
     <odometryFrame>odom</odometryFrame>

@@ -1,6 +1,32 @@
 <?xml version="1.0"?>
 <sdf version="1.4">
 <world name="myworld">
+    <physics type='ode'>
+      <!-- max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate -->
+      <gravity>0 0 -9.8</gravity>
+    </physics>
+
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <!-- A global light source -->
+   <scene>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+   </scene>
+
+
+
 	<include>
 		<uri>model://sun</uri>
 	</include>
@@ -28,13 +54,13 @@
  <surface>
               <friction>
                 <ode>
-                  <mu>5</mu>
-                  <mu2>5</mu2>
-              <fdir1>1 1 1</fdir1>
+                  <mu>0.1</mu>
+                  <mu2>0.1</mu2>
+              <!--fdir1>1 1 1</fdir1-->
                 </ode>
               </friction>
             </surface>
-          <max_contacts>10</max_contacts>
+          <!--max_contacts>10</max_contacts-->
         </collision>
         <gravity>1</gravity>
       </link>
@@ -65,11 +91,11 @@
     </model>
 
     <model name='wrench'>
-      <pose>0.739 0.247 0.47817 1.57079632679 0 1.57079632679</pose>
+      <pose>0.739 0.247 0.44317 1.57079632679 0 1.57079632679</pose>
       <static>0</static>
       <link name='link'>
  <inertial>
-     <mass>0.0847</mass>
+     <mass>0.01</mass>
 <pose>0 0 0 -0.122173 0 0</pose>
         <inertia> 
           <ixx>0.000185</ixx>   
@@ -83,21 +109,21 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>file://wrench.DAE</uri>
+              <uri>file://wrench.DAE</uri> <scale>1.46 1.46 1</scale>
             </mesh>
           </geometry>
         </visual>
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>file://wrench.DAE</uri>
+              <uri>file://wrench.DAE</uri> <scale>1.46 1.46 1</scale>
             </mesh>
           </geometry>
       <surface>
         <friction>
           <ode>
-            <mu>0.3</mu>
-            <mu2>0.3</mu2>
+            <mu>1</mu>
+            <mu2>1</mu2>
           </ode>
         </friction>
       </surface>
