@@ -303,6 +303,7 @@ class orient():
             # the far left end of the box. If we cannot, move along the box to the left 2m.
             # If we can, rotate 90 degrees around the box.
             if self.flag == 2:
+                    xA = bearing.data[1]
                     # Determine bounds of camera FOV
                     camera_y_mx = xA*np.tan(self.camera_fov_h/2)
                     camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)

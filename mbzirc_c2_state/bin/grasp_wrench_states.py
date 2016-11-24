@@ -300,7 +300,7 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.20)+0.005*ct # 0.134 distance from camera to left_tip   
+                ee_position[0] = (xA + 0.461-0.17)+0.005*ct # 0.134 distance from camera to left_tip   
                 #ee_position[0] = ee_position[0]+0.005 #
                 ee_position[1] = ee_position[1]+wrench_id[1]*0.5
                 ee_position[2] = ee_position[2]+wrench_id[2]*0.5
@@ -373,7 +373,7 @@ class GraspWrench(smach.State):
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
         ve = -0.1
-        dist_to_move = 0.5
+        dist_to_move = 0.2
         sleep_time = 0.1
         time_to_move = abs(dist_to_move/ve)
         twist = Twist()

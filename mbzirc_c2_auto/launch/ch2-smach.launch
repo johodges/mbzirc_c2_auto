@@ -15,10 +15,16 @@
 <!-- include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" / -->
 
 <node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine.py" output='screen'/>
-<!-- node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/ -->
+<node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/>
 
 <!-- node name="board" pkg="mbzirc_c2_auto" type="panel-k.sh" / -->
-<!-- node name="image_view" pkg="image_view" type="image_view">
+<node name="image_view" pkg="image_view" type="image_view">
   <remap from="image" to="/mybot/camera1/image_raw"/>
-</node -->
+</node>
+
+<node name="image_view2" pkg="image_view" type="image_view">
+  <remap from="image" to="/wrench_prob_id_image"/>
+</node>
+
+
 </launch>
