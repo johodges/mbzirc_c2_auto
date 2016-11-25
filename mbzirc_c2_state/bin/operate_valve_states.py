@@ -297,7 +297,7 @@ class RotateValve(smach.State):
                                        'turnedValve'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto rotate.py", shell=True)
+        prc = subprocess.Popen("rosrun mbzirc_grasping rotate_valve.py", shell=True)
         prc.wait()
 
         return rospy.get_param('smach_state')
