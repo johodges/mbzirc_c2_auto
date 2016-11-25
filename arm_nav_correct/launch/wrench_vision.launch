@@ -1,0 +1,22 @@
+<launch>
+  <node pkg="arm_nav_correct" name="wrench_vision" type="wrench_vision.py" output="screen">
+
+    <remap from="/input_arm_cam" to="/mybot/camera1/image_raw" />
+    <remap from="camera_frame_id" to="camera" />
+
+    <rosparam>
+       medianBlur_ksize: 5
+       GaussianBlur_ksize_width: 15
+       GaussianBlur_ksize_height: 15
+       GaussianBlur_sigmaX: 0
+       GaussianBlur_sigmaY: 0
+       HoughCircles_dp: 1
+       HoughCircles_minDist: 20
+       HoughCircles_param1: 50
+       HoughCircles_param2: 30
+       HoughCircles_minRadius: 30
+       HoughCircles_maxRadius: 100
+    </rosparam>
+
+  </node>
+</launch>
