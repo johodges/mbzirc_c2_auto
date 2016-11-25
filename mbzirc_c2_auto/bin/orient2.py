@@ -303,6 +303,7 @@ class orient():
             # the far left end of the box. If we cannot, move along the box to the left 2m.
             # If we can, rotate 90 degrees around the box.
             if self.flag == 2:
+                    xA = bearing.data[1]
                     # Determine bounds of camera FOV
                     camera_y_mx = xA*np.tan(self.camera_fov_h/2)
                     camera_y_mn = -1*xA*np.tan(self.camera_fov_h/2)
@@ -326,7 +327,7 @@ class orient():
                         print "ymx, ymn:", ymx, ymn
 
                         # Define the target location in the local coordinate system
-                        tar_loc = np.array([[xmn+0.5],[ymx+3]])
+                        tar_loc = np.array([[xmn+0.5],[ymx+2]])
                         # print "Target loc in local coord and local sys:", tar_loc
 
                         # Convert local object and target locations to global coordinate system
@@ -470,11 +471,11 @@ class orient():
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                offset = -0.2
+                offset = -0.1
                 wrenc_y = (1-self.w_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
                 wrenc_z = (1-self.w_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
                 # Check if we are centered between valve and wrenches
-                if abs(wrenc_y+offset) <= 0.25:
+                if abs(wrenc_y+offset) <= 0.15:
                     print "Victory!"
 
                     # Calculate the object location in local coordinate system
@@ -495,7 +496,7 @@ class orient():
                         di = 0.1
                     self.goal.target_pose.pose = Pose(Point(self.x0+di*np.sin(self.yaw),self.y0-di*np.cos(self.yaw),0), Quaternion(q[0],q[1],q[2],q[3]))
                     """
-                    tar_glo = np.dot(self.R,[bearing.data[1]-3,wrenc_y+offset])
+                    tar_glo = np.dot(self.R,[bearing.data[1]-2,wrenc_y+offset])
                     x_wre = tar_glo[0]+self.x0
                     y_wre = tar_glo[1]+self.y0
                     self.goal.target_pose.pose = Pose(Point(x_wre,y_wre,0), Quaternion(q[0],q[1],q[2],q[3]))

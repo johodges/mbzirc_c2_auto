@@ -250,7 +250,7 @@ class drive2valve():
                 update_rot()
 
                 # Check if we are centered between valve and wrenches
-                if abs(vw_off) <= 50:
+                if abs(vw_off) <= 500:
                     print "Victory!"
                     xA = bearing.data[1]
                     yA = bearing.data[2]
@@ -266,7 +266,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 1
+                    po = 0.7
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2
