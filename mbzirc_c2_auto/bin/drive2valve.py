@@ -230,11 +230,11 @@ class drive2valve():
                 print "Valve in local coordinates: ", valve
                 valve = valve+[tf_x,tf_y,tf_z]
                 print "Valve in global coordinates: ", valve
-                rospy.set_param('valve',[float(valve[0]), float(valve[1]), float(valve[2])])
+                rospy.set_param('valve2',[float(valve[0]), float(valve[1]), float(valve[2])])
                 # Set the current position of the end effector with respect to the base
                 rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
-                rospy.set_param('stow_position',[float(tf_x), float(tf_y), float(tf_z)])
-                rospy.set_param('current_joint_state',[0,0,0,0,0,0])
+                #rospy.set_param('stow_position',[float(tf_x), float(tf_y), float(tf_z)])
+                #rospy.set_param('current_joint_state',[0,0,0,0,0,0])
                 rospy.set_param('ugv_position',[self.x0,self.y0,0,self.X0,self.Y0,self.Z0,self.W0])
                 rospy.set_param('smach_state','valvepos')
                 rospy.signal_shutdown('Ending node.')
@@ -266,7 +266,7 @@ class drive2valve():
                     y_loc = ((ymx-ymn)/2)+ymn
                     print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.7
+                    po = 0.8
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
                     self.flag = 2

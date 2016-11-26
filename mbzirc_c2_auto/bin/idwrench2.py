@@ -45,9 +45,9 @@ class idwrench():
 
         self.d_mu = 22.0 # Diameter of correct wrench in pixels
         self.d_sig = 3.8 # Uncertainty in diameter
-        self.l_mu = 336 # Length of correct wrench in pixels 
+        self.l_mu = 450 # Length of correct wrench in pixels 
         self.l_sig = 25.0 # Uncertainty in length
-        self.a_mu = 9208 # Area of correct wrench in pixels
+        self.a_mu = 17500 # Area of correct wrench in pixels
         self.a_sig = 2000 # Uncertainty in area
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 

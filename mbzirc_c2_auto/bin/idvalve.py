@@ -34,6 +34,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
+import matplotlib.pyplot as plt
 # from decimal import *
 # import tf
 # import math
@@ -56,12 +57,16 @@ class move2op():
 
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
+        self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
         self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
         self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
         rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c, queue_size=1)
 
     def shutdown(self):
         rospy.sleep(1)
+
+    def callback_bearing(self, bearing):
+        self.xA = bearing.data[1]
 
     # callback_v_c is used to store the valve center topic into the class to be
     # referenced by the other callback routines.
@@ -79,25 +84,90 @@ class move2op():
         cimg = cv2.medianBlur(cv_image,5)
         cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
 
-        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=500)
+        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=50, param2=30, minRadius=50, maxRadius=200)
 
         if circles is not None:
-            # Determine the center of the valve in the image
-            mn = min(circles[0,:,0])
-            idx = np.argwhere(circles[0,:,0] == mn)
-            i = circles[0,:][idx][0][0]
-            val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
+            center_x = circles[0,:,0]
+            center_y = circles[0,:,1]
+            radius = circles[0,:,2]
+            for n in range(len(circles[0,:,1])):
+                cv2.circle(cimg,(center_x[n],center_y[n]), radius[n],
+                    (0,0,244), 2, cv2.CV_AA)
 
-            ee_position = rospy.get_param('ee_position')
-            valve = rospy.get_param('valve')
-            xA = valve[0]-ee_position[0]
+            z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
+            # Run K-means to determine centers and to which group each point belongs.
+            term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
+            flag = cv2.KMEANS_RANDOM_CENTERS
+            #ret = []
+            #ret_old = 99999999999
+            #ret_flag = 0
+            #for i in range(1,8):
+            #    ret2, labels, centers = cv2.kmeans(z, i, term_crit, 100, flag)
+            #    print ret2
+            #    if ret2 < 1000000 and i > 1:
+            #        ret_flag = 1
+            #    if ret_flag == 0:
+            #        ret.append(ret2)
+            #    ret_old = ret2
+            #ret = np.asarray(ret)
+            #ret_ind = np.argmin(ret)
+            #k = ret_ind+1
+            #print "Best number of clusters is: ", k
+            #print "Best ret is: ", ret[ret_ind]
+            k = 3
+            ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+            hihi, bin_edges = np.histogram(labels, bins=3, range=[0,2])
+            print hihi
+
+            mn = np.min(hihi)
+            ind = np.argmin(hihi)
+            rospy.logdebug("All k-means centers: %s", " ".join(str(x) for x in centers))
+            if mn < 50:
+                rospy.logdebug("Optimum number of groups is 3")
+                sz = np.shape(centers)
+                centers2 = np.zeros([sz[0]-1,sz[1]])
+                ct = 0
+                for i in range(0,3):
+                    if i != ind:
+                        centers2[ct,:] = centers[i,:]
+                        ct = ct + 1
+                centers = centers2
+            else:
+                rospy.logdebug("Optimum number of groups is 2")
+                k = 2
+                ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+            centers = centers[centers[:,0].argsort()]
+            print "Updated k-means centers: ", centers
+            # Determine the center of the valve in the image
+            cents = centers.copy()
+            sz_full = np.shape(cimg)
+            cents[:,0] = centers[:,0] - sz_full[1]/2
+            cents[:,1] = centers[:,1] - sz_full[0]/2
+            cents = np.multiply(cents,cents)
+            dist = np.zeros([k,1])
+
+            for i in range(0,2):
+                dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
+            dist_loc = np.argmin(dist)
+            rospy.logdebug("Minimum distance from center: %s", str(dist_loc))
+            if len(dist) > 1:
+               dist[dist_loc] = 99999999
+               dist_loc = np.argmin(dist)
+            else:
+               dist_loc = dist_loc
+            rospy.logdebug("Minimum distance from center 2nd place: %s", str(dist_loc))
+            val_loc = [centers[dist_loc,0],centers[dist_loc,1]]
+            rospy.logdebug("Valve location in px: %s %s", str(val_loc[0]), str(val_loc[1]))
+            #cv2.imshow('All Circles',cimg)
+            #cv2.waitKey(0)
+            cv2.imwrite('/home/jonathan/valveID_0_circs.png',cimg)
             rospy.logdebug("Valve in pixels: %s", " ".join(str(x) for x in val_loc))
 
             # Find camera dimensions wrt the base coordinate system
-            camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
-            camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
-            camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
-            camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
+            camera_y_mx = self.xA*np.arctan(self.camera_fov_h/2)
+            camera_y_mn = -1*self.xA*np.arctan(self.camera_fov_h/2)
+            camera_z_mx = self.xA*np.arctan(self.camera_fov_v/2)
+            camera_z_mn = -1*self.xA*np.arctan(self.camera_fov_v/2)
             rospy.logdebug("Camera ymn/ymx: %s %s", str(camera_y_mn), str(camera_y_mx))
             rospy.logdebug("Camera zmn/zmx: %s %s", str(camera_z_mn), str(camera_z_mx))
 
@@ -105,7 +175,7 @@ class move2op():
             valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
             valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
 
-            self.valve_id = np.array([xA, valve_y, valve_z],dtype=np.float32)
+            self.valve_id = np.array([self.xA, valve_y, valve_z],dtype=np.float32)
             rospy.logdebug("Valve in m: %s", " ".join(str(x) for x in self.valve_id))
             rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
             err = np.power(valve_y*valve_y+valve_z*valve_z,0.5)
@@ -118,13 +188,13 @@ class move2op():
                 # Valve not centered, publish new move parameters
                 rospy.set_param('smach_state','valveOffCenter')
                 valve_ID_ready_pos = rospy.get_param('valve')
-                valve_ID_ready_pos[0] = valve[0]
+                valve_ID_ready_pos[0] = self.xA
                 valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.25*self.valve_id[1]
                 valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.25*self.valve_id[2]
 
-                rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
-                                                float(valve_ID_ready_pos[1]),
-                                                float(valve_ID_ready_pos[2])])
+                #rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
+                #                                float(valve_ID_ready_pos[1]),
+                #                                float(valve_ID_ready_pos[2])])
 
                 rospy.set_param('valve', [float(valve_ID_ready_pos[0]),
                                           float(valve_ID_ready_pos[1]),

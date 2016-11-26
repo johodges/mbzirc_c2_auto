@@ -224,7 +224,7 @@ def main():
                                    transitions={'readyToGrasp' : 'GRASP_WRENCH'})
 
             smach.StateMachine.add('GRASP_WRENCH', GraspWrench(),
-                                   transitions={'wrenchGrasped' : 'MOVE_WRENCH_READY',
+                                   transitions={'wrenchGrasped' : 'readyToOperate',
                                                 'gripFailure' : 'droppedWrench'},
                                    remapping={'got_wrench' : 'have_wrench'})
 

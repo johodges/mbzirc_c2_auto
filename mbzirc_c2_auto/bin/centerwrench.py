@@ -62,6 +62,7 @@ class centerwrench():
     # shutdown runs when this node dies
     def shutdown(self):
         rospy.sleep(1)
+
     def callback_bearing(self, bearing):
         self.xA = bearing.data[1]
 

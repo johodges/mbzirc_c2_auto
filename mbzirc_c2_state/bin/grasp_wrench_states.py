@@ -364,31 +364,31 @@ class GraspWrench(smach.State):
 
     def execute(self, userdata):
         prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
-        rospy.sleep(5)
+        rospy.sleep(2)
         #prc.wait()
-        #ee_position = rospy.get_param('ee_position')
-        #rospy.set_param('ee_position', [float(ee_position[0]),
-        #                                float(ee_position[1]),
-        #                                float(ee_position[2])])
-        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        #prc.wait()
-        ve = -0.1
-        dist_to_move = 0.2
-        sleep_time = 0.1
-        time_to_move = abs(dist_to_move/ve)
-        twist = Twist()
-        twist.linear.x = ve
-        twist.linear.y = 0
-        twist.linear.z = 0
-        twist.angular.x = 0
-        twist.angular.y = 0
-        twist.angular.z = 0
-        twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
-        ct_move = 0
-        while ct_move*sleep_time < time_to_move:
-            twi_pub.publish(twist)
-            ct_move = ct_move+1
-            rospy.sleep(sleep_time)
+        ee_position = rospy.get_param('ee_position')
+        rospy.set_param('ee_position', [float(ee_position[0]-0.2),
+                                        float(ee_position[1]),
+                                        float(ee_position[2])])
+        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        prc.wait()
+        #ve = -0.1
+        #dist_to_move = 0.2
+        #sleep_time = 0.1
+        #time_to_move = abs(dist_to_move/ve)
+        #twist = Twist()
+        #twist.linear.x = ve
+        #twist.linear.y = 0
+        #twist.linear.z = 0
+        #twist.angular.x = 0
+        #twist.angular.y = 0
+        #twist.angular.z = 0
+        #twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+        #ct_move = 0
+        #while ct_move*sleep_time < time_to_move:
+        #    twi_pub.publish(twist)
+        #    ct_move = ct_move+1
+        #    rospy.sleep(sleep_time)
         #prc.wait()
         rospy.sleep(0.1)
         rospy.set_param('smach_state','wrenchGrasped')
