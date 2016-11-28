@@ -72,7 +72,7 @@ class idwrench():
 
     # shutdown runs when this node dies
     def shutdown(self):
-        rospy.sleep(1)
+        rospy.sleep(0.1)
 
     # callback_wrench takes the RGB image and determines the (x,y,z) location of
     # the correct wrench.

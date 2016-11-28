@@ -114,7 +114,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://stem/meshes/stem.dae</uri>
+            <uri>model://stem/meshes/stem2.dae</uri>
             <scale>0.0005 0.0005 0.0005</scale>
           </mesh>
         </geometry>

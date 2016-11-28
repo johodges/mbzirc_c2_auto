@@ -110,104 +110,111 @@ class laser_listener():
 
                     # Check if the scan is just right
                     else:
-
-                        # Plot the scan if desired
-                        if plot_flag == 1:
-                            plt.plot(y_coord2[i][1:xlen],x_coord2[i][1:xlen],'r-')
-
-                        # Find median angle of scan
-                        ang = np.median(y2[i])
-                        idx = np.argwhere(y2[i] == ang)
-
-                        # If no median exists because an even number of entries, ignore
-                        # the first entry to make it an odd number of entries
-                        if len(idx) == 0:
-                            ang = np.median(y2[i][1:xlen])
+                        mxmx = max(iii for iii in x_coord2[i] if iii < 10)
+                        print "Max range of object: ", mxmx
+                        if mxmx > 0.5:
+                            # Plot the scan if desired
+                            if plot_flag == 1:
+                                plt.plot(y_coord2[i][1:xlen],x_coord2[i][1:xlen],'r-')
+    
+                            # Find median angle of scan
+                            ang = np.median(y2[i])
                             idx = np.argwhere(y2[i] == ang)
-
-                        # Store minimum and maximum extents of scan
-                        xmn = min(x_coord2[i][1:xlen])
-                        xmx = max(x_coord2[i][1:xlen])
-                        ymn = min(y_coord2[i][1:xlen])
-                        ymx = max(y_coord2[i][1:xlen])
-
-                        # Store physical (x,y) coordinates in local system of median
-                        # angle of scan
-                        xA = x_coord2[i][idx]
-                        yA = y_coord2[i][idx]
-
-                        # Store physical (x,y) coordinates in local system of minimum
-                        # range of scan
-                        idx2 = np.argwhere(x_coord2[i] == xmn)
-                        xB = x_coord2[i][idx2]
-                        yB = y_coord2[i][idx2]
-
-                        # Determine which way the robot needs to rotate based on the
-                        # physical orientations of the median and minimum scans
-                        m = (yB-yA)/(xB-xA)
-                        m2 = 1/m
-                        theta2 = math.atan(-m2/1)
-                        b2 = yA-m2*xA
-                        d = 2
-                        t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
-                        t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
-
-                        xc1 = pow(-t1+(t1*t1-4*t2),0.5)/2
-                        xc2 = pow(-t1-(t1*t1-4*t2),0.5)/2
-                        yc1 = m2*xc1+b2
-                        yc2 = m2*xc2+b2
-                        #tmp = pow(-m2*m2*xA*xA+2*m2*xA*(yA-b2)-yA*yA+2*b2*yA-b2*b2+d*d*(m2*m2+1),0.5)
-                        #xc3 = -1*(tmp-xA-m2*(yA-b2))/(m2*m2+1)
-
-                        #yc3 = m2*xc3+b2
-                        e = pow(xA*xA+yA*yA,0.5)
-                        xc3 = xA-d*np.cos(theta2)
-                        yc3 = yA-d*np.sin(theta2)
-                        #e = d*np.sin(theta2)/(np.sin(math.radians(90)-theta2))
-                        # print e
-                        #xc3 = e*np.cos(math.radians(90)-theta2)
-                        #yc3 = e*np.sin(math.radians(90)-theta2)
-                        #print m, m2
-                        #print xc1, yc1
-                        #print xc2, yc2
-                        #print xc3, yc3, math.degrees(theta2)
-                        if math.isnan(xc2) == 1:
-                            xC = xc1
-                            yC = yc1
-                        else:
-                            xC = xc2
-                            yC = yc2
-
-                        # print xc3, yc3, math.degrees(theta2)
-                        # print xA, yA
-                        # print xB, yB
-                        # print e
-                        #print xC, yC, math.degrees(theta2)
-
-                        if xA > xB:
-                            if yA > yB:
-                                if debug_flag == 1:
-                                    print "xA > xB, yA > yB"
-                                rot = -1
+    
+                            # If no median exists because an even number of entries, ignore
+                            # the first entry to make it an odd number of entries
+                            if len(idx) == 0:
+                                ang = np.median(y2[i][1:xlen])
+                                idx = np.argwhere(y2[i] == ang)
+    
+                            # Store minimum and maximum extents of scan
+                            xmn = min(x_coord2[i][1:xlen])
+                            xmx = max(x_coord2[i][1:xlen])
+                            ymn = min(y_coord2[i][1:xlen])
+                            ymx = max(y_coord2[i][1:xlen])
+    
+                            # Store physical (x,y) coordinates in local system of median
+                            # angle of scan
+                            #mmm = min(iii for iii in x_coord2[i] if iii > 0.5)
+                            xA_thresh = x_coord2[i]
+                            xA = np.median(xA_thresh[xA_thresh > 0.5])
+                            #xA = mxmx #np.median(x_coord2[i])
+                            #xA = x_coord2[i][idx]
+                            yA = y_coord2[i][idx]
+    
+                            # Store physical (x,y) coordinates in local system of minimum
+                            # range of scan
+                            #print "x_coord2: ", x_coord2[i]
+                            idx2 = np.argwhere(x_coord2[i] == xmn)
+                            xB = x_coord2[i][idx2]
+                            yB = y_coord2[i][idx2]
+    
+                            # Determine which way the robot needs to rotate based on the
+                            # physical orientations of the median and minimum scans
+                            m = (yB-yA)/(xB-xA)
+                            m2 = 1/m
+                            theta2 = math.atan(-m2/1)
+                            b2 = yA-m2*xA
+                            d = 2
+                            t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
+                            t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
+    
+                            xc1 = pow(-t1+(t1*t1-4*t2),0.5)/2
+                            xc2 = pow(-t1-(t1*t1-4*t2),0.5)/2
+                            yc1 = m2*xc1+b2
+                            yc2 = m2*xc2+b2
+                            #tmp = pow(-m2*m2*xA*xA+2*m2*xA*(yA-b2)-yA*yA+2*b2*yA-b2*b2+d*d*(m2*m2+1),0.5)
+                            #xc3 = -1*(tmp-xA-m2*(yA-b2))/(m2*m2+1)
+    
+                            #yc3 = m2*xc3+b2
+                            e = pow(xA*xA+yA*yA,0.5)
+                            xc3 = xA-d*np.cos(theta2)
+                            yc3 = yA-d*np.sin(theta2)
+                            #e = d*np.sin(theta2)/(np.sin(math.radians(90)-theta2))
+                            # print e
+                            #xc3 = e*np.cos(math.radians(90)-theta2)
+                            #yc3 = e*np.sin(math.radians(90)-theta2)
+                            #print m, m2
+                            #print xc1, yc1
+                            #print xc2, yc2
+                            #print xc3, yc3, math.degrees(theta2)
+                            if math.isnan(xc2) == 1:
+                                xC = xc1
+                                yC = yc1
                             else:
-                                if debug_flag == 1:
-                                    print "xA > xB, yA < yB"
-                                rot = 1
-                        else:
-                            if yA > yB:
-                                if debug_flag == 1:
-                                    print "xA < xB, yA > yB"
-                                rot = -1
+                                xC = xc2
+                                yC = yc2
+    
+                            # print xc3, yc3, math.degrees(theta2)
+                            # print xA, yA
+                            # print xB, yB
+                            # print e
+                            #print xC, yC, math.degrees(theta2)
+    
+                            if xA > xB:
+                                if yA > yB:
+                                    if debug_flag == 1:
+                                        print "xA > xB, yA > yB"
+                                    rot = -1
+                                else:
+                                    if debug_flag == 1:
+                                        print "xA > xB, yA < yB"
+                                    rot = 1
                             else:
-                                if debug_flag == 1:
-                                    print "xA < xB, yA < yB"
-                                rot = 1
-
-                        # Output the bearing for publishing
-                        bearing = np.array([theta2,xA,yA,xB,yB,xmn,xmx,ymn,ymx,xc3,yc3], dtype=np.float32)
-                        if debug_flag == 1:
-                            print bearing
-
+                                if yA > yB:
+                                    if debug_flag == 1:
+                                        print "xA < xB, yA > yB"
+                                    rot = -1
+                                else:
+                                    if debug_flag == 1:
+                                        print "xA < xB, yA < yB"
+                                    rot = 1
+    
+                            # Output the bearing for publishing
+                            bearing = np.array([theta2,xA,yA,xB,yB,xmn,xmx,ymn,ymx,xc3,yc3],    dtype=np.float32)
+                            if debug_flag == 1:
+                                print bearing
+    
         # If bearing does not exist, publish [0,0] instead
         if 'bearing' in locals():
             hihi = 1
