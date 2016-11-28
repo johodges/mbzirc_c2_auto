@@ -31,15 +31,15 @@ def move():
 	arm.set_joint_value_target('ur5_arm_elbow_joint', cjs[2])
 	arm.set_joint_value_target('ur5_arm_wrist_1_joint', cjs[3])
 	arm.set_joint_value_target('ur5_arm_wrist_2_joint', cjs[4])
-	arm.set_joint_value_target('ur5_arm_wrist_3_joint', 3.14) #3.14159)
+	arm.set_joint_value_target('ur5_arm_wrist_3_joint', 0.0) #3.14159)
 
 	traj = arm.plan()
 
 	arm.execute(traj)
 
 	rospy.sleep(5.0)
-        jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],3.14159,0,0]
-        arm.set_joint_value_target('ur5_arm_wrist_3_joint', -3.14)
+        jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],0.0,0,0]
+        arm.set_joint_value_target('ur5_arm_wrist_3_joint', -6.28)
 
 	traj = arm.plan()
 
