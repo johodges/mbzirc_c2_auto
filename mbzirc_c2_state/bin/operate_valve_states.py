@@ -30,6 +30,7 @@ import rospy
 import smach
 import subprocess
 import numpy as np
+from geometry_msgs.msg import Twist
 
 class StowArm(smach.State):
     """Moves the arm to stow position
@@ -51,9 +52,29 @@ class StowArm(smach.State):
         rospy.set_param('ee_position', [float(stow_pos[0]),
                                         float(stow_pos[1]),
                                         float(stow_pos[2])])
-
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = stow_pos[0]
+        tw.linear.y = stow_pos[1]
+        tw.linear.z = stow_pos[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
 
         move_arm_state = rospy.get_param('move_arm_status')
         #move_arm_state = 'success'
@@ -132,8 +153,30 @@ class MoveToValveReady(smach.State):
 
         # rospy.spin()
 
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = valve_ID_ready_pos[0]
+        tw.linear.y = valve_ID_ready_pos[1]
+        tw.linear.z = 0.3
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
+
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
 
         move_state = rospy.get_param('move_arm_status')
 
@@ -246,10 +289,34 @@ class ServoToValve(smach.State):
 
     def execute(self, userdata):
         # Execute the arm servo
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+        ee_position = rospy.get_param('ee_position')
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = ee_position[0]
+        tw.linear.y = ee_position[1]
+        tw.linear.z = ee_position[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
+
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
 
         # Return the state outcome
+
         move_state = rospy.get_param('move_arm_status')
         if move_state == 'success':
             return 'moveSuccess'

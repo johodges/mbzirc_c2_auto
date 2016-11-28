@@ -61,11 +61,32 @@ class MoveToReady(smach.State):
             rospy.set_param('ee_position', [float(curr_pos[0]),
                                             float(curr_pos[1]),
                                             float(curr_pos[2])])
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = curr_pos[0]
+        tw.linear.y = curr_pos[1]
+        tw.linear.z = curr_pos[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
 
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
 
-        move_state = rospy.get_param('move_arm_status')
+        #move_state = rospy.get_param('move_arm_status')
 
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
@@ -120,10 +141,32 @@ class MoveToWrenchReady(smach.State):
                                         float(wrench_ready_pos[1]),
                                         float(wrench_ready_pos[2])])
 
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = wrench_ready_pos[0]
+        tw.linear.y = wrench_ready_pos[1]
+        tw.linear.z = wrench_ready_pos[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
 
-        move_state = rospy.get_param('move_arm_status')
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
+
+        #move_state = rospy.get_param('move_arm_status')
 
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
@@ -224,8 +267,31 @@ class MoveToWrench(smach.State):
         rospy.set_param('ee_position', [float(wrench_id[0]),
                                         float(wrench_id[1]),
                                         float(wrench_id[2])])
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = wrench_id[0]
+        tw.linear.y = wrench_id[1]
+        tw.linear.z = wrench_id[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
+
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
         ve = 0.1
         dist_to_move = 0.2
         sleep_time = 0.1
@@ -276,12 +342,13 @@ class MoveToWrench(smach.State):
             print "Wrench ID: ", wrench_id
             thresh = 10
             xA = 20
-            ee_position = [0,0,0]
-            ct = 0
+            ee_position = rospy.get_param('ee_position')
+            ct3 = 0
             ee_position[0] = ee_position[0]+0.06
 
             while ee_position[0] < xA+0.461-0.152:
                 rospy.sleep(0.1)
+
                 prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                 prc.wait()
                 rospy.sleep(0.1)
@@ -300,7 +367,7 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.20)+0.005*ct # 0.134 distance from camera to left_tip   
+                ee_position[0] = (xA + 0.461-0.20)+0.005*ct3 # 0.134 distance from camera to left_tip   
                 #ee_position[0] = ee_position[0]+0.005 #
                 ee_position[1] = ee_position[1]+wrench_id[1]*0.5
                 ee_position[2] = ee_position[2]+wrench_id[2]*0.5
@@ -312,9 +379,32 @@ class MoveToWrench(smach.State):
                 rospy.sleep(0.1)
                 print "***********************************************"
                 print "New ee_position", ee_position
-                prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-                prc.wait()
-                ct = ct+1
+
+                move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+                goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+                tw = Twist()
+                tw.linear.x = ee_position[0]
+                tw.linear.y = ee_position[1]
+                tw.linear.z = ee_position[2]
+                flag = 0; ct = 0; ct2 = 0
+        
+                while flag == 0:
+                    while ct < 5:
+                        goal_pub.publish(tw)
+                        ct = ct+1
+                        rospy.sleep(0.1)
+                    move_state = rospy.get_param('move_arm_status')
+                    if move_state == 'moveFailed':
+                        ct = 0
+                        ct2 = ct2+1
+                    if move_state == 'success':
+                        flag = 1
+                    if ct2 > 5:
+                        flag = 1
+
+                #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+                #prc.wait()
+                ct3 = ct3+1
             print "We are close enough! Distance = ", dist
             return 'atWrench'
 
@@ -370,8 +460,32 @@ class GraspWrench(smach.State):
         rospy.set_param('ee_position', [float(ee_position[0]-0.2),
                                         float(ee_position[1]),
                                         float(ee_position[2])])
-        prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        prc.wait()
+
+        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+        tw = Twist()
+        tw.linear.x = ee_position[0]
+        tw.linear.y = ee_position[1]
+        tw.linear.z = ee_position[2]
+        flag = 0; ct = 0; ct2 = 0
+        
+        while flag == 0:
+            while ct < 5:
+                goal_pub.publish(tw)
+                ct = ct+1
+                rospy.sleep(0.1)
+            move_state = rospy.get_param('move_arm_status')
+            if move_state == 'moveFailed':
+                ct = 0
+                ct2 = ct2+1
+            if move_state == 'success':
+                flag = 1
+            if ct2 > 5:
+                flag = 1
+
+        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+        #prc.wait()
+
         #ve = -0.1
         #dist_to_move = 0.2
         #sleep_time = 0.1

@@ -11,15 +11,15 @@ import numpy as np
 if __name__ == '__main__':
     rospy.init_node('move_arm_pub', anonymous=True)
     goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-    ee_position = rospy.get_param('ee_position')
+    #ee_position = rospy.get_param('ee_position')
     ct = 0
     twist = Twist()
-    twist.linear.x = ee_position[0]+0.2
-    twist.linear.y = ee_position[1]
-    twist.linear.z = ee_position[2]+0.2
+    twist.linear.x = 1
+    twist.linear.y = 0.2
+    twist.linear.z = 0.6
 
     print twist
-    while ct < 1000:
+    while ct < 10:
         goal_pub.publish(twist)
         ct = ct+1
         rospy.sleep(0.1)

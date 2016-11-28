@@ -80,12 +80,24 @@ class move2op():
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
+        try:
+            img_count = rospy.get_param('img_count')
+            img_count = img_count + 1
+        except:
+            img_count = 0
+        print "****************************************************"
+        print "Image count: ", img_count
+        #'/home/jonathan/idvalve_' + str(img_count) + '.png'
+        cv2.imwrite('/home/jonathan/idvalve_rgb_%s.png' % str(img_count),cv_image)
+        cv_image_gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         lower = np.array([0,0,100], dtype = "uint8")
         upper = np.array([50,50,255], dtype = "uint8")
         mask = cv2.inRange(cv_image, lower, upper)
         output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
         cimg = cv2.medianBlur(output,5)
         cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
+        cv2.imwrite('/home/jonathan/idvalve_gra_%s.png' % str(img_count),cv_image_gray)
+        rospy.set_param('img_count',img_count)
         #cv2.imshow('Gray',cimg)
         #cv2.waitKey(0)
         circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=1, maxRadius=200)
