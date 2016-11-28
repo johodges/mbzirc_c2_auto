@@ -67,11 +67,11 @@ class move2op():
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-    if random.random() < 0.1:
-        rospy.set_param('smach_state','wrenchFell')
-    else:
+    #if random.random() < 0.1:
+    #    rospy.set_param('smach_state','wrenchFell')
+    #else:
         rospy.set_param('smach_state','wrenchOnValve')
-        rospy.sleep(10)
+        rospy.sleep(5)
 
 if __name__ == '__main__':
     try:

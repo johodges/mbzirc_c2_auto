@@ -64,7 +64,7 @@ class move_arm_param():
         self.arm.allow_replanning(True)
 
         # Allow some leeway in position (meters) and orientation (radians)
-        self.arm.set_goal_position_tolerance(0.01)
+        self.arm.set_goal_position_tolerance(0.001)
         self.arm.set_goal_orientation_tolerance(0.01)
 
         # Set the target pose from the input

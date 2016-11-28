@@ -1,7 +1,9 @@
 <launch>	  
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">	    
 		<arg name="world_name" value="$(find mybot_gazebo)/worlds/mybot.world"/>	    
-		<arg name="gui" value="true"/>	  
+		<arg name="gui" value="true"/>
+ 		<!--arg name="paused" value="true" /-->	 
+ 
 	</include>	
 
 <!-- urdf xml robot description loaded on the Parameter Server, converting the xacro into a proper urdf file-->

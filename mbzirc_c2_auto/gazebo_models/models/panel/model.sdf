@@ -55,8 +55,9 @@
         <surface>
           <friction>
             <ode>
-              <mu>100</mu>
-              <mu2>50</mu2>
+              <mu>5</mu>
+              <mu2>5</mu2>
+              <fdir1>1 1 1</fdir1>
             </ode>
           </friction>
           <!-- bounce>
@@ -100,8 +101,8 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <ambient>1 0.3 0.3 1</ambient>
+          <diffuse>1 0.7 0.7 1</diffuse>
           <specular>0.01 0.01 0.01 1</specular>
           <emissive>0 0 0 1</emissive>
         </material>
@@ -147,7 +148,7 @@
         </dynamics>
       </axis>
     </joint>
-    <static>0</static>
+    <static>1</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

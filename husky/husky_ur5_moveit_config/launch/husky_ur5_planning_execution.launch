@@ -6,6 +6,12 @@
   <!-- Remap follow_joint_trajectory -->
   <remap if="$(arg real)" from="arm_controller/follow_joint_trajectory" to="follow_joint_trajectory"/>
 
+  <!-- We do not have a robot connected, so publish fake joint states -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <rosparam param="/source_list">[/move_group/fake_controller_joint_states]</rosparam>
+  </node>
+
   <!-- Launch moveit -->
   <include file="$(find husky_ur5_moveit_config)/launch/move_group.launch">
     <arg name="debug" default="$(arg debug)" />

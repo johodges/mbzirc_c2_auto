@@ -1,0 +1,9 @@
+<robot name="wrench12">
+  <link name="wrench12">
+    <visual>
+      <geometry>
+        <mesh filename="package://mbzirc_c2_auto)/gazebo_models/models/wrenches/wrench.DAE"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

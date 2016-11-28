@@ -60,7 +60,7 @@ if __name__ == '__main__':
     th = -1
     twist.angular.z = th*turn
     ct = 0
-    tot_time = 3
+    tot_time = 30000
 
     while ct*rest_time < tot_time:
         pub.publish(twist)
