@@ -80,13 +80,34 @@ class move2op():
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-
-        cimg = cv2.medianBlur(cv_image,5)
+        lower = np.array([0,0,100], dtype = "uint8")
+        upper = np.array([50,50,255], dtype = "uint8")
+        mask = cv2.inRange(cv_image, lower, upper)
+        output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
+        cimg = cv2.medianBlur(output,5)
         cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
-
-        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=50, param2=30, minRadius=50, maxRadius=200)
-
+        #cv2.imshow('Gray',cimg)
+        #cv2.waitKey(0)
+        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=1, maxRadius=200)
+        print np.shape(circles)
         if circles is not None:
+            center_x = circles[0,:,0]
+            center_y = circles[0,:,1]
+            radius = circles[0,:,2]
+            z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
+            term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
+            flag = cv2.KMEANS_RANDOM_CENTERS
+            k = 1
+            ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+
+            radius_med = np.median(radius)
+            print "Center location: ", centers[0]
+            print "Median radius: ", radius_med
+            val_loc = [(centers[0][0]),(centers[0][1])]
+            """
+            *************************************************************
+            All of this code was done without color detection and may be useful in the future.
+            *************************************************************
             center_x = circles[0,:,0]
             center_y = circles[0,:,1]
             radius = circles[0,:,2]
@@ -98,22 +119,6 @@ class move2op():
             # Run K-means to determine centers and to which group each point belongs.
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
-            #ret = []
-            #ret_old = 99999999999
-            #ret_flag = 0
-            #for i in range(1,8):
-            #    ret2, labels, centers = cv2.kmeans(z, i, term_crit, 100, flag)
-            #    print ret2
-            #    if ret2 < 1000000 and i > 1:
-            #        ret_flag = 1
-            #    if ret_flag == 0:
-            #        ret.append(ret2)
-            #    ret_old = ret2
-            #ret = np.asarray(ret)
-            #ret_ind = np.argmin(ret)
-            #k = ret_ind+1
-            #print "Best number of clusters is: ", k
-            #print "Best ret is: ", ret[ret_ind]
             k = 3
             ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
             hihi, bin_edges = np.histogram(labels, bins=3, range=[0,2])
@@ -144,24 +149,37 @@ class move2op():
             cents[:,0] = centers[:,0] - sz_full[1]/2
             cents[:,1] = centers[:,1] - sz_full[0]/2
             cents = np.multiply(cents,cents)
-            dist = np.zeros([k,1])
 
-            for i in range(0,2):
-                dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
-            dist_loc = np.argmin(dist)
-            rospy.logdebug("Minimum distance from center: %s", str(dist_loc))
-            if len(dist) > 1:
-               dist[dist_loc] = 99999999
-               dist_loc = np.argmin(dist)
+            cents2 = centers.copy()
+            cents2[0,0] = centers[0,0]-centers[1,0]
+            cents2[0,1] = centers[0,1]-centers[1,1]
+            cents2 = np.multiply(cents2,cents2)
+            dist2 = np.power(cents2[0,0]+cents2[0,1],0.5)/2
+            if dist2 > 50:
+                rospy.logdebug("Optimum number of groups is 2")
+                dist = np.zeros([k,1])
+                for i in range(0,2):
+                    dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
+                dist_loc = np.argmin(dist)
+                rospy.logdebug("Minimum distance from center: %s", str(dist_loc))
+                if len(dist) > 1:
+                   dist[dist_loc] = 99999999
+                   dist_loc = np.argmin(dist)
+                else:
+                   dist_loc = dist_loc
+                rospy.logdebug("Minimum distance from center 2nd place: %s", str(dist_loc))
+                val_loc = [centers[dist_loc,0],centers[dist_loc,1]]
             else:
-               dist_loc = dist_loc
-            rospy.logdebug("Minimum distance from center 2nd place: %s", str(dist_loc))
-            val_loc = [centers[dist_loc,0],centers[dist_loc,1]]
+                rospy.logdebug("Optimum number of groups is 1")
+                k = 1
+                ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+                val_loc = [centers[0,0],centers[0,1]]
             rospy.logdebug("Valve location in px: %s %s", str(val_loc[0]), str(val_loc[1]))
             #cv2.imshow('All Circles',cimg)
             #cv2.waitKey(0)
             cv2.imwrite('/home/jonathan/valveID_0_circs.png',cimg)
             rospy.logdebug("Valve in pixels: %s", " ".join(str(x) for x in val_loc))
+            """
 
             # Find camera dimensions wrt the base coordinate system
             camera_y_mx = self.xA*np.arctan(self.camera_fov_h/2)
@@ -189,8 +207,8 @@ class move2op():
                 rospy.set_param('smach_state','valveOffCenter')
                 valve_ID_ready_pos = rospy.get_param('valve')
                 valve_ID_ready_pos[0] = self.xA
-                valve_ID_ready_pos[1] = valve_ID_ready_pos[1]+0.25*self.valve_id[1]
-                valve_ID_ready_pos[2] = valve_ID_ready_pos[2]+0.25*self.valve_id[2]
+                valve_ID_ready_pos[1] = self.valve_id[1]
+                valve_ID_ready_pos[2] = self.valve_id[2]
 
                 #rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]-0.5),
                 #                                float(valve_ID_ready_pos[1]),

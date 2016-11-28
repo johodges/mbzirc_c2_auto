@@ -118,7 +118,7 @@ class MoveToValveReady(smach.State):
         rospy.sleep(0.1)
         ee_position = rospy.get_param('ee_position')
         rospy.sleep(0.1)
-        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.5
+        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
         valve_ID_ready_pos[2] = valve_ID_ready_pos[2]
         print "Valve ID ready pos: ", valve_ID_ready_pos
         print "ee_position: ", ee_position
@@ -214,14 +214,14 @@ class MoveToValve(smach.State):
         diff = (valve[0]+0.461)-ee_position[0]
         print "****************************************"
         print "xA, ee_position, diff: ", valve[0]+0.461, ee_position[0], diff
-        if diff > 0.3:
-            rospy.set_param('ee_position', [float(ee_position[0]+0.05),
-                                            float(ee_position[1]),
-                                            float(ee_position[2])])
+        if diff > 0.08:
+            rospy.set_param('ee_position', [float(ee_position[0]+0.005),
+                                            float(ee_position[1]+valve[1]*0.5),
+                                            float(ee_position[2]+valve[2]*0.5)])
             return 'servoArm'
 
         else:
-            if diff < 0.3:
+            if diff < 0.08:
             #if userdata.valve_centered_in:
                 return 'moveForward'
             else:
@@ -280,8 +280,8 @@ class MoveToOperate(smach.State):
         diff = (valve[0]+0.461)-ee_position[0]
         print "****************************************"
         print "Diff: ", diff
-        if diff < 0.2:
-            rospy.set_param('ee_position', [float(ee_position[0]+0.1),
+        if diff < 0.03:
+            rospy.set_param('ee_position', [float(ee_position[0]+0.005),
                                             float(ee_position[1]),
                                             float(ee_position[2])])
             prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
