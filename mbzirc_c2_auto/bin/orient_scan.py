@@ -111,7 +111,7 @@ class laser_listener():
                     # Check if the scan is just right
                     else:
                         mxmx = max(iii for iii in x_coord2[i] if iii < 10)
-                        print "Max range of object: ", mxmx
+                        #print "Max range of object: ", mxmx
                         if mxmx > 0.5:
                             # Plot the scan if desired
                             if plot_flag == 1:
