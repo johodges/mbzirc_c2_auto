@@ -489,7 +489,7 @@ class GraspWrench(smach.State):
         rospy.sleep(2)
         #prc.wait()
         ee_position = rospy.get_param('ee_position')
-        ee_position[0] = ee_position[0]-0.2
+        ee_position[0] = ee_position[0]-0.1
         rospy.set_param('ee_position', [float(ee_position[0]),
                                         float(ee_position[1]),
                                         float(ee_position[2])])
