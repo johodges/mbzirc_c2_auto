@@ -267,16 +267,36 @@ class MoveToValve(smach.State):
 
     def execute(self, userdata):
         rospy.Subscriber('/move_arm/valve_pos_kf', Twist, self.callback)
+        ee_pub = rospy.Publisher("/move_arm/valve_pos", Twist, queue_size=1)
         rospy.sleep(0.1)
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
-        diff = (valve[0]+0.461)-ee_position[0]
-        print "****************************************"
-        print "xA, ee_position, diff: ", valve[0]+0.461, ee_position[0], diff
+        diff = valve[0]
+        #print "****************************************"
+        #print "xA, ee_position, diff: ", valve[0]+0.461, ee_position[0], diff
         if diff > 0.08:
-            rospy.set_param('ee_position', [float(ee_position[0]+0.005),
-                                            float(ee_position[1]+valve[1]*0.5),
-                                            float(ee_position[2]+valve[2]*0.5)])
+            ee_position[0] = ee_position[0]+0.005
+            print "ee_position before Kalman filter", ee_position
+            print "************************************************"
+            ee_twist = Twist()
+            ee_twist.linear.x = ee_position[0]
+            ee_twist.linear.y = valve[1]
+            ee_twist.linear.z = valve[2]
+            ee_pub.publish(ee_twist)
+            rospy.sleep(0.1)
+            tw = self.valve_pos_kf
+            print "Estimated pose from Kalman filter: ", tw
+
+            ee_position[1] = ee_position[1]+tw.linear.y
+            ee_position[2] = ee_position[2]+tw.linear.z
+            rospy.set_param('ee_position', [float(ee_position[0]),
+                                                float(ee_position[1]),
+                                                float(ee_position[2])])
+            rospy.sleep(0.1)
+            print "***********************************************"
+            print "ee_position after Kalman filter", ee_position
+            ee_twist.linear.y = ee_position[1]
+            ee_twist.linear.z = ee_position[2]
             return 'servoArm'
 
         else:

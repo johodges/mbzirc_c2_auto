@@ -54,6 +54,7 @@ class move2op():
         self.camera_fov_v = 1.5708
         self.camera_pix_h = 1920
         self.camera_pix_v = 1080
+        self.ct5 = 0
 
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
@@ -98,26 +99,52 @@ class move2op():
         output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
         cimg = cv2.medianBlur(output,5)
         cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('Image before circles',cimg)
+        #cv2.waitKey(0)
         cv2.imwrite('/home/jonathan/idvalve_gra_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image_gray)
         rospy.set_param('img_count',img_count)
         #cv2.imshow('Gray',cimg)
         #cv2.waitKey(0)
-        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=1, maxRadius=200)
+        rad_px = int(130*340/(1000*self.xA))
+        print "Estimated pixel radius: ", rad_px
+
+        #circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=15, minRadius=rad_px-10, maxRadius=rad_px+10)
+        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=rad_px-10, maxRadius=rad_px+10)
+        cv2.imshow('Image before circles',cimg)
+        
         print np.shape(circles)
         if circles is not None:
+            img_hou_all = cimg.copy()
             center_x = circles[0,:,0]
             center_y = circles[0,:,1]
             radius = circles[0,:,2]
+            for n in range(len(circles[0,:,1])):
+                cv2.circle(img_hou_all,(center_x[n],center_y[n]), radius[n],
+                    (255,255,255), 2, cv2.CV_AA)
+            cv2.imshow('Image after circles', img_hou_all)
+
             z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
             k = 1
             ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-
+            #cv2.waitKey(0)
             radius_med = np.median(radius)
             print "Center location: ", centers[0]
             print "Median radius: ", radius_med
             val_loc = [(centers[0][0]),(centers[0][1])]
+            k_y = 0.22*308/(self.xA*1000)
+            k_z = 0.27*308/(self.xA*1000)
+            stem_y = int(centers[0][0]+k_y*(centers[0][0]-1920/2))
+            stem_z = int(centers[0][1]+k_z*(centers[0][1]-1080/2))
+            img_circ_med = cv_image.copy()
+            cv2.circle(img_circ_med,(centers[0][0],centers[0][1]), radius_med,
+                    (0,255,0), 2, cv2.CV_AA)
+            cv2.circle(img_circ_med,(stem_y,stem_z), 5,
+                    (255,0,0), 2, cv2.CV_AA)
+            cv2.imwrite('/home/jonathan/idvalve_vis_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),img_circ_med)
+            cv2.imshow('Image median circle', img_circ_med)
+            cv2.waitKey(0)
             """
             *************************************************************
             All of this code was done without color detection and may be useful in the future.
@@ -211,7 +238,10 @@ class move2op():
             rospy.logdebug("Valve in m: %s", " ".join(str(x) for x in self.valve_id))
             rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
             err = np.power(valve_y*valve_y+valve_z*valve_z,0.5)
-            if err < 0.01:
+            if err < 0.003:
+                rospy.set_param('valve', [float(self.xA),
+                                          float(0.0),
+                                          float(0.0)])
                 # Valve is centered no other action required
                 rospy.set_param('smach_state','valveCenter')
                 rospy.logdebug("*****************************************************")
@@ -232,7 +262,9 @@ class move2op():
                                           float(valve_ID_ready_pos[1]),
                                           float(valve_ID_ready_pos[2])])
         else:
-            rospy.set_param('smach_state','valveNotFound')
+            self.ct5 = self.ct5 + 1
+            if self.ct5 > 25:
+                rospy.set_param('smach_state','valveNotFound')
 
         rospy.signal_shutdown('Ending node.')
 

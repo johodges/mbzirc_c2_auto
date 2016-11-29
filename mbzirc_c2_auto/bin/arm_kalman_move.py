@@ -100,8 +100,8 @@ class arm_kalman:
 
 
 def main(args):
-  # rospy.init_node('arm_kalman', anonymous=True, log_level=rospy.DEBUG)
-  rospy.init_node('arm_kalman', anonymous=True, log_level=rospy.INFO)
+  rospy.init_node('arm_kalman', anonymous=True, log_level=rospy.DEBUG)
+  # rospy.init_node('arm_kalman', anonymous=True, log_level=rospy.INFO)
   kf = arm_kalman()
   try:
     rospy.spin()
