@@ -44,6 +44,8 @@ def move():
     # Stop any current arm movement
     arm.stop()
 
+    rospy.set_param('smach_state','turnedValve')
+
     #Shut down MoveIt! cleanly
     moveit_commander.roscpp_shutdown()
     moveit_commander.os._exit(0)
