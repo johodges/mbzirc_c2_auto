@@ -82,6 +82,13 @@ class InitSimulation(smach.State):
         if userdata.sim_type_in is not 'normal':
             rospy.set_param('wrench',[1.3494152516567712, 0.20670606484791776, 0.36069096929131383])
             rospy.set_param('valve',[1.3494152516567712, 0.4806854679264738, 0.21677653795777196])
+            rospy.set_param('ugv_position',[2.264628423236346-3.639,
+                                           -1.3395932893079656+1.3967,
+                                            0.0,
+                                            0.0,
+                                            0.0,
+                                           -0.04051637848621451,
+                                            0.9991788744135666])
             rospy.set_param('ee_position',[0.486, 0.109, 0.620])
             rospy.set_param('stow_position',[0.486, 0.109, 0.620])
             rospy.set_param('current_joint_state', [0, 0, 0, 0, 0, 0])
@@ -138,7 +145,7 @@ def main():
         sm_wrench.userdata.move_counter = 0
         sm_wrench.userdata.max_move_retries = 1
         sm_wrench.userdata.have_wrench = False
-        sm_wrench.userdata.sim_type_wrench = 'wrenchTest'
+        sm_wrench.userdata.sim_type_wrench = 'normal'
 
         sm_valve.userdata.move_counter = 0
         sm_valve.userdata.max_move_retries = 1
