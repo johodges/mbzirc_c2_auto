@@ -70,8 +70,8 @@ class move_arm_topic():
         self.arm.allow_replanning(True)
 
         # Allow some leeway in position (meters) and orientation (radians)
-        self.arm.set_goal_position_tolerance(0.001)
-        self.arm.set_goal_orientation_tolerance(0.01)
+        self.arm.set_goal_position_tolerance(0.0001)
+        self.arm.set_goal_orientation_tolerance(0.001)
 
         # Set the target pose from the input
         self.target_pose = PoseStamped()
