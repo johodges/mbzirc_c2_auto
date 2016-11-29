@@ -69,7 +69,7 @@ class MoveToReady(smach.State):
         tw.linear.y = curr_pos[1]
         tw.linear.z = curr_pos[2]
         flag = 0; ct = 0; ct2 = 0
-        
+
         while flag == 0:
             while ct < 5:
                 goal_pub.publish(tw)
@@ -149,7 +149,7 @@ class MoveToWrenchReady(smach.State):
         tw.linear.y = wrench_ready_pos[1]
         tw.linear.z = wrench_ready_pos[2]
         flag = 0; ct = 0; ct2 = 0
-        
+
         while flag == 0:
             while ct < 5:
                 goal_pub.publish(tw)
@@ -280,7 +280,7 @@ class MoveToWrench(smach.State):
         tw.linear.y = wrench_id[1]
         tw.linear.z = wrench_id[2]
         flag = 0; ct = 0; ct2 = 0
-        
+
         while flag == 0:
             while ct < 5:
                 goal_pub.publish(tw)
@@ -332,7 +332,7 @@ class MoveToWrench(smach.State):
         ct = 0
         rest_time = 0.1
         tot_time = 3
-    
+
         while ct*rest_time < tot_time:
             gripper_pub.publish(twist)
             rospy.sleep(0.1)
@@ -393,7 +393,7 @@ class MoveToWrench(smach.State):
                 rospy.sleep(0.1)
                 tw = self.valve_pos_kf
                 print "Estimated pose from Kalman filter: ", tw
-                
+
                 #ee_position[0] = ee_position[0]+0.005 #
                 ee_position[1] = ee_position[1]+tw.linear.y
                 ee_position[2] = ee_position[2]+tw.linear.z
@@ -417,7 +417,7 @@ class MoveToWrench(smach.State):
                 #tw.linear.y = ee_position[1]
                 #tw.linear.z = ee_position[2]
                 flag = 0; ct = 0; ct2 = 0
-        
+
                 while flag == 0:
                     while ct < 5:
                         goal_pub.publish(ee_twist)
@@ -479,7 +479,9 @@ class GraspWrench(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['wrenchGrasped',
-                                       'gripFailure'],
+                                       'gripFailure',
+                                       'wrenchTestDone'],
+                             input_keys=['sim_type_in'],
                              output_keys=['got_wrench'])
 
     def execute(self, userdata):
@@ -499,7 +501,7 @@ class GraspWrench(smach.State):
         tw.linear.y = ee_position[1]
         tw.linear.z = ee_position[2]
         flag = 0; ct = 0; ct2 = 0
-        
+
         while flag == 0:
             while ct < 5:
                 goal_pub.publish(tw)
@@ -543,6 +545,9 @@ class GraspWrench(smach.State):
         if status == 'wrenchGrasped':
             userdata.got_wrench = True
 
-        return status
+        if userdata.sim_type_in == 'normal':
+            return status
+        else:
+            return 'wrenchTestDone'
 
 
