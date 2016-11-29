@@ -66,7 +66,8 @@ class move2op():
         rospy.sleep(1)
 
     def callback_bearing(self, bearing):
-        self.xA = bearing.data[1]
+        ee_position = rospy.get_param('ee_position')
+        self.xA = bearing.data[1]+0.461-ee_position[0]
 
     # callback_v_c is used to store the valve center topic into the class to be
     # referenced by the other callback routines.
@@ -88,7 +89,8 @@ class move2op():
         print "****************************************************"
         print "Image count: ", img_count
         #'/home/jonathan/idvalve_' + str(img_count) + '.png'
-        cv2.imwrite('/home/jonathan/idvalve_rgb_%s.png' % str(img_count),cv_image)
+        
+        cv2.imwrite('/home/jonathan/idvalve_rgb_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image)
         cv_image_gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         lower = np.array([0,0,100], dtype = "uint8")
         upper = np.array([50,50,255], dtype = "uint8")
@@ -96,7 +98,7 @@ class move2op():
         output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
         cimg = cv2.medianBlur(output,5)
         cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
-        cv2.imwrite('/home/jonathan/idvalve_gra_%s.png' % str(img_count),cv_image_gray)
+        cv2.imwrite('/home/jonathan/idvalve_gra_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image_gray)
         rospy.set_param('img_count',img_count)
         #cv2.imshow('Gray',cimg)
         #cv2.waitKey(0)
