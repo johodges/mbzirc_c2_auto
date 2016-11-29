@@ -71,7 +71,7 @@
 <xacro:property name="tipWidth" value="0.03"/>
 <xacro:property name="tipMass" value="2.07"/>
 <xacro:property name="tip_close_limit" value="0.05"/> 
-<xacro:property name="tip_open_limit" value="0.6"/> 
+<xacro:property name="tip_open_limit" value="1.0"/> 
 
 <xacro:property name="cameraSize" value="0.025"/>
 <xacro:property name="cameraMass" value="0.05"/>

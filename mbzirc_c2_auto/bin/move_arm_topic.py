@@ -31,7 +31,7 @@ class move_arm_topic():
         # Name this node, it must be unique
         rospy.init_node('move_arm', anonymous=False)
         rospy.on_shutdown(self.cleanup) # Set rospy to execute a shutdown function when exiting
-        self.flag = 0
+        self.ready_for_goal = 0
         self.ct = 0
 
         # Set up ROS subscriber callback routines
@@ -93,7 +93,7 @@ class move_arm_topic():
         #self.jt.joint_state = data
 
     def cb_goal(self, data):
-        if self.flag == 0:
+        if self.ready_for_goal == 0:
             rospy.loginfo("Recieved new goal.")
             self.target_pose.pose.position.x = data.linear.x
             self.target_pose.pose.position.y = data.linear.y
@@ -118,27 +118,27 @@ class move_arm_topic():
                 # Execute the planned trajectory
                 self.move_succeeded = self.arm.execute(traj)
 
-                self.flag = 1
+                self.ready_for_goal = 1
                 #rospy.set_param('current_joint_state',jt)
         else:
             rospy.loginfo("Recieved new goal before finishing motion. Ignoring.")
     # callback_feedback is used to store the feedback topic into the class to be
     # referenced by the other callback routines.
     def cb_stat(self, data):
-        if self.flag == 1:
+        if self.ready_for_goal == 1:
             self.status = data.status_list[0].status
 
             if self.move_succeeded:
                 # rospy.sleep(5)
                 rospy.loginfo('Successful Arm Move')
                 rospy.set_param('move_arm_status','success')
-                self.flag = 2
+                self.ready_for_goal = 2
             else:
                 rospy.loginfo('Arm Move Failed')
                 rospy.set_param('move_arm_status','failure')
-                self.flag = 2
-        if self.flag == 2:
-            self.flag = 0
+                self.ready_for_goal = 2
+        if self.ready_for_goal == 2:
+            self.ready_for_goal = 0
             #self.cleanup()
             #rospy.signal_shutdown('Ending node.')
 

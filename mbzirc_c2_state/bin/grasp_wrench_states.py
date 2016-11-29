@@ -31,6 +31,7 @@ import rospy
 import smach
 import subprocess
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
+from mbzirc_c2_auto.msg import kf_msg
 
 class MoveToReady(smach.State):
     """Moves the arm to the ready state from the stowed state
@@ -252,6 +253,9 @@ class MoveToWrench(smach.State):
                                          'max_retries'],
                              output_keys=['move_counter_out'])
 
+    def callback(self, data):
+        self.valve_pos_kf = data
+
     def execute(self, userdata):
         rospy.sleep(0.1)
         wrench_id = rospy.get_param('wrench_ID_m')
@@ -346,6 +350,19 @@ class MoveToWrench(smach.State):
             ct3 = 0
             ee_position[0] = ee_position[0]+0.06
 
+            kf = kf_msg()
+            kf_pub = rospy.Publisher("/move_arm/kf_init", kf_msg, queue_size=1, latch=True)
+            ee_pub = rospy.Publisher("/move_arm/valve_pos", Twist, queue_size=1)
+            kf.initial_pos = [0,wrench_id[1],wrench_id[2],0,0,0]
+            kf.initial_covar = [0.001,0.001]
+            kf.covar_motion = [0.001,0.001]
+            kf.covar_observer = [0.001,0.001]
+
+            kf_pub.publish(kf)
+            rospy.sleep(0.1) # Wait for 0.1s to ensure init topic is published
+            rospy.sleep(1) # Wait for 1.0s to ensure init routine is completed
+            ee_twist = Twist()
+
             while ee_position[0] < xA+0.461-0.152:
                 rospy.sleep(0.1)
 
@@ -379,6 +396,23 @@ class MoveToWrench(smach.State):
                 rospy.sleep(0.1)
                 print "***********************************************"
                 print "New ee_position", ee_position
+
+                ee_twist.linear.x = ee_position[0]
+                ee_twist.linear.y = ee_position[1]
+                ee_twist.linear.z = ee_position[2]
+                ee_pub.publish(ee_twist)
+                rospy.sleep(0.1)
+                #rospy.wait_for_message('/move_arm/valve_pos_kf')
+                #rospy.Subscriber('/move_arm/valve_pos_kf', Twist, self.callback)
+                #rospy.wait_for_message('/move_arm/valve_pos_kf', Twist, timeout=2)
+                
+                #tw = self.valve_pos_kf
+
+
+
+
+
+
 
                 move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
                 goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
