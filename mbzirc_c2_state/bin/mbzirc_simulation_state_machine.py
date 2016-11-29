@@ -71,28 +71,26 @@ class InitSimulation(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['normalRun',
-                                       'armTest'],
+                             outcomes=['normal',
+                                       'armTest',
+                                       'wrenchTest',
+                                       'valveTest'],
                              input_keys=['sim_type_in'])
 
     def execute(self, userdata):
 
-        # Sleep to allow the user to pause
-        rospy.sleep(5)
-
-        if userdata.sim_type_in is 'normal':
-            return 'normalRun'
-
-        elif userdata.sim_type_in is 'arm_test':
-            rospy.set_param('wrench',[1.50195926, -0.02785565, 0.40498503])
-            rospy.set_param('valve',[1.50195926, 0.23329135, 0.22560422])
+        if userdata.sim_type_in is not 'normal':
+            rospy.set_param('wrench',[1.3494152516567712, 0.20670606484791776, 0.36069096929131383])
+            rospy.set_param('valve',[1.3494152516567712, 0.4806854679264738, 0.21677653795777196])
             rospy.set_param('ee_position',[0.486, 0.109, 0.620])
             rospy.set_param('stow_position',[0.486, 0.109, 0.620])
             rospy.set_param('current_joint_state', [0, 0, 0, 0, 0, 0])
-            return 'armTest'
 
-        # Default Return Code
-        return 'normalRun'
+        rospy.loginfo("Running in %s mode.", userdata.sim_type_in)
+
+        # Sleep to allow the user to pause
+        rospy.sleep(5)
+        return userdata.sim_type_in
 
 
 def main():
@@ -116,6 +114,7 @@ def main():
         # Create the sub SMACH state machine for grabbing wrench
         sm_wrench = smach.StateMachine(outcomes=['readyToOperate',
                                                  'testingArm',
+                                                 'testWrench',
                                                  'failedToMove',
                                                  'droppedWrench',
                                                  'wrenchIDFailed'])
@@ -129,9 +128,11 @@ def main():
                                                 'valveStuck'])
 
         # Define the type of simulation:
-        #   'normal'   : Execute the normal plan
-        #   'arm_test' : Test the arm for range of motion and stability
-        sm.userdata.sim_type = 'normal'
+        #   'normal'     : Execute the normal plan
+        #   'armTest'    : Test the arm for range of motion and stability
+        #   'wrenchTest' : Test the wrench manipulation
+        #   'valveTest'  : Test the valve operation
+        sm.userdata.sim_type = 'wrenchTest'
 
         # Define userdata for the state machines
         sm_wrench.userdata.move_counter = 0
@@ -145,8 +146,10 @@ def main():
 
         # Define the Main State Machine (sm)
         smach.StateMachine.add('INITIALIZATION', InitSimulation(),
-                               transitions={'normalRun' : 'NAVIGATE',
-                                            'armTest' : 'TEST_ARM'},
+                               transitions={'normal' : 'NAVIGATE',
+                                            'armTest' : 'TEST_ARM',
+                                            'wrenchTest' : 'TEST_WRENCH',
+                                            'valveTest' : 'TEST_VALVE'},
                                remapping={'sim_type_in' : 'sim_type'})
 
 
@@ -159,9 +162,11 @@ def main():
         smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
                                transitions={'readyToOperate' : 'OPERATE_VALVE',
                                             'testingArm' : 'success',
+                                            'testWrench' : 'success',
                                             'failedToMove' : 'failure',
                                             'droppedWrench' : 'failure',
-                                            'wrenchIDFailed' : 'failure'})
+                                            'wrenchIDFailed' : 'failure'},
+                               remapping={'sim_type_wrench' : 'sim_type'})
 
         smach.StateMachine.add('OPERATE_VALVE', sm_valve,
                                transitions={'valveOperated' : 'success',
@@ -174,6 +179,16 @@ def main():
         smach.StateMachine.add('TEST_ARM', TestArm(),
                                transitions={'armTestComplete' : 'success',
                                             'armTestFailed' : 'failure'})
+
+        smach.StateMachine.add('TEST_WRENCH', TestWrenchGrab(),
+                               transitions={'wrenchTestComplete' : 'GRAB_WRENCH',
+                                            'wrenchTestFailed' : 'failure'})
+
+        smach.StateMachine.add('TEST_VALVE', TestValveOp(),
+                               transitions={'valveOpTestComplete' : 'OPERATE_VALVE',
+                                            'valveOpTestFailed' : 'failure'})
+
+
 
 
 
@@ -225,8 +240,10 @@ def main():
 
             smach.StateMachine.add('GRASP_WRENCH', GraspWrench(),
                                    transitions={'wrenchGrasped' : 'readyToOperate',
-                                                'gripFailure' : 'droppedWrench'},
-                                   remapping={'got_wrench' : 'have_wrench'})
+                                                'gripFailure' : 'droppedWrench',
+                                                'wrenchTestDone' : 'testWrench'},
+                                   remapping={'got_wrench' : 'have_wrench',
+                                              'sim_type_in' : 'sim_type_wrench'})
 
         # Define the OPERATE_VALVE State Machine (sm_valve)
         with sm_valve:
