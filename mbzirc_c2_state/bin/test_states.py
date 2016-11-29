@@ -139,7 +139,7 @@ class TestWrenchGrab(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo("*** START WRENCH TEST ***")
-        subprocess.Popen( "rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
+        # subprocess.Popen( "rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
         subprocess.Popen( "rosrun mbzirc_c2_auto orient_scan.py", shell=True)
         rospy.sleep(5)
         return 'wrenchTestComplete'
