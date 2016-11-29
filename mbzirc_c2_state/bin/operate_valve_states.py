@@ -31,6 +31,7 @@ import smach
 import subprocess
 import numpy as np
 from geometry_msgs.msg import Twist
+from mbzirc_c2_auto.msg import kf_msg
 
 class StowArm(smach.State):
     """Moves the arm to stow position
@@ -185,6 +186,17 @@ class MoveToValveReady(smach.State):
         #move_state = 'success'
 
         if move_state == 'success':
+            kf = kf_msg()
+            kf_pub = rospy.Publisher("/move_arm/kf_init", kf_msg, queue_size=1, latch=True)
+            ee_pub = rospy.Publisher("/move_arm/valve_pos", Twist, queue_size=1)
+            kf.initial_pos = [0,0,0,0,0,0]
+            kf.initial_covar = [0.001,0.001]
+            kf.covar_motion = [0.001,0.001]
+            kf.covar_observer = [0.001,0.001]
+
+            kf_pub.publish(kf)
+            rospy.sleep(0.1) # Wait for 0.1s to ensure init topic is published
+            rospy.sleep(1) # Wait for 1.0s to ensure init routine is completed
             return 'atValveReady'
 
         else:
@@ -250,8 +262,12 @@ class MoveToValve(smach.State):
                                        'moveForward'],
                              input_keys=['valve_centered_in'])
 
-    def execute(self, userdata):
+    def callback(self, data):
+        self.valve_pos_kf = data
 
+    def execute(self, userdata):
+        rospy.Subscriber('/move_arm/valve_pos_kf', Twist, self.callback)
+        rospy.sleep(0.1)
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
         diff = (valve[0]+0.461)-ee_position[0]
