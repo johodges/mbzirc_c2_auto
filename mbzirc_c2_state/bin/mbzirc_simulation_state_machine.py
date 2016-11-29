@@ -138,6 +138,7 @@ def main():
         sm_wrench.userdata.move_counter = 0
         sm_wrench.userdata.max_move_retries = 1
         sm_wrench.userdata.have_wrench = False
+        sm_wrench.userdata.sim_type_wrench = 'wrenchTest'
 
         sm_valve.userdata.move_counter = 0
         sm_valve.userdata.max_move_retries = 1
@@ -165,8 +166,7 @@ def main():
                                             'testWrench' : 'success',
                                             'failedToMove' : 'failure',
                                             'droppedWrench' : 'failure',
-                                            'wrenchIDFailed' : 'failure'},
-                               remapping={'sim_type_wrench' : 'sim_type'})
+                                            'wrenchIDFailed' : 'failure'})
 
         smach.StateMachine.add('OPERATE_VALVE', sm_valve,
                                transitions={'valveOperated' : 'success',
