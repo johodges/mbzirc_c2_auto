@@ -257,6 +257,7 @@ class MoveToWrench(smach.State):
         self.valve_pos_kf = data
 
     def execute(self, userdata):
+        rospy.Subscriber('/move_arm/valve_pos_kf', Twist, self.callback)
         rospy.sleep(0.1)
         wrench_id = rospy.get_param('wrench_ID_m')
         rospy.sleep(0.1)
@@ -353,7 +354,7 @@ class MoveToWrench(smach.State):
             kf = kf_msg()
             kf_pub = rospy.Publisher("/move_arm/kf_init", kf_msg, queue_size=1, latch=True)
             ee_pub = rospy.Publisher("/move_arm/valve_pos", Twist, queue_size=1)
-            kf.initial_pos = [0,wrench_id[1],wrench_id[2],0,0,0]
+            kf.initial_pos = [0,0,0,0,0,0]
             kf.initial_covar = [0.001,0.001]
             kf.covar_motion = [0.001,0.001]
             kf.covar_observer = [0.001,0.001]
@@ -363,7 +364,7 @@ class MoveToWrench(smach.State):
             rospy.sleep(1) # Wait for 1.0s to ensure init routine is completed
             ee_twist = Twist()
 
-            while ee_position[0] < xA+0.461-0.152:
+            while ee_position[0] < xA+0.461-0.155:
                 rospy.sleep(0.1)
 
                 prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
@@ -378,16 +379,24 @@ class MoveToWrench(smach.State):
                 wrench_id_px = rospy.get_param('wrench_ID')
                 rospy.sleep(0.1)
                 print "wrench_id", wrench_id
-                print "ee_position", ee_position
-                print "************************************************"
                 print "Wrench_id_px: ", wrench_id_px
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.20)+0.005*ct3 # 0.134 distance from camera to left_tip
+                ee_position[0] = (xA + 0.461-0.17)+0.005*ct3 # 0.134 distance from camera to left_tip   
+                print "ee_position before Kalman filter", ee_position
+                print "************************************************"
+                ee_twist.linear.x = ee_position[0]
+                ee_twist.linear.y = wrench_id[1]
+                ee_twist.linear.z = wrench_id[2]
+                ee_pub.publish(ee_twist)
+                rospy.sleep(0.1)
+                tw = self.valve_pos_kf
+                print "Estimated pose from Kalman filter: ", tw
+
                 #ee_position[0] = ee_position[0]+0.005 #
-                ee_position[1] = ee_position[1]+wrench_id[1]*0.5
-                ee_position[2] = ee_position[2]+wrench_id[2]*0.5
+                ee_position[1] = ee_position[1]+tw.linear.y
+                ee_position[2] = ee_position[2]+tw.linear.z
                 rospy.set_param('ee_position', [float(ee_position[0]),
                                                 float(ee_position[1]),
                                                 float(ee_position[2])])
@@ -395,36 +404,23 @@ class MoveToWrench(smach.State):
                 rospy.set_param('wrench_ID_m',[wrench_id[0]-dx,wrench_id[1],wrench_id[2]])
                 rospy.sleep(0.1)
                 print "***********************************************"
-                print "New ee_position", ee_position
-
-                ee_twist.linear.x = ee_position[0]
+                print "ee_position after Kalman filter", ee_position
                 ee_twist.linear.y = ee_position[1]
                 ee_twist.linear.z = ee_position[2]
-                ee_pub.publish(ee_twist)
-                rospy.sleep(0.1)
-                #rospy.wait_for_message('/move_arm/valve_pos_kf')
-                #rospy.Subscriber('/move_arm/valve_pos_kf', Twist, self.callback)
-                #rospy.wait_for_message('/move_arm/valve_pos_kf', Twist, timeout=2)
-                
-                #tw = self.valve_pos_kf
-
-
-
-
 
 
 
                 move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
                 goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-                tw = Twist()
-                tw.linear.x = ee_position[0]
-                tw.linear.y = ee_position[1]
-                tw.linear.z = ee_position[2]
+                #tw = Twist()
+                #tw.linear.x = ee_position[0]
+                #tw.linear.y = ee_position[1]
+                #tw.linear.z = ee_position[2]
                 flag = 0; ct = 0; ct2 = 0
 
                 while flag == 0:
                     while ct < 5:
-                        goal_pub.publish(tw)
+                        goal_pub.publish(ee_twist)
                         ct = ct+1
                         rospy.sleep(0.1)
                     move_state = rospy.get_param('move_arm_status')
@@ -493,10 +489,11 @@ class GraspWrench(smach.State):
         rospy.sleep(2)
         #prc.wait()
         ee_position = rospy.get_param('ee_position')
-        rospy.set_param('ee_position', [float(ee_position[0]-0.2),
+        ee_position[0] = ee_position[0]-0.2
+        rospy.set_param('ee_position', [float(ee_position[0]),
                                         float(ee_position[1]),
                                         float(ee_position[2])])
-
+        rospy.sleep(0.1)
         move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
         goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
         tw = Twist()
