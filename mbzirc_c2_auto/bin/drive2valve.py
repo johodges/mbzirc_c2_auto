@@ -288,6 +288,8 @@ class drive2valve():
                 rospy.loginfo("Setting initial estimate of valve location.")
                 valve = rospy.get_param('valve')
                 ugv_pos = rospy.get_param('ugv_position')
+                rospy.loginfo(valve)
+                rospy.loginfo(ugv_pos)
                 val_loc = [valve[0]-1,valve[1]]
                 val_glo = np.dot(self.R,val_loc)
                 self.x_val_glo = val_glo[0]+ugv_pos[0]

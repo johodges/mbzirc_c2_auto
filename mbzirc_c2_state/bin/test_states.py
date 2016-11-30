@@ -28,11 +28,11 @@ import math
 
 
 class TestArm(smach.State):
-    """Searches for and then navigates to the board
+    """Test the arm stability
 
     Outcomes
     --------
-        atBoard : at the board location
+        armTestComplete : arm tested
 
     """
 
@@ -120,4 +120,47 @@ class TestArm(smach.State):
 
 
         return 'armTestComplete'
+
+
+
+class TestWrenchGrab(smach.State):
+    """Test the wrench grabbing process
+
+    Outcomes
+    --------
+        wrenchTestComplete : at the board location ready to test the wrench
+
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['wrenchTestComplete',
+                                       'wrenchTestFailed'])
+
+    def execute(self, userdata):
+        rospy.loginfo("*** START WRENCH TEST ***")
+        subprocess.Popen("rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
+        subprocess.Popen("rosrun mbzirc_c2_auto orient_scan.py", shell=True)
+        rospy.sleep(5)
+        return 'wrenchTestComplete'
+
+
+
+class TestValveOp(smach.State):
+    """Searches for and then navigates to the board
+
+    Outcomes
+    --------
+        atBoard : at the board location
+
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['valveOpTestComplete',
+                                       'valveOpTestFailed'])
+
+    def execute(self, userdata):
+        rospy.loginfo("*** START VALVE TEST ***")
+        return 'valveOpTestComplete'
 

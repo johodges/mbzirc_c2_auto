@@ -129,10 +129,10 @@
     </node>
 
   </group>
-  <!-- node name="spawn_husky_model" pkg="gazebo_ros" type="spawn_model"
-    args="-x 61.361 -z 0.15 -y -23.66 -Y 3.14 -urdf -param robot_description -model mobile_base"/ -->
-  <node name="spawn_husky_model2" pkg="gazebo_ros" type="spawn_model"
-    args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model mobile_base"/>
+  <node name="spawn_husky_model" pkg="gazebo_ros" type="spawn_model"
+    args="-x 61.361 -z 0.15 -y -23.60 -Y 3.14 -urdf -param robot_description -model mobile_base"/>
+  <!-- node name="spawn_husky_model2" pkg="gazebo_ros" type="spawn_model"
+    args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model mobile_base"/ -->
 
   <!-- node name="spawn_husky_model" pkg="gazebo_ros" type="spawn_model"
     args="$(optenv ROBOTINITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/ -->

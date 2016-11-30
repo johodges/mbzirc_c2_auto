@@ -40,7 +40,7 @@ class centerwrench():
 
         # Tweaking parameters - Need to adjust for different distances from camera
         self.max_circ_diam = 100 # Maximum circle diameter considered
-        self.canny_param = [100, 30] # Canny edge detection thresholds
+        self.canny_param = [100, 20] # Canny edge detection thresholds
 
         # Hardware Parameters
         self.camera_fov_h = 1.5708
@@ -53,11 +53,12 @@ class centerwrench():
         # Counters
         self.ct = 0
 
-	# Establish publishers and subscribers
-	self.bridge = CvBridge()
+        # Establish publishers and subscribers
+        self.bridge = CvBridge()
         self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
         self.tftree = tf.TransformListener()
-	self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
 
     # shutdown runs when this node dies
     def shutdown(self):
@@ -112,7 +113,7 @@ class centerwrench():
                 while val < one_perc:
                     val = val+hist[j]
                     j = j +1
-                lims[i,0] = j
+                lims[i,0] = j+20
                 if flag == 0:
                     val = 0; j = 0;
                     while val < one_perc:
@@ -201,7 +202,7 @@ class centerwrench():
             # Detect the circles using a hough transform
             circles = cv2.HoughCircles(img_gray_hou, cv2.cv.CV_HOUGH_GRADIENT,1,1,
                 np.array([]),self.canny_param[0],self.canny_param[1],0,self.max_circ_diam)
-            img_hou_all = img_gray_hou.copy()
+            img_hou_all = cv2.cvtColor(img_gray_hou.copy(), cv2.COLOR_GRAY2BGR)
             center_x = circles[0,:,0]
             center_y = circles[0,:,1]
             radius = circles[0,:,2]
@@ -233,6 +234,7 @@ class centerwrench():
             print "Best number of clusters is: ", k
             print "Best ret is: ", ret[ret_ind]
             ret, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
+
             return centers, img_hou_all, k
 
         # Convert ROS image to opencv image
@@ -264,6 +266,8 @@ class centerwrench():
             # Detect circles
             centers, img_all_circles, k = detect_circle(img_gray_hou)
             cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
+            self.image_output.publish(self.bridge.cv2_to_imgmsg(img_all_circles, "bgr8"))
+            rospy.sleep(0.1)
             sz_circs = np.shape(centers)
             centers = centers[centers[:,0].argsort()]
 
