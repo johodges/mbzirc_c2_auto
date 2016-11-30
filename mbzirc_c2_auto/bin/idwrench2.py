@@ -24,7 +24,7 @@ import scipy.stats
 class idwrench():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('idwrench', anonymous=True)
+        rospy.init_node('idwrench', anonymous=True)
         
         # Enable shutdown in rospy
         rospy.on_shutdown(self.shutdown)
@@ -63,12 +63,13 @@ class idwrench():
         self.ct = 0
 
 	# Establish publishers and subscribers
-	self.bridge = CvBridge()
-	self.id_pub = rospy.Publisher("/wrench_id_image",Image,queue_size = 1)
-        self.binary_pub = rospy.Publisher("/wrench_binary_image",Image,queue_size = 1)
-        self.prob_pub = rospy.Publisher("/wrench_prob_image",Image,queue_size = 1)
-        self.probid_pub = rospy.Publisher("/wrench_prob_id_image",Image,queue_size = 1)
-	self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.bridge = CvBridge()
+        self.id_pub = rospy.Publisher("/output/wrench_id_image",Image,queue_size = 1)
+        self.binary_pub = rospy.Publisher("/output/wrench_binary_image",Image,queue_size = 1)
+        self.prob_pub = rospy.Publisher("/output/wrench_prob_image",Image,queue_size = 1)
+        self.probid_pub = rospy.Publisher("/output/wrench_prob_id_image",Image,queue_size = 1)
+        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
 
     # shutdown runs when this node dies
     def shutdown(self):
@@ -422,13 +423,14 @@ class idwrench():
             # Visualize the probabilities and the best match
             img_kmeans, img_id, img_kmeans_id = visualize_probability(img_crop, vote_result,
                 wrench_ind, params, contours)
-            cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
-            cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
+            #cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
+            #cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
             # Publish results
             self.id_pub.publish(self.bridge.cv2_to_imgmsg(img_id, "bgr8"))
             self.prob_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans, "bgr8"))
             self.probid_pub.publish(self.bridge.cv2_to_imgmsg(img_kmeans_id, "bgr8"))
             self.binary_pub.publish(self.bridge.cv2_to_imgmsg(img_seg, "8UC1"))
+            self.image_output.publish(self.bridge.cv2_to_imgmsg(img_kmeans_id, "bgr8"))
             ee_position = rospy.get_param('ee_position')
             wrench_position = rospy.get_param('wrench')
             xA = wrench_position[0]-ee_position[0]

@@ -119,6 +119,8 @@ class move_arm_topic():
                 self.move_succeeded = self.arm.execute(traj)
 
                 self.ready_for_goal = 1
+                # Update current joint position for use in planning next time
+                rospy.set_param('current_joint_state',cjs)
                 #rospy.set_param('current_joint_state',jt)
         else:
             rospy.loginfo("Recieved new goal before finishing motion. Ignoring.")

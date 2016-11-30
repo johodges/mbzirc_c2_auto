@@ -37,13 +37,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 # from decimal import *
 # import tf
-# import math
+import math
 # import random
 
 class move2op():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('idvalve', anonymous=True, log_level=rospy.DEBUG)
+        rospy.init_node('idvalve', anonymous=True, log_level=rospy.DEBUG)
 
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
@@ -55,14 +55,16 @@ class move2op():
         self.camera_pix_h = 1920
         self.camera_pix_v = 1080
         self.ct5 = 0
+        self.lim_type = 0
 
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
         self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
         self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
         self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
+        self.image_circ_pub = rospy.Publisher("/output/valve_center",Image, queue_size=1)
         rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c, queue_size=1)
-
+        self.image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
     def shutdown(self):
         rospy.sleep(1)
 
@@ -78,6 +80,78 @@ class move2op():
     # callback_wrench is used to store the wrench topic into the class to be
     # referenced by the other callback routines.
     def callback(self, data):
+        # This subroutine computes the limits to be used in the brightness/contrast
+        # adjustment routine. The flag denotes whether to fix the upper limit based
+        # on the highest one percent of the data or not. 0 = Dynamic fix, 1 = Fixed
+        # at an intensity of 255.
+        def stretchlim(img,flag):
+            # Determine size of image in pixels
+            sz = np.shape(img)
+            num_of_px = sz[0]*sz[1]
+            # Determine one percent of total pixels (for use in image adjust code)
+            one_perc = math.floor(num_of_px*0.01)
+            lims = np.zeros((sz[2],2))
+            # Compute lower/upper 1% threshold for each channel
+            for i in range(0,sz[2]):
+                hist,bins = np.histogram(img[:,:,i].ravel(),255,[0,255])
+                val = 0; j = 0;
+                while val < one_perc:
+                    val = val+hist[j]
+                    j = j +1
+                lims[i,0] = j
+                if flag == 0:
+                    val = 0; j = 0;
+                    while val < one_perc:
+                        val = val+hist[254-j]
+                        j = j + 1
+                    lims[i,1] = 254-j+20
+                if flag == 1:
+                    lims[i,1] = 255
+            return lims
+
+        # This subroutine adjusts the intensities in each channel of the RGB image
+        # using the limits supplied by stretchlim. Returns the adjusted image.
+        def imadjust(img,lims):
+            img2 = np.copy(img)
+            sz = np.shape(img2)
+            # Loop through each channel in the image
+            for i in range(0,sz[2]):
+                I2 = img2[:,:,i]
+                # Set intensities above and below threshold to caps to prevent
+                # overflow in 8bit numbers.
+                I2[I2 > lims[i,1]] = lims[i,1]
+                I2[I2 < lims[i,0]] = lims[i,0]
+                # Scale the intensity in the channel
+                img2[:,:,i] = (I2-lims[i,0])/(lims[i,1]-lims[i,0])*255
+            return img2
+
+        # This subroutine removes the background from the RGB image by increasing
+        # the intensity in each channel of the image by (1/2) of the maximum value
+        # within that channel. Returns the RGB image after background removal.
+        def back_ground_remove(I):
+            # Determine size of image in pixels
+            sz = np.shape(I)
+            # Initialize intensity array
+            i = np.zeros((sz[2],1))
+            # Initialize updated intensity matrix
+            I3 = I.copy()
+            # Loop through each channel of the image
+            for j in range(0,sz[2]):
+                # Caculate the intensity histogram of one channel
+                hist,bins = np.histogram(I[:,:,j].ravel(),255,[0,255])
+                I2 = I[:,:,j].copy()
+                # Find the most common bin in the histogram
+                i[j] = np.argmax(hist)
+                # Fix overflow problems by setting values greater than the
+                # modifier such that they will be maxed after addition
+                I2[I2 > 255-i[j]*0.5] = 255-i[j]*0.5
+                # Add the intensity modifier
+                I2 = I2+0.5*i[j]
+                # Update intensity matrix
+                I3[:,:,j] = I2
+            return I3
+
+
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
@@ -91,17 +165,20 @@ class move2op():
         print "Image count: ", img_count
         #'/home/jonathan/idvalve_' + str(img_count) + '.png'
         
-        cv2.imwrite('/home/jonathan/idvalve_rgb_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image)
-        cv_image_gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        lower = np.array([0,0,100], dtype = "uint8")
-        upper = np.array([50,50,255], dtype = "uint8")
-        mask = cv2.inRange(cv_image, lower, upper)
-        output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
-        cimg = cv2.medianBlur(output,5)
-        cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('Image before circles',cimg)
+        #cv2.imwrite('/home/jonathan/idvalve_rgb_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image)
+        #cv_image_gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        #lower = np.array([0,0,100], dtype = "uint8")
+        #upper = np.array([50,50,255], dtype = "uint8")
+        #mask = cv2.inRange(cv_image, lower, upper)
+        #output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
+        cimg = cv2.medianBlur(cv_image,5)
+        lims = stretchlim(cimg,self.lim_type)
+        img_adj = imadjust(cv_image.copy(),lims)
+        img_remove = back_ground_remove(img_adj.copy())
+        img_remove_gray = cv2.cvtColor(img_remove, cv2.COLOR_BGR2GRAY)
+        #cv2.imshow('Image before circles',img_remove_gray)
         #cv2.waitKey(0)
-        cv2.imwrite('/home/jonathan/idvalve_gra_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image_gray)
+        #cv2.imwrite('/home/jonathan/idvalve_gra_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image_gray)
         rospy.set_param('img_count',img_count)
         #cv2.imshow('Gray',cimg)
         #cv2.waitKey(0)
@@ -109,10 +186,10 @@ class move2op():
         print "Estimated pixel radius: ", rad_px
 
         #circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=15, minRadius=rad_px-10, maxRadius=rad_px+10)
-        circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=rad_px-10, maxRadius=rad_px+10)
-        cv2.imshow('Image before circles',cimg)
-        
-        print np.shape(circles)
+        circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=10, minRadius=rad_px-10, maxRadius=rad_px+10)
+        #cv2.imshow('Image before circles',cimg)
+
+
         if circles is not None:
             img_hou_all = cimg.copy()
             center_x = circles[0,:,0]
@@ -121,7 +198,7 @@ class move2op():
             for n in range(len(circles[0,:,1])):
                 cv2.circle(img_hou_all,(center_x[n],center_y[n]), radius[n],
                     (255,255,255), 2, cv2.CV_AA)
-            cv2.imshow('Image after circles', img_hou_all)
+            #cv2.imshow('Image after circles', img_hou_all)
 
             z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
@@ -142,9 +219,11 @@ class move2op():
                     (0,255,0), 2, cv2.CV_AA)
             cv2.circle(img_circ_med,(stem_y,stem_z), 5,
                     (255,0,0), 2, cv2.CV_AA)
-            cv2.imwrite('/home/jonathan/idvalve_vis_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),img_circ_med)
-            cv2.imshow('Image median circle', img_circ_med)
-            cv2.waitKey(0)
+            self.image_circ_pub.publish(self.bridge.cv2_to_imgmsg(img_circ_med, "bgr8"))
+            self.image_output.publish(self.bridge.cv2_to_imgmsg(img_circ_med, "bgr8"))
+            #cv2.imwrite('/home/jonathan/idvalve_vis_%s.png' % str(img_count),img_circ_med)
+            #cv2.imshow('Image median circle', img_circ_med)
+            #cv2.waitKey(0)
             """
             *************************************************************
             All of this code was done without color detection and may be useful in the future.
@@ -230,7 +309,7 @@ class move2op():
             rospy.logdebug("Camera ymn/ymx: %s %s", str(camera_y_mn), str(camera_y_mx))
             rospy.logdebug("Camera zmn/zmx: %s %s", str(camera_z_mn), str(camera_z_mx))
 
-            # Convert the valve pixel loacation
+            # Convert the valve pixel location
             valve_y = (1-val_loc[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
             valve_z = (1-val_loc[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
 
@@ -238,7 +317,7 @@ class move2op():
             rospy.logdebug("Valve in m: %s", " ".join(str(x) for x in self.valve_id))
             rospy.set_param('valve_ID',[float(self.valve_id[0]), float(self.valve_id[1]), float(self.valve_id[2])])
             err = np.power(valve_y*valve_y+valve_z*valve_z,0.5)
-            if err < 0.003:
+            if err < 0.002:
                 rospy.set_param('valve', [float(self.xA),
                                           float(0.0),
                                           float(0.0)])

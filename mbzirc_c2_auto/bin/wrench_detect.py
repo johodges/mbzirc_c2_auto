@@ -17,9 +17,11 @@ import numpy as np
 class find_wrench:
 
   def __init__(self):
-    self.image_pub = rospy.Publisher("image_topic_2",Image, queue_size=1)
+    self.image_pub = rospy.Publisher("/output/wrench_cascade_image",Image, queue_size=1)
+    self.image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
     self.w = rospy.Publisher("/wrench_center",numpy_msg(Floats), queue_size=1)
     self.ct = 0
+    self.ct2 = 0
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
 
@@ -86,6 +88,10 @@ class find_wrench:
     try:
       self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
       self.w.publish(w_loc)
+
+      if np.shape(cents)[0] > 6 and self.ct2 == 0:
+        self.image_output.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
+        self.ct2 = 1
 
     except CvBridgeError as e:
       print(e)

@@ -39,7 +39,7 @@ class orient():
     #     3. We initialize counters in the class to be shared by the various callback routines
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('orient', anonymous=True)
+        rospy.init_node('orient', anonymous=True)
 
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)

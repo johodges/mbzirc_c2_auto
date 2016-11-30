@@ -271,11 +271,9 @@ class MoveToValve(smach.State):
         rospy.sleep(0.1)
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
-        diff = valve[0]
-        #print "****************************************"
-        #print "xA, ee_position, diff: ", valve[0]+0.461, ee_position[0], diff
-        if diff > 0.08:
-            ee_position[0] = ee_position[0]+0.005
+
+        if valve[0] > 0.31 or valve[1] != 0 or valve[2] != 0:
+            ee_position[0] = ee_position[0]+0.5*(valve[0]-0.21)
             print "ee_position before Kalman filter", ee_position
             print "************************************************"
             ee_twist = Twist()
@@ -300,12 +298,7 @@ class MoveToValve(smach.State):
             return 'servoArm'
 
         else:
-            if diff < 0.08:
-            #if userdata.valve_centered_in:
-                return 'moveForward'
-            else:
-                return 'servoArm'
-
+            return 'moveForward'
 
 
 class ServoToValve(smach.State):
