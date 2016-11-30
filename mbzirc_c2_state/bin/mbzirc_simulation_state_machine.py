@@ -139,7 +139,7 @@ def main():
         #   'armTest'    : Test the arm for range of motion and stability
         #   'wrenchTest' : Test the wrench manipulation
         #   'valveTest'  : Test the valve operation
-        sm.userdata.sim_type = 'wrenchTest'
+        sm.userdata.sim_type = 'normal'
 
         # Define userdata for the state machines
         sm_wrench.userdata.move_counter = 0

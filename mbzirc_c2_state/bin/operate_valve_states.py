@@ -377,11 +377,10 @@ class MoveToOperate(smach.State):
         ee_position = rospy.get_param('ee_position')
         self.arm = ee_position[0]
         self.xA = valve[0]
-        self.dist = self.arm+self.xA+0.461
-        
-        print "****************************************"
-        print "Diff: ", diff
-        while (self.dist-ee_position[0]) < 0.2:
+        self.dist = self.arm+self.xA
+        print "self.dist: ", self.dist
+        while (self.dist-ee_position[0]) > 0.22:
+            ee_position = rospy.get_param('ee_position')
             rospy.set_param('ee_position', [float(ee_position[0]+0.005),
                                             float(ee_position[1]),
                                             float(ee_position[2])])
