@@ -272,8 +272,9 @@ class MoveToValve(smach.State):
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
 
-        if valve[0] > 0.31 or valve[1] != 0 or valve[2] != 0:
-            ee_position[0] = ee_position[0]+0.5*(valve[0]-0.21)
+        if valve[0] > 0.35 or valve[1] != 0 or valve[2] != 0:
+            print "Distance from board from camera: ", valve[0]
+            ee_position[0] = ee_position[0]+0.5*(valve[0]-0.25)
             print "ee_position before Kalman filter", ee_position
             print "************************************************"
             ee_twist = Twist()
@@ -371,20 +372,24 @@ class MoveToOperate(smach.State):
                                        'wrenchOnValve'])
 
     def execute(self, userdata):
+
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
-        diff = (valve[0]+0.461)-ee_position[0]
+        self.arm = ee_position[0]
+        self.xA = valve[0]
+        self.dist = self.arm+self.xA+0.461
+        
         print "****************************************"
         print "Diff: ", diff
-        if diff < 0.03:
+        while (self.dist-ee_position[0]) < 0.2:
             rospy.set_param('ee_position', [float(ee_position[0]+0.005),
                                             float(ee_position[1]),
                                             float(ee_position[2])])
             prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
             prc.wait()
-            return 'wrenchOnValve'
-        else:
-            return 'wrenchOnValve'
+            
+        return 'wrenchOnValve'
+
         #prc = subprocess.Popen("rosrun mbzirc_c2_auto move2op.py", shell=True)
         #prc.wait()
         #return rospy.get_param('smach_state')
