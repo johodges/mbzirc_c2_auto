@@ -18,6 +18,34 @@
 
     http://www.gnu.org/licenses/gpl.html
 
+  *************************************************************************
+  State classes are defined in files associated with the sub-state machine
+
+  navigation_states.py
+    FindBoard
+
+  orient_states.py
+    Orient
+
+  grasp_wrench_states.py
+    MoveToReady
+    MoveToReadyWreanch
+    IDWrench
+    MoveToWrench
+    MoveToGrasp
+    GraspWrench
+
+  operate_valve_states.py
+    MoveToValveReady
+    IDValve
+    MoveToValve
+    MoveToOperate
+    RotateValve
+
+  test_states.py
+    TestArm
+  *************************************************************************
+
 """
 
 import rospy
@@ -30,34 +58,6 @@ from operate_valve_states import *
 from test_states import *
 from control_msgs.msg import *
 from trajectory_msgs.msg import *
-
-# *************************************************************************
-# State classes are defined in files associated with the sub-state machine
-#
-# navigation_states.py
-#   FindBoard
-#
-# orient_states.py
-#   Orient
-#
-# grasp_wrench_states.py
-#   MoveToReady
-#   MoveToReadyWreanch
-#   IDWrench
-#   MoveToWrench
-#   MoveToGrasp
-#   GraspWrench
-#
-# operate_valve_states.py
-#   MoveToValveReady
-#   IDValve
-#   MoveToValve
-#   MoveToOperate
-#   RotateValve
-#
-# test_states.py
-#   TestArm
-# *************************************************************************
 
 class InitSimulation(smach.State):
     """Initializes the simulation for testing or normal runs
