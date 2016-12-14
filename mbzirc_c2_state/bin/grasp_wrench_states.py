@@ -32,6 +32,7 @@ import smach
 import subprocess
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from mbzirc_c2_auto.msg import kf_msg
+from twist_command import *
 
 class MoveToReady(smach.State):
     """Moves the arm to the ready state from the stowed state
@@ -62,27 +63,8 @@ class MoveToReady(smach.State):
             rospy.set_param('ee_position', [float(curr_pos[0]),
                                             float(curr_pos[1]),
                                             float(curr_pos[2])])
-        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-        tw = Twist()
-        tw.linear.x = curr_pos[0]
-        tw.linear.y = curr_pos[1]
-        tw.linear.z = curr_pos[2]
-        flag = 0; ct = 0; ct2 = 0
 
-        while flag == 0:
-            while ct < 5:
-                goal_pub.publish(tw)
-                ct = ct+1
-                rospy.sleep(0.1)
-            move_state = rospy.get_param('move_arm_status')
-            if move_state == 'moveFailed':
-                ct = 0
-                ct2 = ct2+1
-            if move_state == 'success':
-                flag = 1
-            if ct2 > 5:
-                flag = 1
+	move_state = twist_command(curr_pos[0], curr_pos[1], curr_pos[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
@@ -142,27 +124,7 @@ class MoveToWrenchReady(smach.State):
                                         float(wrench_ready_pos[1]),
                                         float(wrench_ready_pos[2])])
 
-        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-        tw = Twist()
-        tw.linear.x = wrench_ready_pos[0]
-        tw.linear.y = wrench_ready_pos[1]
-        tw.linear.z = wrench_ready_pos[2]
-        flag = 0; ct = 0; ct2 = 0
-
-        while flag == 0:
-            while ct < 5:
-                goal_pub.publish(tw)
-                ct = ct+1
-                rospy.sleep(0.1)
-            move_state = rospy.get_param('move_arm_status')
-            if move_state == 'moveFailed':
-                ct = 0
-                ct2 = ct2+1
-            if move_state == 'success':
-                flag = 1
-            if ct2 > 5:
-                flag = 1
+	move_state = twist_command(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos(2)
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
@@ -273,27 +235,7 @@ class MoveToWrench(smach.State):
                                         float(wrench_id[1]),
                                         float(wrench_id[2])])
 
-        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-        tw = Twist()
-        tw.linear.x = wrench_id[0]
-        tw.linear.y = wrench_id[1]
-        tw.linear.z = wrench_id[2]
-        flag = 0; ct = 0; ct2 = 0
-
-        while flag == 0:
-            while ct < 5:
-                goal_pub.publish(tw)
-                ct = ct+1
-                rospy.sleep(0.1)
-            move_state = rospy.get_param('move_arm_status')
-            if move_state == 'moveFailed':
-                ct = 0
-                ct2 = ct2+1
-            if move_state == 'success':
-                flag = 1
-            if ct2 > 5:
-                flag = 1
+	move_state = twist_command(wrench_id[0], wrench_id[1], wrench_id[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
@@ -408,29 +350,7 @@ class MoveToWrench(smach.State):
                 ee_twist.linear.y = ee_position[1]
                 ee_twist.linear.z = ee_position[2]
 
-
-
-                move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-                goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-                #tw = Twist()
-                #tw.linear.x = ee_position[0]
-                #tw.linear.y = ee_position[1]
-                #tw.linear.z = ee_position[2]
-                flag = 0; ct = 0; ct2 = 0
-
-                while flag == 0:
-                    while ct < 5:
-                        goal_pub.publish(ee_twist)
-                        ct = ct+1
-                        rospy.sleep(0.1)
-                    move_state = rospy.get_param('move_arm_status')
-                    if move_state == 'moveFailed':
-                        ct = 0
-                        ct2 = ct2+1
-                    if move_state == 'success':
-                        flag = 1
-                    if ct2 > 5:
-                        flag = 1
+		move_state = twist_command(ee_twist.linear.x, ee_twist.linear.y, ee_twist.linear.z)
 
                 #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
                 #prc.wait()
@@ -494,27 +414,8 @@ class GraspWrench(smach.State):
                                         float(ee_position[1]),
                                         float(ee_position[2])])
         rospy.sleep(0.1)
-        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-        tw = Twist()
-        tw.linear.x = ee_position[0]
-        tw.linear.y = ee_position[1]
-        tw.linear.z = ee_position[2]
-        flag = 0; ct = 0; ct2 = 0
 
-        while flag == 0:
-            while ct < 5:
-                goal_pub.publish(tw)
-                ct = ct+1
-                rospy.sleep(0.1)
-            move_state = rospy.get_param('move_arm_status')
-            if move_state == 'moveFailed':
-                ct = 0
-                ct2 = ct2+1
-            if move_state == 'success':
-                flag = 1
-            if ct2 > 5:
-                flag = 1
+	move_state = twist_command(ee_position[0], ee_position[1], ee_position[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
