@@ -40,7 +40,6 @@ class MoveToReady(smach.State):
     Outcomes
     --------
         atReady : at the ready position
-        moveStuck : move failed but still retrying
         moveFailed : move failed too many times
 
     """
@@ -48,7 +47,6 @@ class MoveToReady(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['atReady',
-                                       'moveStuck',
                                        'moveFailed'],
                              input_keys=['move_counter_in',
                                          'max_retries'],
@@ -66,11 +64,6 @@ class MoveToReady(smach.State):
 
 	move_state = twist_command(curr_pos[0], curr_pos[1], curr_pos[2])
 
-        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        #prc.wait()
-
-        #move_state = rospy.get_param('move_arm_status')
-
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
 
@@ -78,12 +71,7 @@ class MoveToReady(smach.State):
             return 'atReady'
 
         else:
-            if userdata.move_counter_in < userdata.max_retries:
-                userdata.move_counter_out = userdata.move_counter_in + 1
-                return 'moveStuck'
-
-            else:
-                return 'moveFailed'
+            return 'moveFailed'
 
 
 
@@ -325,7 +313,7 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.17)+0.005*ct3 # 0.134 distance from camera to left_tip   
+                ee_position[0] = (xA + 0.461-0.17)+0.005*ct3 # 0.134 distance from camera to left_tip
                 print "ee_position before Kalman filter", ee_position
                 print "************************************************"
                 ee_twist.linear.x = ee_position[0]
