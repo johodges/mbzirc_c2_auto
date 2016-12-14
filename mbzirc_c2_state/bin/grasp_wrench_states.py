@@ -124,7 +124,7 @@ class MoveToWrenchReady(smach.State):
                                         float(wrench_ready_pos[1]),
                                         float(wrench_ready_pos[2])])
 
-	move_state = twist_command(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos(2)
+	move_state = twist_command(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
