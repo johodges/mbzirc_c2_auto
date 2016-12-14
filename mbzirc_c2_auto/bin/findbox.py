@@ -7,16 +7,17 @@
     This code searches a 2-D LIDAR scan for an object within
     a minimum and maximum length bound. The LIDAR scan is
     segmented based on null returns and large deviations between
-    points. 
+    points.
 
-    Inputs:
+    Subscribers:
         /scan     - 2-D LIDAR scan from ROS
-        plot_flag - If zero, do not plot LIDAR scan. Plotting the
-                    scan slows down the code.
-    Outputs:
+    Publishers:
         /detection- array containing [angle,distance] to the median of
                     the detected object in local coordinates. Contains
                     [0,0] if no object is detected.
+    Internal Switches:
+        plot_data - If False, do not plot LIDAR scan. Plotting the
+                scan slows down the code.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,18 +45,18 @@ import scipy.spatial.distance as scd
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 
-"""
-This callback runs each time a LIDAR scan is obtained from
-the /scan topic in ROS. Returns a topic /detection. If no
-object is found, /detection = [0,0]. If an object is found,
-/detection = [angle,distance] to median of scan.
-"""
-
 def callback(data):
+    """
+    This callback runs each time a LIDAR scan is obtained from
+    the /scan topic in ROS. Returns a topic /detection. If no
+    object is found, /detection = [0,0]. If an object is found,
+    /detection = [angle,distance] to median of scan.
+    """
+
     # Initialize parameters
     rate = rospy.Rate(10)
     scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_flag = 0
+    plot_data = False
 
     # Set max/min angle and increment
     x = np.arange(1.66,-1.6525,-0.0029146999)
@@ -89,7 +90,7 @@ def callback(data):
     y_coord2 = np.array(np.split(y_coord, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
 
     # If we want to plot the LIDAR scan, open the plot environment
-    if plot_flag == 1:
+    if plot_data:
         plt.figure(1)
         #plt.cla()
 
@@ -106,18 +107,18 @@ def callback(data):
             # Check if this object is too small
             if dist2_sum < 0.25:
                 # If we want to plot, plot small object
-                if plot_flag == 1:
+                if plot_data:
                     plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',linewidth=2.0)
             else:
 
                 # Check if this object is too big
                 if dist2_sum > 1.5:
                     # If we want to plot, plot large object
-                    if plot_flag == 1:
+                    if plot_data:
                         plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',linewidth=2.0)
                 else:
                     # If we want to plot, plot just right object
-                    if plot_flag == 1:
+                    if plot_data:
                         plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',linewidth=2.0)
 
                     # Find range and bearing of median of object
@@ -136,7 +137,7 @@ def callback(data):
     pub.publish(bearing)
 
     # If we want to plot, make it prettier
-    if plot_flag == 1:
+    if plot_data:
         plt.ylim([0,20])
         plt.xlim([-5,5])
         plt.xlabel('Left of robot [m] ')
@@ -147,6 +148,8 @@ def callback(data):
     pass
 
 def laser_listener():
+    '''Entry point for the file.  Subscribe to lase scan topic and wait
+    '''
     pass
     rospy.init_node('findbox', anonymous=True)
     rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,callback, queue_size=1)
