@@ -66,10 +66,13 @@ class InitSimulation(smach.State):
     --------
         normalRun : start normal simulation
         armTest : perform a test on the arm
-
+        wrenchTest : perform a test on the arm
+        valveTest : perform a test on the arm
     """
 
     def __init__(self):
+        '''Initialization of InitSimulation
+        '''
         smach.State.__init__(self,
                              outcomes=['normal',
                                        'armTest',
@@ -78,6 +81,8 @@ class InitSimulation(smach.State):
                              input_keys=['sim_type_in'])
 
     def execute(self, userdata):
+        '''Execution block for the state
+        '''
 
         if userdata.sim_type_in is not 'normal':
             rospy.set_param('wrench',[1.3494152516567712, 0.20670606484791776, 0.36069096929131383])
@@ -100,7 +105,7 @@ class InitSimulation(smach.State):
         return userdata.sim_type_in
 
 
-def main():
+def main(sim_mode):
     """Defines the state machines for Smach
     """
 
@@ -139,7 +144,7 @@ def main():
         #   'armTest'    : Test the arm for range of motion and stability
         #   'wrenchTest' : Test the wrench manipulation
         #   'valveTest'  : Test the valve operation
-        sm.userdata.sim_type = 'normal'
+        sm.userdata.sim_type = sim_mode
 
         # Define userdata for the state machines
         sm_wrench.userdata.move_counter = 0
@@ -213,11 +218,7 @@ def main():
         with sm_wrench:
             smach.StateMachine.add('MOVE_TO_READY', MoveToReady(),
                                    transitions={'atReady' : 'MOVE_WRENCH_READY',
-                                                'moveStuck' : 'MOVE_TO_READY',
-                                                'moveFailed' : 'failedToMove'},
-                                   remapping={'move_counter_in' : 'move_counter',
-                                              'max_retries' : 'max_move_retries',
-                                              'move_counter_out' : 'move_counter'})
+                                                'moveFailed' : 'failedToMove'})
 
             smach.StateMachine.add('MOVE_WRENCH_READY', MoveToWrenchReady(),
                                    transitions={'atWrenchReady' : 'ID_WRENCH',
@@ -305,4 +306,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 2:
+        rospy.loginfo("****++++**** Not ENOUGH ARGUMENTS TO SM ****++++****")
+        rospy.loginfo(sys.argv)
+        rospy.loginfo('Defaulting to normal run.')
+        main('normal')
+    else:
+        main(sys.argv[1])

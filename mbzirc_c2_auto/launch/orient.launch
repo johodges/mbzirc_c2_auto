@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-<node name="orient" pkg="mbzirc_c2_auto" type="orient.py" />
-<node name="orient_scan" pkg="mbzirc_c2_auto" type="orient_scan.py" />
-</launch>
