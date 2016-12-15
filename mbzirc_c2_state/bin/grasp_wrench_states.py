@@ -2,7 +2,7 @@
 
     State machine classes for grasping a certain wrench from a peg board.
 
-    Classes
+    Classes:
         MoveToReady -
         MoveToWrenchReady
         IDWrench
@@ -30,9 +30,9 @@
 import rospy
 import smach
 import subprocess
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
+from geometry_msgs.msg import Twist
 from mbzirc_c2_auto.msg import kf_msg
-from twist_command import *
+from robot_mv_cmds import *
 
 class MoveToReady(smach.State):
     """Moves the arm to the ready state from the stowed state
@@ -40,50 +40,32 @@ class MoveToReady(smach.State):
     Outcomes
     --------
         atReady : at the ready position
-        moveStuck : move failed but still retrying
         moveFailed : move failed too many times
-
     """
 
     def __init__(self):
+        '''MoveToReady initialization'''
         smach.State.__init__(self,
                              outcomes=['atReady',
-                                       'moveStuck',
-                                       'moveFailed'],
-                             input_keys=['move_counter_in',
-                                         'max_retries'],
-                             output_keys=['move_counter_out'])
+                                       'moveFailed'])
 
     def execute(self, userdata):
+        '''MoveToReady execution routine'''
+        #
+        curr_pos = rospy.get_param('ee_position')
+        curr_pos[0] = curr_pos[0] + 0.2
+        curr_pos[2] = curr_pos[2] + 0.2
+        rospy.set_param('ee_position', [float(curr_pos[0]),
+                                        float(curr_pos[1]),
+                                        float(curr_pos[2])])
 
-        if userdata.move_counter_in == 0:
-            curr_pos = rospy.get_param('ee_position')
-            curr_pos[0] = curr_pos[0] + 0.2
-            curr_pos[2] = curr_pos[2] + 0.2
-            rospy.set_param('ee_position', [float(curr_pos[0]),
-                                            float(curr_pos[1]),
-                                            float(curr_pos[2])])
-
-	move_state = twist_command(curr_pos[0], curr_pos[1], curr_pos[2])
-
-        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        #prc.wait()
-
-        #move_state = rospy.get_param('move_arm_status')
-
-        # Preset the out move counter to 0, override if necessary
-        userdata.move_counter_out = 0
+        move_state = moveArmTwist(curr_pos[0], curr_pos[1], curr_pos[2])
 
         if move_state == 'success':
             return 'atReady'
 
         else:
-            if userdata.move_counter_in < userdata.max_retries:
-                userdata.move_counter_out = userdata.move_counter_in + 1
-                return 'moveStuck'
-
-            else:
-                return 'moveFailed'
+            return 'moveFailed'
 
 
 
@@ -94,7 +76,8 @@ class MoveToWrenchReady(smach.State):
     Outcomes
     --------
         atWrenchReady : at location to determine correct wrench
-        moveToOperate
+        moveToOperate :
+
         moveStuck : move failed but still retrying
         moveFailed : move failed too many times
 
@@ -124,7 +107,7 @@ class MoveToWrenchReady(smach.State):
                                         float(wrench_ready_pos[1]),
                                         float(wrench_ready_pos[2])])
 
-	move_state = twist_command(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos[2])
+        move_state = moveArmTwist(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
@@ -235,7 +218,7 @@ class MoveToWrench(smach.State):
                                         float(wrench_id[1]),
                                         float(wrench_id[2])])
 
-	move_state = twist_command(wrench_id[0], wrench_id[1], wrench_id[2])
+        move_state = moveArmTwist(wrench_id[0], wrench_id[1], wrench_id[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
@@ -325,7 +308,7 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.461-0.17)+0.005*ct3 # 0.134 distance from camera to left_tip   
+                ee_position[0] = (xA + 0.461-0.17)+0.005*ct3 # 0.134 distance from camera to left_tip
                 print "ee_position before Kalman filter", ee_position
                 print "************************************************"
                 ee_twist.linear.x = ee_position[0]
@@ -350,7 +333,7 @@ class MoveToWrench(smach.State):
                 ee_twist.linear.y = ee_position[1]
                 ee_twist.linear.z = ee_position[2]
 
-		move_state = twist_command(ee_twist.linear.x, ee_twist.linear.y, ee_twist.linear.z)
+                move_state = moveArmTwist(ee_twist.linear.x, ee_twist.linear.y, ee_twist.linear.z)
 
                 #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
                 #prc.wait()
@@ -415,7 +398,7 @@ class GraspWrench(smach.State):
                                         float(ee_position[2])])
         rospy.sleep(0.1)
 
-	move_state = twist_command(ee_position[0], ee_position[1], ee_position[2])
+        move_state = moveArmTwist(ee_position[0], ee_position[1], ee_position[2])
 
         #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
         #prc.wait()
