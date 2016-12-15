@@ -44,6 +44,13 @@ import scipy.misc as ms
 import scipy.spatial.distance as scd
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+import StringIO
+from sensor_msgs.msg import Image
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
+import urllib, base64
+import os
+import sys
 
 def callback(data):
     """
@@ -56,10 +63,15 @@ def callback(data):
     # Initialize parameters
     rate = rospy.Rate(10)
     scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_data = False
+    plot_data = True
 
     # Set max/min angle and increment
-    x = np.arange(1.66,-1.6525,-0.0029146999)
+    scan_min = data.angle_min
+    scan_max = data.angle_max
+    scan_inc = data.angle_increment
+
+    #x = np.arange(1.66,-1.6525,-0.0029146999)
+    x = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)
@@ -89,11 +101,6 @@ def callback(data):
     x_coord2 = np.array(np.split(x_coord, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
     y_coord2 = np.array(np.split(y_coord, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
 
-    # If we want to plot the LIDAR scan, open the plot environment
-    if plot_data:
-        plt.figure(1)
-        #plt.cla()
-
     # Loop through each segmented object
     for i in range(len(x2)):
 
@@ -105,28 +112,12 @@ def callback(data):
             dist2_sum = np.sum(dist2[i][1:xlen-1])
 
             # Check if this object is too small
-            if dist2_sum < 0.25:
-                # If we want to plot, plot small object
-                if plot_data:
-                    plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',linewidth=2.0)
-            else:
-
-                # Check if this object is too big
-                if dist2_sum > 1.5:
-                    # If we want to plot, plot large object
-                    if plot_data:
-                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',linewidth=2.0)
-                else:
-                    # If we want to plot, plot just right object
-                    if plot_data:
-                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',linewidth=2.0)
-
-                    # Find range and bearing of median of object
-                    ang = np.median(x2[i])
-                    dis = np.median(y2[i])
-                    mn = min(y2[i][1:xlen])
-                    mx = max(y2[i][1:xlen])
-                    bearing = np.array([ang,dis], dtype=np.float32)
+            if dist2_sum > 0.25 and dist2_sum < 1.5:
+                ang = np.median(x2[i])
+                dis = np.median(y2[i])
+                mn = min(y2[i][1:xlen])
+                mx = max(y2[i][1:xlen])
+                bearing = np.array([ang,dis], dtype=np.float32)
 
     # Check if bearing exists. Store [0,0] if no object was found
     if 'bearing' not in locals():
@@ -136,15 +127,38 @@ def callback(data):
     pub = rospy.Publisher("/detection",numpy_msg(Floats), queue_size=1)
     pub.publish(bearing)
 
-    # If we want to plot, make it prettier
+    # If we want to plot the LIDAR scan, open the plot environment
     if plot_data:
+        plt.figure(1)
+        for i in range(len(x2)):
+            xlen = len(x2[i])-0
+            if xlen > 4:
+                dist2_sum = np.sum(dist2[i][1:xlen-1])
+                if dist2_sum < 0.25:
+                    if plot_data:
+                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',linewidth=2.0)
+                else:
+                    if dist2_sum > 1.5:
+                        if plot_data:
+                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',linewidth=2.0)
+                    else:
+                        if plot_data:
+                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',linewidth=2.0)
         plt.ylim([0,20])
         plt.xlim([-5,5])
+        plt.gca().invert_xaxis()
         plt.xlabel('Left of robot [m] ')
         plt.ylabel('Front of robot [m]')
         plt.title('Laser Scan')
-        plt.draw()
-        plt.pause(0.001)
+        imgdata = StringIO.StringIO()
+        plt.savefig(imgdata, format='png')
+        imgdata.seek(0)
+        img_array = np.asarray(bytearray(imgdata.read()), dtype=np.uint8)
+        im = cv2.imdecode(img_array, 1)
+        bridge = CvBridge()
+        image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
+        image_output.publish(bridge.cv2_to_imgmsg(im, "bgr8"))
+        plt.close()
     pass
 
 def laser_listener():

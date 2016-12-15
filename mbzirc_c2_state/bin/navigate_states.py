@@ -25,6 +25,8 @@
 import rospy
 import smach
 import subprocess
+import os
+import signal
 
 
 class FindBoard(smach.State):
@@ -43,13 +45,16 @@ class FindBoard(smach.State):
     def execute(self, userdata):
 
         rospy.loginfo('Searching for board')
-        a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+        a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", 
+            stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        #a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
         rospy.sleep(0.1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
         b.wait()
         rospy.loginfo('Searching for board')
-        a.kill()
+        os.killpg(os.getpgid(a.pid), signal.SIGTERM) 
+        rospy.sleep(0.1)
 
         return 'atBoard'
 

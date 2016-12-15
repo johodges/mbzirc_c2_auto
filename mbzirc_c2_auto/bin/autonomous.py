@@ -6,9 +6,22 @@
     Initial version based on ccam-navigation by Chris Mobley
     Autonomous movement added by Jonathan Hodges
 
-    Define waypoint destinations for a robot to move autonomously within
-    a map framework.
+    This code moves a mobile base along a waypoint based search routine
+    while looking for an object. Once an object is detected, the search
+    routine is cancelled and the mobile base moves toward the object
+    instead.
 
+    Input Files:
+        mbzirc_c2_auto/params/pre-defined-path.txt - Waypoints for search
+                                                     routine
+    Subscribers:
+        /detection- array containing [angle,distance] to the median of
+                    the detected object in local coordinates. Contains
+                    [0,0] if no object is detected.
+    Publishers:
+        /cmd_vel - topic to manually move the robot
+        /move_base/goal - goal sent to the move_base node in ROS
+        
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -36,66 +49,63 @@ import numpy as np
 from decimal import *
 
 class mbzirc_c2_auto():
-    # A few key tasks are achieved in the initializer function:
-    #     1. We load the pre-defined search routine
-    #     2. We connect to the move_base server in ROS
-    #     3. We start the ROS subscriber callback function registering
-    #        the object
-    #     4. We initialize counters in the class to be shared by the
-    #        various callback routines
+
     def __init__(self):
-        # Name this node, it must be unique
-        rospy.init_node('autonomous', anonymous=True)
+        """
+          A few key tasks are achieved in the initializer function:
+              1. We load the pre-defined search routine
+              2. We connect to the move_base server in ROS
+              3. We start the ROS subscriber callback function registering
+                 the object
+              4. We initialize counters in the class to be shared by the
+                 various callback routines
 
-        # Enable shutdown in rospy (This is important so we cancel any
-        # move_base goals when the node is killed)
-        rospy.on_shutdown(self.shutdown)
+            These are the possible returns from move_base.get_state() function.
+            Included for reference. 
+            goal_states = ['PENDING', 'ACTIVE', 'PREEMPTED',
+                           'SUCCEEDED', 'ABORTED', 'REJECTED',
+                           'PREEMPTING', 'RECALLING', 'RECALLED',
+                           'LOST']
+        """
+        # Establish ROS node
+        rospy.init_node('autonomous', anonymous=True) # Name this node
+        rospy.on_shutdown(self.shutdown) # Enable shutdown in rospy
+        rospack = rospkg.RosPack() # Find rospackge locations
 
-        # Minimum pause at each location
-        self.rest_time = rospy.get_param("~rest_time", 0.1)
-        # Loops before stall
-        self.stalled_threshold = 200
+        # Initialize parameters
+        self.rest_time = 0.1            # Minimum pause at each location
+        self.stalled_threshold = 200    # Loops before stall
 
-        # Goal state return values
-        #goal_states = ['PENDING', 'ACTIVE', 'PREEMPTED',
-        #               'SUCCEEDED', 'ABORTED', 'REJECTED',
-        #               'PREEMPTING', 'RECALLING', 'RECALLED',
-        #               'LOST']
-
-        # Set up the goal locations. Poses are defined in the map frame.
-        # An easy way to find the pose coordinates is to point-and-click
-        # Nav Goals in RViz when running in the simulator.
-        # Pose coordinates are then displayed in the terminal
-        # that was used to launch RViz.
+        # Set up the waypoint locations. Poses are defined in the map frame.
         self.locations = dict()
         self.wpname = dict()
         
-        rospack = rospkg.RosPack()
         f = open(rospack.get_path(
             'mbzirc_c2_auto')+'/params/pre-defined-path.txt','r')
-        ct2 = 0
+        line_counter = 0
         with f as openfileobject:
             first_line = f.readline()
             for line in openfileobject:
                 nome = [x.strip() for x in line.split(',')]
-                self.wpname[ct2] = nome[0]
-                x = Decimal(nome[1]); y = Decimal(nome[2])
-                z = Decimal(nome[3])
-                X = Decimal(nome[4]); Y = Decimal(nome[5])
-                Z = Decimal(nome[6])
-                self.locations[self.wpname[ct2]] = Pose(Point(x,y,z), Quaternion(X,Y,Z,1))
-                ct2 = ct2+1
-        self.wp = -1
+                self.wpname[line_counter] = nome[0]
+                x = Decimal(nome[1]); y = Decimal(nome[2]); z = Decimal(nome[3])
+                X = Decimal(nome[4]); Y = Decimal(nome[5]); Z = Decimal(nome[6])
+                self.locations[self.wpname[line_counter]] = Pose(Point(x,y,z), Quaternion(X,Y,Z,1))
+                line_counter = line_counter+1
+        self.wp = 0
+        self.ct = 0
         self.ct4 = 0
         self.ct5 = 0
+        self.state = 3
 
+        # Set up ROS publishers and subscribers
         # Publisher to manually control the robot 
-        # (e.g. to stop it, queue_size=5)
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
 
+        # Subscribe to object detection topic
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
         # Subscribe to the move_base action server
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-
         rospy.loginfo("Waiting for move_base action server...")
 
         # Wait 60 seconds for the action server to become available
@@ -105,7 +115,6 @@ class mbzirc_c2_auto():
         rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
         rospy.sleep(self.rest_time)
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
 
     def shutdown(self):
         rospy.loginfo("Stopping the robot...")
@@ -156,22 +165,26 @@ class mbzirc_c2_auto():
                 rospy.sleep(sleep_time)
             return None
 
-        if self.wp > -1:
-            state = self.move_base.get_state()
-        else:
-            self.goal.target_pose.pose = self.locations[self.wpname[self.wp+1]]
-            self.goal.target_pose.header.frame_id = 'odom'
-            self.goal.target_pose.header.stamp = rospy.Time.now()
-            self.move_base.send_goal(self.goal)
-            self.wp = self.wp+1
-            self.ct = 0
-            rospy.sleep(5)
-            state = self.move_base.get_state()
+        #if self.wp > -1:
+        #    self.state = self.move_base.get_state()
+        #else:
+        #    self.goal.target_pose.pose = self.locations[self.wpname[self.wp+1]]
+        #    self.goal.target_pose.header.frame_id = 'odom'
+        #    self.goal.target_pose.header.stamp = rospy.Time.now()
+        #    self.move_base.send_goal(self.goal)
+        #    self.wp = self.wp+1
+        #    self.ct = 0
+        #    rospy.sleep(5)
+        #    self.state = self.move_base.get_state()
         if bearing.data[0] == 0:
+            try:
+                self.state = self.move_base.get_state()
+            except:
+                self.state = self.state
             rospy.logdebug("%f",self.ct)
             self.ct5 = self.ct5+1
             rospy.logdebug("I see no object!")
-            if state == 3:
+            if self.state == 3:
                 self.wp = self.wp+1
                 location = self.wpname[self.wp]
                 self.goal.target_pose.pose = self.locations[location]
@@ -208,19 +221,22 @@ class mbzirc_c2_auto():
                 if bear < 3:
                     bear = 0
                 x = bear*np.cos(bearing.data[0])-1
-                y = -bear*np.sin(bearing.data[0])-1
+                y = bear*np.sin(bearing.data[0])-1
                 self.goal.target_pose.header.frame_id = 'base_link'
                 self.goal.target_pose.pose = Pose(Point(x,y,0), Quaternion(0,0,0,1))
                 rospy.loginfo("Going to: (%f,%f)",bearing.data[0],bearing.data[1])
                 self.goal.target_pose.header.stamp = rospy.Time.now()
                 self.move_base.send_goal(self.goal)
-                state = self.move_base.get_state()
+                try:
+                    self.state = self.move_base.get_state()
+                except:
+                    self.state = self.state
                 self.ct4 = self.ct4+1
                 if bear < 3:
                     rospy.set_param('smach_state','atBoard')
                     rospy.signal_shutdown('We are close enough to the object!')
                 rospy.sleep(5)
-                rospy.loginfo("State:" + str(state))
+                rospy.loginfo("State:" + str(self.state))
             else:
                 self.ct4 = self.ct4+1
                 self.ct5 = 0
