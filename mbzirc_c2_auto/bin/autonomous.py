@@ -62,7 +62,7 @@ class mbzirc_c2_auto():
         detect_counter: counter for LIDAR detection scans
         noise_counter: counter for LIDAR empty scans
         state: current state of move_base node
-        cmd_vel_pub: Publisher to manually control the robot 
+        twi_pub: Publisher to manually control the robot 
         move_base: move_base action server
         goal: move_base goal
         ct_move: manually movement counter
@@ -76,7 +76,7 @@ class mbzirc_c2_auto():
             is detected.
 
     Publishers:
-        /cmd_vel: topic to manually move the robot
+        /joy_teleop/cmd_vel: topic to manually move the robot
         /move_base/goal: goal sent to the move_base node in ROS
             
     """
@@ -132,8 +132,8 @@ class mbzirc_c2_auto():
 
         # Set up ROS publishers and subscribers
         # Publisher to manually control the robot 
-        self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
-
+        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+            queue_size=5)
         # Subscribe to object detection topic
         rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, 
             queue_size=1)
@@ -159,7 +159,7 @@ class mbzirc_c2_auto():
         rospy.loginfo("Stopping the robot...")
         self.move_base.cancel_goal()
         rospy.sleep(0.1)
-        self.cmd_vel_pub.publish(Twist())
+        self.twi_pub.publish(Twist())
         rospy.sleep(0.1)
 
     def callback(self, bearing):
@@ -182,11 +182,9 @@ class mbzirc_c2_auto():
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.linear.x = ve
-            twi_pub = rospy.Publisher(
-                "/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
             while self.ct_move*sleep_time < time_to_move:
-                twi_pub.publish(twist)
+                self.twi_pub.publish(twist)
                 self.ct_move = self.ct_move+1
                 rospy.sleep(sleep_time)
             return None
@@ -205,11 +203,9 @@ class mbzirc_c2_auto():
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.angular.z = ve
-            twi_pub = rospy.Publisher(
-                "/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
             while self.ct_move*sleep_time < time_to_move:
-                twi_pub.publish(twist)
+                self.twi_pub.publish(twist)
                 self.ct_move = self.ct_move+1
                 rospy.sleep(sleep_time)
             return None
