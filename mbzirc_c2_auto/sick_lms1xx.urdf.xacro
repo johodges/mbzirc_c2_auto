@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           <scan>
             <horizontal>
               <samples>1137</samples>
-              <resolution>0.1</resolution>
+              <resolution>1.0</resolution>
               <min_angle>-1.66</min_angle>
               <max_angle>1.66</max_angle>
             </horizontal>
