@@ -1,21 +1,27 @@
 #!/usr/bin/env python
 
-""" orient_scan.py - Version 1.0 2016-10-12
+"""orient_scan.py - Version 1.0 2016-10-12
+Author: Jonathan Hodges
 
-    This software uses a LIDAR scan to identify a box.
-    Made by Jonathan Hodges
+This code searches a 2-D LIDAR scan for an object within a minimum and maximum
+length bound. The LIDAR scan is segmented based on null returns and large
+deviations between points.
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.5
+Subscribers:
+    /scan: 2-D LIDAR scan from ROS
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details at:
+Publishers:
+    /bearing: array containing [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
 
-    http://www.gnu.org/licenses/gpl.html
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details at:
+http://www.gnu.org/licenses/gpl.html
 
 """
 import roslib; roslib.load_manifest('urg_node')
@@ -32,39 +38,55 @@ from rospy_tutorials.msg import Floats
 import math
 
 class laser_listener():
-    # Initialize the class
+    """MBZIRC Challenge 2 orient_scan
+
+    This code searches a 2-D LIDAR scan for an object within a minimum and
+    maximum length bound. The LIDAR scan is segmented based on null returns and
+    large deviations between points.
+
+    Attributes:
+        self.pub: Publisher for bearing topic
+
+    Subscribers:
+        /scan: 2-D LIDAR scan from ROS
+
+    Publishers:
+        /bearing: array containing
+            [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
+"""
+
     def __init__(self):
+        """This initializes the publishers and subscribers in the class.
+        """
         # Name this node, it must be unique
         rospy.init_node('orient_scan', anonymous=True)
 
         # Set up ROS subscriber callback routines
-        rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback, queue_size=1)
+        rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback,
+            queue_size=1)
+        self.pub = rospy.Publisher("/bearing",numpy_msg(Floats), queue_size=1)
 
-        # Initialize counter for plot debugging (to flip y-axis for better viewing)
-        self.pt = 0
-
-    # callback (/scan) is used to segment a laser scan into continuous segments
-    # and identify if the robot is normal to the object scan
     def callback(self, data):
+        """callback (/scan) is used to segment a laser scan into continuous
+        segments and identify if the robot is normal to the object scan
+        """
         # Set ros refresh rate
         rate = rospy.Rate(10)
 
         # Initialize parameters
-        plot_flag = 0
-        debug_flag = 0
         thresh = 0.1
 
-        # Establish LIDAR test angles. This must match the parameters of the LIDAR
-        # in gazebo.
-        y = np.arange(-1.66,1.6525,0.0029146999)
+        # Set max/min angle and increment
+        scan_min = data.angle_min
+        scan_max = data.angle_max
+        scan_inc = data.angle_increment
+
+        # Build angle array
+        y = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)
         ycos = np.cos(y)
-
-        # If we want to plot the LIDAR scan, open the plot environment
-        if plot_flag == 1:
-            plt.cla()
 
         # Apply a median filter to the LIDAR scan
         x = sg.medfilt(data.ranges,1)
@@ -95,146 +117,75 @@ class laser_listener():
                 # Calculate how long the scan is
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
 
-                # Check if the scan is too short
-                if dist2_sum < 0.25:
-                #plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-')
-                #plt.plot(x2[i],y_coord2[i],'ks')
-                    hihi = 1
-                else:
+                # Check if the scan is just right
+                if dist2_sum > 0.25 and dist2_sum < 5:
+                    mxmx = max(iii for iii in x_coord2[i] if iii < 30)
+                    if mxmx > 0.5:
+                        # Find median angle of scan
+                        ang = np.median(y2[i])
+                        idx = np.argwhere(y2[i] == ang)
 
-                    # Check if the scan is too long
-                    if dist2_sum > 5:
-                    #plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-')
-                    #plt.plot(x2[i],y_coord2[i],'bs')
-                        hihi = 1
-
-                    # Check if the scan is just right
-                    else:
-                        mxmx = max(iii for iii in x_coord2[i] if iii < 30)
-                        #print "Max range of object: ", mxmx
-                        if mxmx > 0.5:
-                            # Plot the scan if desired
-                            if plot_flag == 1:
-                                plt.plot(y_coord2[i][1:xlen],x_coord2[i][1:xlen],'r-')
-    
-                            # Find median angle of scan
-                            ang = np.median(y2[i])
+                        # If no median exists because an even number of entries, ignore
+                        # the first entry to make it an odd number of entries
+                        if len(idx) == 0:
+                            ang = np.median(y2[i][1:xlen])
                             idx = np.argwhere(y2[i] == ang)
-    
-                            # If no median exists because an even number of entries, ignore
-                            # the first entry to make it an odd number of entries
-                            if len(idx) == 0:
-                                ang = np.median(y2[i][1:xlen])
-                                idx = np.argwhere(y2[i] == ang)
-    
-                            # Store minimum and maximum extents of scan
-                            xmn = min(x_coord2[i][1:xlen])
-                            xmx = max(x_coord2[i][1:xlen])
-                            ymn = min(y_coord2[i][1:xlen])
-                            ymx = max(y_coord2[i][1:xlen])
-    
-                            # Store physical (x,y) coordinates in local system of median
-                            # angle of scan
-                            #mmm = min(iii for iii in x_coord2[i] if iii > 0.5)
-                            xA_thresh = x_coord2[i]
-                            xA = np.median(xA_thresh[xA_thresh > 0.5])
-                            #xA = mxmx #np.median(x_coord2[i])
-                            #xA = x_coord2[i][idx]
-                            yA = y_coord2[i][idx]
-    
-                            # Store physical (x,y) coordinates in local system of minimum
-                            # range of scan
-                            #print "x_coord2: ", x_coord2[i]
-                            idx2 = np.argwhere(x_coord2[i] == xmn)
-                            xB = x_coord2[i][idx2]
-                            yB = y_coord2[i][idx2]
-    
-                            # Determine which way the robot needs to rotate based on the
-                            # physical orientations of the median and minimum scans
-                            m = (yB-yA)/(xB-xA)
-                            m2 = 1/m
-                            theta2 = math.atan(-m2/1)
-                            b2 = yA-m2*xA
-                            d = 2
-                            t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
-                            t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
-    
-                            xc1 = pow(-t1+(t1*t1-4*t2),0.5)/2
-                            xc2 = pow(-t1-(t1*t1-4*t2),0.5)/2
-                            yc1 = m2*xc1+b2
-                            yc2 = m2*xc2+b2
-                            #tmp = pow(-m2*m2*xA*xA+2*m2*xA*(yA-b2)-yA*yA+2*b2*yA-b2*b2+d*d*(m2*m2+1),0.5)
-                            #xc3 = -1*(tmp-xA-m2*(yA-b2))/(m2*m2+1)
-    
-                            #yc3 = m2*xc3+b2
-                            e = pow(xA*xA+yA*yA,0.5)
-                            xc3 = xA-d*np.cos(theta2)
-                            yc3 = yA-d*np.sin(theta2)
-                            #e = d*np.sin(theta2)/(np.sin(math.radians(90)-theta2))
-                            # print e
-                            #xc3 = e*np.cos(math.radians(90)-theta2)
-                            #yc3 = e*np.sin(math.radians(90)-theta2)
-                            #print m, m2
-                            #print xc1, yc1
-                            #print xc2, yc2
-                            #print xc3, yc3, math.degrees(theta2)
-                            if math.isnan(xc2) == 1:
-                                xC = xc1
-                                yC = yc1
-                            else:
-                                xC = xc2
-                                yC = yc2
-    
-                            # print xc3, yc3, math.degrees(theta2)
-                            # print xA, yA
-                            # print xB, yB
-                            # print e
-                            #print xC, yC, math.degrees(theta2)
-    
-                            if xA > xB:
-                                if yA > yB:
-                                    if debug_flag == 1:
-                                        print "xA > xB, yA > yB"
-                                    rot = -1
-                                else:
-                                    if debug_flag == 1:
-                                        print "xA > xB, yA < yB"
-                                    rot = 1
-                            else:
-                                if yA > yB:
-                                    if debug_flag == 1:
-                                        print "xA < xB, yA > yB"
-                                    rot = -1
-                                else:
-                                    if debug_flag == 1:
-                                        print "xA < xB, yA < yB"
-                                    rot = 1
-    
-                            # Output the bearing for publishing
-                            bearing = np.array([theta2,xA,yA,xB,yB,xmn,xmx,ymn,ymx,xc3,yc3],    dtype=np.float32)
-                            if debug_flag == 1:
-                                print bearing
-    
+
+                        # Store minimum and maximum extents of scan
+                        xmn = min(x_coord2[i][1:xlen])
+                        xmx = max(x_coord2[i][1:xlen])
+                        ymn = min(y_coord2[i][1:xlen])
+                        ymx = max(y_coord2[i][1:xlen])
+
+                        # Store physical (x,y) coordinates in local system of median
+                        # angle of scan
+                        xA_thresh = x_coord2[i]
+                        xA = np.median(xA_thresh[xA_thresh > 0.5])
+                        yA = y_coord2[i][idx]
+
+                        # Store physical (x,y) coordinates in local system of minimum
+                        # range of scan
+                        #print "x_coord2: ", x_coord2[i]
+                        idx2 = np.argwhere(x_coord2[i] == xmn)
+                        xB = x_coord2[i][idx2]
+                        yB = y_coord2[i][idx2]
+
+                        # Determine which way the robot needs to rotate based on the
+                        # physical orientations of the median and minimum scans
+                        m = (yB-yA)/(xB-xA)
+                        m2 = 1/m
+                        theta2 = math.atan(-m2/1)
+                        b2 = yA-m2*xA
+                        d = 2
+                        t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
+                        t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
+
+                        xc1 = pow(-t1+(t1*t1-4*t2),0.5)/2
+                        xc2 = pow(-t1-(t1*t1-4*t2),0.5)/2
+                        yc1 = m2*xc1+b2
+                        yc2 = m2*xc2+b2
+
+                        e = pow(xA*xA+yA*yA,0.5)
+                        xc3 = xA-d*np.cos(theta2)
+                        yc3 = yA-d*np.sin(theta2)
+
+                        if math.isnan(xc2) == 1:
+                            xC = xc1
+                            yC = yc1
+                        else:
+                            xC = xc2
+                            yC = yc2
+
+                        # Output the bearing for publishing
+                        bearing = np.array([theta2,xA,xmn,xmx,ymn,ymx,xc3,yc3],
+                            dtype=np.float32)
+
         # If bearing does not exist, publish [0,0] instead
-        if 'bearing' in locals():
-            hihi = 1
-        else:
+        if 'bearing' not in locals():
             bearing = np.array([0,0], dtype=np.float32)
 
         # Publish /bearing topic
-        pub = rospy.Publisher("/bearing",numpy_msg(Floats), queue_size=1)
-        pub.publish(bearing)
-
-        # If plotting the scan, make it pretty
-        if plot_flag == 1:
-            if self.pt == 0:
-                plt.gca().invert_xaxis()
-                self.pt = self.pt +1
-            plt.xlabel('y Distance [m]')
-            plt.ylabel('x Distance [m]')
-            plt.title('Laser Scan')
-            plt.draw()
-        pass
+        self.pub.publish(bearing)
 
 if __name__ == '__main__':
 

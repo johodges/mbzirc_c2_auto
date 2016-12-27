@@ -1,35 +1,34 @@
 #!/usr/bin/env python
 
-""" findbox.py - Version 1.0 2016-10-12
+"""findbox.py - Version 1.0 2016-10-12
+Author: Jonathan Hodges
 
-    Initial version by Jonathan Hodges.
+This code searches a 2-D LIDAR scan for an object within a minimum and maximum
+length bound. The LIDAR scan is segmented based on null returns and large
+deviations between points.
 
-    This code searches a 2-D LIDAR scan for an object within
-    a minimum and maximum length bound. The LIDAR scan is
-    segmented based on null returns and large deviations between
-    points.
+Subscribers:
+    /scan: 2-D LIDAR scan from ROS
 
-    Subscribers:
-        /scan     - 2-D LIDAR scan from ROS
-    Publishers:
-        /detection- array containing [angle,distance] to the median of
-                    the detected object in local coordinates. Contains
-                    [0,0] if no object is detected.
-    Internal Switches:
-        plot_data - If False, do not plot LIDAR scan. Plotting the
-                scan slows down the code.
+Publishers:
+    /detection: array containing [angle,distance] to the median of the detected
+        object in local coordinates. Contains [0,0] if no object is detected.
+    /output/keyevent_image: image containing key events in the challenge. This
+        code publishes the segmented LIDAR scan.
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.5
+Attributes:
+    plot_data - If False, do not plot LIDAR scan. Plotting the scan slows down
+        the code.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details at:
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
-    http://www.gnu.org/licenses/gpl.html
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details at:
+http://www.gnu.org/licenses/gpl.html
 
 """
 
@@ -63,14 +62,14 @@ def callback(data):
     # Initialize parameters
     rate = rospy.Rate(10)
     scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_data = True
+    plot_data = False
 
     # Set max/min angle and increment
     scan_min = data.angle_min
     scan_max = data.angle_max
     scan_inc = data.angle_increment
 
-    #x = np.arange(1.66,-1.6525,-0.0029146999)
+    # Build angle array
     x = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
 
     # Pre-compute trig functions of angles
@@ -94,12 +93,17 @@ def callback(data):
     # Compute physical distance between measurements
     dist = np.power(x_diff+y_diff,0.5)
 
-    # Segment the LIDAR scan based on the physical distance between measurements
-    x2 = np.array(np.split(x, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
-    y2 = np.array(np.split(y, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
-    dist2 = np.array(np.split(dist, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
-    x_coord2 = np.array(np.split(x_coord, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
-    y_coord2 = np.array(np.split(y_coord, np.argwhere(dist > scan_dist_thresh).flatten()[1:]))
+    # Segment the LIDAR scan based on physical distance between measurements
+    x2 = np.array(np.split(x, np.argwhere(
+        dist > scan_dist_thresh).flatten()[1:]))
+    y2 = np.array(np.split(y, np.argwhere(
+        dist > scan_dist_thresh).flatten()[1:]))
+    dist2 = np.array(np.split(dist, np.argwhere(
+        dist > scan_dist_thresh).flatten()[1:]))
+    x_coord2 = np.array(np.split(x_coord, np.argwhere(
+        dist > scan_dist_thresh).flatten()[1:]))
+    y_coord2 = np.array(np.split(y_coord, np.argwhere(
+        dist > scan_dist_thresh).flatten()[1:]))
 
     # Loop through each segmented object
     for i in range(len(x2)):
@@ -136,14 +140,17 @@ def callback(data):
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
                 if dist2_sum < 0.25:
                     if plot_data:
-                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',linewidth=2.0)
+                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',
+                            linewidth=2.0)
                 else:
                     if dist2_sum > 1.5:
                         if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',linewidth=2.0)
+                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',
+                                linewidth=2.0)
                     else:
                         if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',linewidth=2.0)
+                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',
+                                linewidth=2.0)
         plt.ylim([0,20])
         plt.xlim([-5,5])
         plt.gca().invert_xaxis()
@@ -156,7 +163,8 @@ def callback(data):
         img_array = np.asarray(bytearray(imgdata.read()), dtype=np.uint8)
         im = cv2.imdecode(img_array, 1)
         bridge = CvBridge()
-        image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
+        image_output = rospy.Publisher("/output/keyevent_image",Image, 
+            queue_size=1)
         image_output.publish(bridge.cv2_to_imgmsg(im, "bgr8"))
         plt.close()
     pass

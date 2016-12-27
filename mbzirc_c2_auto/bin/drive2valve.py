@@ -1,21 +1,41 @@
 #!/usr/bin/env python
 
-""" drive2valve.py - Version 1.0 2016-10-12
+"""drive2valve.py - Version 1.0 2016-10-12
+Author: Jonathan Hodges
 
-    Author: Jonathan Hodges, Virginia Tech
+This software drives the husky from the wrench position to the valve position.
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.5
+Subscribers:
+    /bearing: array containing [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
+    /move_base/feedback: Topic containing current position and orientation of
+        UGV from move_base server
+    /tf: TF tree
+    /valve: Topic containing estimated center of valve (I don't think this is
+        currently in use)
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details at:
+Publishers:
+    /joy_teleop/cmd_vel: topic to manually move the robot
+    /move_base/goal: goal sent to the move_base node in ROS
 
-    http://www.gnu.org/licenses/gpl.html
+Parameters:
+    valve: valve location in global coordinates
+    wrench: wrench location in global coordinates
+    ee_position: current position of end effector in base_link coordinates
+    stow_position: end effector location in stow position
+    current_joint_state: initalize joint states before moving arm
+    ugv_position: current ugv position in global coordinates
+    smach_state: status for state machine
 
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details at:
+http://www.gnu.org/licenses/gpl.html
+    
 """
 
 import rospy
@@ -29,155 +49,225 @@ import numpy as np
 import tf
 
 class drive2valve():
-    # A few key tasks are achieved in the initializer function:
-    #     1. We connect to the move_base server in ROS
-    #     2. We start the two ROS subscriber callback functions
-    #     3. We initialize counters in the class to be shared by the various callback routines
+    """This software drives the husky from the wrench position to the valve
+    position.
+
+    Attributes:
+        camera_fov_h: Horizontal field of view of camera in radians
+        camera_fov_v: Vertical field of view of camera in radians
+        camera_pix_h: Horizontal field of view of camera in pixels
+        camera_pix_v: Vertical field of view of camera in pixels
+        ct_move: manually movement counter
+        fake_smach: flag to transition to different nodes within this node
+        feedback: position and orientation feedback from the move_base server
+        goal: move_base goal
+        move_base: move_base action server
+        rest_time: default sleep time
+        stalled_threshold: threshold for stalled UGV
+        tftree: TF tree
+        twi_pub: Publisher to manually control the robot 
+        wp: flag to get a goal at the start
+        v_c: valve center
+        x_tar_glo: target location x coordinate in global coordinates
+        y_tar_glo: target location y coordinate in global coordinates
+        x0: x position from feedback from move_base server
+        y0: y position from feedback from move_base server
+        z0: z position from feedback from move_base server
+        X0: X quaternion from feedback from move_base server
+        Y0: Y quaternion from feedback from move_base server
+        Z0: Z quaternion from feedback from move_base server
+        W0: W quaternion from feedback from move_base server
+        roll: x orientation from feedback from move_base server
+        pitch: y orientation from feedback from move_base server
+        yaw: z orientation from feedback from move_base server
+        theta: z orientation from feedback from move_base server
+        R: rotation matrix to convert local system to global system
+
+    Subscribers:
+        /bearing: array containing
+            [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
+        /move_base/feedback: Topic containing current position and orientation
+            of UGV from move_base server
+        /tf: TF tree
+        /valve: Topic containing estimated center of valve (I don't think this
+            is currently in use)
+
+    Publishers:
+        /joy_teleop/cmd_vel: topic to manually move the robot
+        /move_base/goal: goal sent to the move_base node in ROS
+
+    Parameters:
+        valve: valve location in global coordinates
+        wrench: wrench location in global coordinates
+        ee_position: current position of end effector in base_link coordinates
+        stow_position: end effector location in stow position
+        current_joint_state: initalize joint states before moving arm
+        ugv_position: current ugv position in global coordinates
+        smach_state: status for state machine
+
+    """
+
     def __init__(self):
-        # Name this node, it must be unique
-	rospy.init_node('drive2valve', anonymous=True)
+        """This initializes the various attributes in the class
 
-        # Enable shutdown in rospy (This is important so we cancel any move_base goals
-        # when the node is killed)
-        rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
+        A few key tasks are achieved in the initializer function:
+            1. We connect to the move_base server in ROS
+            2. We start the ROS publishers and subscribers
+            3. We initialize shared parameters
 
-        # Establish number of loops through callback routine before we decide to resend
-        # the move base goal since the robot is stuck
-        self.stalled_threshold = rospy.get_param("~stalled_threshold", 500) # Loops before stall
+        These are the possible returns from move_base.get_state() function.
+        Included for reference:
+        goal_states: ['PENDING', 'ACTIVE', 'PREEMPTED','SUCCEEDED', 'ABORTED',
+                      'REJECTED','PREEMPTING', 'RECALLING', 'RECALLED', 'LOST']
 
-        # Initialize counter variables
-        self.old_bearing = 0
-        self.ct3 = 0
-        self.flag = 0
-        self.wp = -1
-        self.ct = 0
-        self.ct_wrench = 0
-        self.off = 0
+        """
+        # Establish ROS node
+        rospy.init_node('drive2valve', anonymous=True) # Name this node
+        rospy.on_shutdown(self.shutdown) # Enable shutdown in rospy
 
-        # Store camera parameters
+        # Initialize parameters
+        self.rest_time = 0.1            # Minimum pause at each location
+        self.stalled_threshold = 500    # Loops before stall
+        self.fake_smach = 0             # Flag to transition to diff actions
+        self.wp = -1                    # Set to -1 to get goal at start
+
+        # Hardware Parameters
         self.camera_fov_h = 1.5708
         self.camera_fov_v = 1.5708
         self.camera_pix_h = 1920
         self.camera_pix_v = 1080
 
-        # Publisher to manually control the robot (e.g. to stop it, queue_size=5)
-        self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
+        # Establish publishers and subscribers
+        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+            queue_size=5)
+        self.tftree = tf.TransformListener() # Set up tf listener
+        rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback,
+            queue_size=1)
+        rospy.Subscriber("/move_base/feedback", MoveBaseFeedback,
+            self.callback_feedback, queue_size=1)
+        rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c,
+            queue_size=1)
 
-        # Subscribe to the move_base action server and wait up to 60 seconds
-        # for it to become available
-        self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+        # Subscribe to the move_base action server
+        self.move_base = actionlib.SimpleActionClient("move_base",
+            MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
+
+        # Wait 60 seconds for the action server to become available
         self.move_base.wait_for_server(rospy.Duration(60))
-        rospy.loginfo("Connected to move base server")
-        rospy.loginfo("Starting navigation test")
         self.goal = MoveBaseGoal()
-        rospy.sleep(0.1)
 
-        # Set up tf listener
-        self.tftree = tf.TransformListener()
+        rospy.loginfo("Connected to move base server")
+        rospy.loginfo("Starting drive to valve.")
 
-        # Set up ROS subscriber callback routines
-        rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback, queue_size=1)
-        rospy.Subscriber("/move_base/feedback", MoveBaseFeedback, self.callback_feedback, queue_size=1)
-        rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c, queue_size=1)
+        rospy.sleep(self.rest_time)
 
-    # The shutdown function is used to cancel any move_base goals when this node is killed
     def shutdown(self):
+        """This subroutine runs when the drive2valve node shutdown. It is
+        important to cancel any move_base goals prior to ending the node so
+        the robot does not keep moving after this node dies.
+        """
         rospy.loginfo("Stopping the robot...")
         self.move_base.cancel_goal()
-        rospy.sleep(2)
-        self.cmd_vel_pub.publish(Twist())
-        rospy.sleep(1)
+        rospy.sleep(self.rest_time)
+        self.twi_pub.publish(Twist())
+        rospy.sleep(self.rest_time)
 
-    # callback_feedback is used to store the feedback topic into the class to be
-    # referenced by the other callback routines.
     def callback_feedback(self, data):
+        """This callback is used to store the feedback topic into the class to
+        be referenced by the other callback routines.
+        """
         self.feedback = data
 
-    # callback_v_c is used to store the valve center topic into the class to be
-    # referenced by the other callback routines.
     def callback_v_c(self, data):
+        """This callback is used to store the valve center topic into the class
+        to be referenced by the other callback routines.
+        """
         self.v_c = data.data
 
-    # callback (bearing) is the primary function in this node. The general process is:
-    #     1. Rotate husky until it is normal to the surface
-    #     2. Check if wrenches are visible on the surface
-    #     3. If no wrenches are visible, move the husky clockwise around the panel.
-    # moves the husky until it is normal to the surface.
-    #     4. Repeat 1-3 until wrenches are identified.
-    #     5. Kill this node
     def callback(self, bearing):
+        """This callback drives the UGV in front of the valve.
 
-        # wait_for_finish - this subroutine waits for a goal to finish before returning
+        The general process is:
+            1. Move to the rough estimate of valve center
+            2. Visual servo to center on valve, and then move forward
+            3. Kill this node
+
+        """
+
         def wait_for_finish(stalled_threshold):
+            """This subroutine waits for a goal to finish before returning
+            """
             self.ct_move = 0
-            rospy.sleep(1)
+            rospy.sleep(self.rest_time)
             while self.move_base.get_state() != 3:
                 if self.ct_move > stalled_threshold:
-                    print "We are stuck! Cancelling current goal and moving backwards 0.5m."
+                    rospy.loginfo("We are stuck! Entering stuck routine.")
                     self.move_base.cancel_goal()
-                    rospy.sleep(1)
+                    rospy.sleep(0.1)
                     back_it_up(-0.25,0.5)
-                    rospy.sleep(0.5)
+                    rospy.sleep(0.1)
                     rot_cmd(0.25,0.25)
-                    print "Resending goal."
                     self.move_base.send_goal(self.goal)
-                    rospy.sleep(1)
+                    rospy.sleep(self.rest_time)
                     self.ct_move = 0
                 self.ct_move = self.ct_move + 1
-                rospy.sleep(0.1)
+                rospy.sleep(self.rest_time)
             return None
 
-        # tar_in_global - this subroutine converts local coordinate target to global coordinates
         def tar_in_global(tar_loc):
+            """This subroutine converts local coordinate target to global
+            coordinates.
+            """
             tar_glo = np.dot(self.R,tar_loc)
             self.x_tar_glo = self.x0+tar_glo[0]
             self.y_tar_glo = self.y0+tar_glo[1]
             return None
 
-        # back_it_up - this subroutine moves the husky forward or backward a distance by manually
-        # controlling the wheels
         def back_it_up(ve,dist_to_move):
-            sleep_time = 0.1
+            """This subroutine manually moves the husky forward or backward
+            a fixed amount at a fixed velocity by bypassing the move_base
+            package and sending a signal directly to the wheels.
+                
+            This subroutine is likely to be replaced by:
+                file:
+                    robot_mv_cmds
+                    subroutine: move_UGV_vel(lv,av,dist_to_move)
+            """ 
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.linear.x = ve
-            twist.linear.y = 0
-            twist.linear.z = 0
-            twist.angular.x = 0
-            twist.angular.y = 0
-            twist.angular.z = 0
-            twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
-            while self.ct_move*sleep_time < time_to_move:
-                twi_pub.publish(twist)
+            while self.ct_move*self.rest_time < time_to_move:
+                self.twi_pub.publish(twist)
                 self.ct_move = self.ct_move+1
-                rospy.sleep(sleep_time)
+                rospy.sleep(self.rest_time)
             return None
 
-        # rot_cmd - this subroutine rotates the husky 90 degrees by controlling the wheels manually
         def rot_cmd(ve,dist_to_move):
-            sleep_time = 0.1
+            """This subroutine manually rotates the husky along the z-axis a
+            fixed amount at a fixed velocity by bypassing the move_base package
+            and sending a signal directly to the wheels.
+
+            This subroutine is likely to be replaced by:
+                file:
+                    robot_mv_cmds
+                    subroutine: move_UGV_vel(lv,av,dist_to_move)
+            """
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
-            twist.linear.x = 0
-            twist.linear.y = 0
-            twist.linear.z = 0
-            twist.angular.x = 0
-            twist.angular.y = 0
             twist.angular.z = ve
-            twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
             self.ct_move = 0
-            while self.ct_move*sleep_time < time_to_move:
-                twi_pub.publish(twist)
+            while self.ct_move*self.rest_time < time_to_move:
+                self.twi_pub.publish(twist)
                 self.ct_move = self.ct_move+1
-                rospy.sleep(sleep_time)
+                rospy.sleep(self.rest_time)
             return None
 
-        # update_rot - this subroutine updates the feedback locations
         def update_rot():
-            # Extract the current pose of the robot in the global reference from
-            # the /feedback topic:
+            """This subroutine updates the feedback locations in the global
+            reference frame from the /feedback topic.
+            """
             self.x0 = self.feedback.feedback.base_position.pose.position.x
             self.y0 = self.feedback.feedback.base_position.pose.position.y
             self.z0 = self.feedback.feedback.base_position.pose.position.z
@@ -186,61 +276,100 @@ class drive2valve():
             self.Z0 = self.feedback.feedback.base_position.pose.orientation.z
             self.W0 = self.feedback.feedback.base_position.pose.orientation.w
             # Convert quaternion angle to euler angles
-            euler = tf.transformations.euler_from_quaternion([self.X0,self.Y0,self.Z0,self.W0])
+            euler = tf.transformations.euler_from_quaternion([self.X0,self.Y0,
+                self.Z0,self.W0])
             self.roll = euler[0]
             self.pitch = euler[1]
             self.yaw = euler[2]
             self.theta = self.yaw
             # Define rotation matrix
-            self.R = np.array([[np.cos(self.theta),-np.sin(self.theta)],[np.sin(self.theta),np.cos(self.theta)]])
+            self.R = np.array([[np.cos(self.theta),-np.sin(self.theta)],
+                [np.sin(self.theta),np.cos(self.theta)]])
             return None
 
-        # We need some feedback from the move_base server to obtain our current
-        # location. Since the move_base server does not publish feedback without an
-        # active goal, we set an initial goal to get our position.
         if self.wp == -1:
-            rospy.loginfo("Moving backward 1m to make move to valve easier.")
+            """We need some feedback from the move_base server to obtain our
+            current location. Since the move_base server does not publish
+            feedback without an active goal, we set an initial goal to get our
+            position.
+
+            Ideally this would be replaced by pulling the position of the UGV
+            from a different feedback topic or the TF tree.
+            """
+            rospy.loginfo("Moving backward 2m to make move to valve easier.")
             back_it_up(-0.25,2)
             self.goal.target_pose.header.frame_id = 'base_link'
-            self.goal.target_pose.pose = Pose(Point(-0.5,0,0), Quaternion(0,0,0,1))
+            self.goal.target_pose.pose = Pose(Point(-0.5,0,0),
+                Quaternion(0,0,0,1))
             self.goal.target_pose.header.stamp = rospy.Time.now()
             self.move_base.send_goal(self.goal)
-            rospy.sleep(1)
+            rospy.sleep(self.rest_time*10)
             self.wp = self.wp+1
         else:
+            update_rot()
+            """Extract points of interest from the /bearing topic:
+            point A: median point of laser scan
+            point C: unused in this routine
+            mn/mx: minimum/maximum extents of the object
+            """
+            ang = bearing.data[0]
+            xA = bearing.data[1]+0.025
+            xmn = bearing.data[2]
+            xmx = bearing.data[3]
+            ymn = bearing.data[4]
+            ymx = bearing.data[5]
+            xC = bearing.data[6]
+            yC = bearing.data[7]
 
-            if self.flag == 2:
-                xA = bearing.data[1]
-                print "Distance to board: ", xA
+            if self.fake_smach == 2:
+                """This node estimates the valve location from the camera
+                frame and kills this node.
+                """
+                rospy.logdebug("Distance to board: %f", xA)
                 camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
                 camera_y_mn = -1*xA*np.arctan(self.camera_fov_h/2)
                 camera_z_mx = xA*np.arctan(self.camera_fov_v/2)
                 camera_z_mn = -1*xA*np.arctan(self.camera_fov_v/2)
-                valve_y = (1-self.v_c[0]/1920)*(camera_y_mx-camera_y_mn)+camera_y_mn
-                valve_z = (1-self.v_c[1]/1080)*(camera_z_mx-camera_z_mn)+camera_z_mn
-                if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/camera"):
-                    t = self.tftree.getLatestCommonTime("/base_link", "/camera")
-                    posi, quat = self.tftree.lookupTransform("/base_link", "/camera", t)
-                    print posi, quat
+                valve_y = (1-self.v_c[0]/self.camera_pix_h)*(camera_y_mx-
+                    camera_y_mn)+camera_y_mn
+                valve_z = (1-self.v_c[1]/self.camera_pix_v)*(camera_z_mx-
+                    camera_z_mn)+camera_z_mn
+                if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
+                    t = self.tftree.getLatestCommonTime("/base_laser",
+                        "/camera")
+                    posi, quat = self.tftree.lookupTransform("/base_laser", 
+                        "/camera", t)
+                    rospy.logdebug("TF Position from base_link to camera:")
+                    rospy.logdebug(posi)
+                    rospy.logdebug("TF Quaternion from base_link to camera:")
+                    rospy.logdebug(quat)
                 tf_x = posi[0]
                 tf_y = posi[1]
                 tf_z = posi[2]
-                print "TF: ", posi
                 valve = np.array([xA, valve_y, valve_z],dtype=np.float32)
-                print "Valve in local coordinates: ", valve
+                rospy.loginfo("Valve in local coord. (x,y,z): (%f,%f,%f)",
+                    valve[0], valve[1], valve[2])
                 valve = valve+[tf_x,tf_y,tf_z]
-                print "Valve in global coordinates: ", valve
-                rospy.set_param('valve2',[float(valve[0]), float(valve[1]), float(valve[2])])
-                # Set the current position of the end effector with respect to the base
-                rospy.set_param('ee_position',[float(tf_x), float(tf_y), float(tf_z)])
-                #rospy.set_param('stow_position',[float(tf_x), float(tf_y), float(tf_z)])
-                #rospy.set_param('current_joint_state',[0,0,0,0,0,0])
-                rospy.set_param('ugv_position',[self.x0,self.y0,0,self.X0,self.Y0,self.Z0,self.W0])
+                rospy.loginfo("Valve in global coord. (x,y,z): (%f,%f,%f)",
+                    valve[0], valve[1], valve[2])
+                rospy.set_param('valve2',[float(valve[0]), float(valve[1]),
+                    float(valve[2])])
+                # Set the position of the end effector with respect to the base
+                rospy.set_param('ee_position',[float(tf_x), float(tf_y),
+                    float(tf_z)])
+                rospy.set_param('ugv_position',
+                    [self.x0,self.y0,0,self.X0,self.Y0,self.Z0,self.W0])
                 rospy.set_param('smach_state','valvepos')
                 rospy.signal_shutdown('Ending node.')
 
-            if self.flag == 1:
-                rospy.sleep(1)
+            if self.fake_smach == 1:
+                """This node centers the UGV on the valve. Note, currently
+                we are bypassing this node because while holding the wrench
+                we can't see the valve at the distance we specify. Once UGV
+                is centered on valve, this node moves the UGV forward until
+                it is a fixed distance from the board.
+                """
+                rospy.sleep(0.1)
                 self.ct_move = 0
                 wait_for_finish(100)
                 valve = self.v_c[0]
@@ -249,27 +378,20 @@ class drive2valve():
                 vw_off = (vw_c-vw_t)
                 update_rot()
 
-                # Check if we are centered between valve and wrenches
+                # Check if we are centered on the valve
                 if abs(vw_off) <= 500:
-                    print "Victory!"
-                    xA = bearing.data[1]
-                    yA = bearing.data[2]
-                    xB = bearing.data[3]
-                    yB = bearing.data[4]
-                    xmn = bearing.data[5]
-                    xmx = bearing.data[6]
-                    ymn = bearing.data[7]
-                    ymx = bearing.data[8]
+                    rospy.loginfo("UGV is centered on the valve.")
 
                     # Calculate the object location in local coordinate system
                     x_loc = ((xmx-xmn)/2)+xmn
                     y_loc = ((ymx-ymn)/2)+ymn
-                    print "Object in local coord and local sys:", x_loc, y_loc, self.Z0
+                    rospy.loginfo("Object in local coord (x,y): (%f,%f)",
+                        x_loc, y_loc)
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.8
+                    po = 0.8 # Distance off board we want to be 
                     back_it_up(0.25,(x_loc-po))
                     rospy.sleep(1)
-                    self.flag = 2
+                    self.fake_smach = 2
                 else:
                     back_it_up(-0.25,1)
 
@@ -277,15 +399,21 @@ class drive2valve():
                         di = -0.1
                     else:
                         di = 0.1
-                    self.goal.target_pose.pose = Pose(Point(self.x0+di*np.sin(self.yaw),self.y0-di*np.cos(self.yaw),0), Quaternion(self.X0,self.Y0,self.Z0,self.W0))
+                    self.goal.target_pose.pose = Pose(Point(
+                        self.x0+di*np.sin(self.yaw),
+                        self.y0-di*np.cos(self.yaw),0), 
+                        Quaternion(self.X0,self.Y0,self.Z0,self.W0))
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.move_base.send_goal(self.goal)
-                    print "Moving forward 1m and to the left-right 0.2m"
+                    rospy.loginfo("UGV is not centered on valve.")
+                    rospy.loginfo("Backing up and moving more centered.")
                     wait_for_finish(100)
+                    rospy.sleep(self.rest_time*10)
 
-            if self.flag == 0:
+            if self.fake_smach == 0:
+                """This node moves to the initial estimate of valve location.
+                """
                 update_rot()
-                rospy.loginfo("Setting initial estimate of valve location.")
                 valve = rospy.get_param('valve')
                 ugv_pos = rospy.get_param('ugv_position')
                 rospy.loginfo(valve)
@@ -295,12 +423,14 @@ class drive2valve():
                 self.x_val_glo = val_glo[0]+ugv_pos[0]
                 self.y_val_glo = val_glo[1]+ugv_pos[1]
                 self.goal.target_pose.header.stamp = rospy.Time.now()
-                self.goal.target_pose.pose = Pose(Point(self.x_val_glo,self.y_val_glo,0), Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
+                self.goal.target_pose.pose = Pose(Point(
+                    self.x_val_glo,self.y_val_glo,0),
+                    Quaternion(ugv_pos[3],ugv_pos[4],ugv_pos[5],ugv_pos[6]))
                 self.goal.target_pose.header.frame_id = 'odom'
                 self.move_base.send_goal(self.goal)
-                print "Moving to intial estimate of valve location."
+                rospy.loginfo("Moving to initial estimate of valve location.")
                 wait_for_finish(100)
-                self.flag = 1
+                self.fake_smach = 1
 if __name__ == '__main__':
     try:
         drive2valve()
