@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
+  <param name="node_logging" value="INFO"/>
+
   <include file="$(find mbzirc_c2_auto)/launch/h-arena2.launch">
     <arg name="paused" value="true" />
     <arg name="ur5_camera_enabled" value="false"/>

@@ -109,7 +109,14 @@ def main(sim_mode):
     """Defines the state machines for Smach
     """
 
-    rospy.init_node('mbzirc_simulation_state_machine', anonymous=True)
+    # Set the log level for the node
+    loglevel = rospy.get_param('node_logging')
+    if loglevel == 'DEBUG' or loglevel == 'SMACH_DEBUG':
+        rospy.init_node('mbzirc_ch2_sm', anonymous=True, log_level=rospy.DEBUG)
+    else:
+        rospy.init_node('mbzirc_ch2_sm', anonymous=True)
+
+    rospy.logdebug("SMACH logging in DEBUG mode.")
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['success', 'failure'])
