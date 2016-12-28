@@ -26,6 +26,37 @@ import rospy
 import smach
 import subprocess
 from std_msgs.msg import String
+import sys
+
+class OrientSMMethod(smach.State):
+    """Determine if old or new state machine should be used
+
+    This should be removed as soon as the new state machine logic for navigation
+    has been implemented
+
+    Outcomes
+    --------
+        useNew : use the new state machine
+        useOld : use the old state machine
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['useNew',
+                                       'useOld'])
+
+    def execute(self, userdata):
+        try:
+            sm_to_use = rospy.get_param('sm_version')
+        except:
+            print sys.exc_info()[0]
+            return 'useOld'
+
+        if sm_to_use == 'new' or sm_to_use == 'newOrient':
+            return 'useNew'
+        else:
+            return 'useOld'
+
 
 
 class Orient(smach.State):
@@ -82,8 +113,8 @@ class GoToNewSide(smach.State):
         smach.State.__init__(self,
                              outcomes=['atNewSide',
                                        'allSidesScanned'],
-                             input_keys=['sideCounter_in'],
-                             output_keys=['sideCounter_out'])
+                             input_keys=['num_sides_in'],
+                             output_keys=['num_sides_out'])
 
     def execute(self, userdata):
         userdata.sideCounter_out = userdata.sideCounter_in + 1;
@@ -136,10 +167,13 @@ class ManualOrient(smach.State):
                                        'noWrenches'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_orient.py", shell=True)
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_ugv_drive.py", shell=True)
         prc.wait()
 
-        return rospy.get_param('smach_state')
+        if rospy.get_param('smach_state') == 'backToAuto':
+            return 'backToAuto'
+        else:
+            return 'noWrenches'
 
 
 class MoveToSideWP(smach.State):
