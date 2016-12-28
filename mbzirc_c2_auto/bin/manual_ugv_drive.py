@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 
-"""key_pulisher.py - Version 1.0 2016-12-27
+"""manual_ugv_drive.py - Version 1.0 2016-12-27
 Author: Alan Lattimer
 
-This reads keystrokes from the stdin stream and publishes them to a topic for
-use in moving the robot
-
-Publishers:
+Subscribers:
     /keys : keystrokes from stdin stream
 
-Acknowledgments:
-    This code was based on Example 8.1 of 'Programming Robots with ROS', M. Quigley,
-    B. Gerkey, and W. D. Smart, 2015
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -32,10 +26,20 @@ from std_msgs.msg import String
 
 
 class manual_orient():
-    def __init__(self):
-        # Name this node, it must be unique
-        rospy.init_node('manual_orient', anonymous=True)
+    """Use keyboard to manually operate the UGV
 
+    Reads the /keys topic to get keystrokes from stdin and then moves the UGV as:
+
+      Q - Quit   W - Forward
+       A - Left  S - Stop  D - Left
+        Z - Auto  X - Backward
+
+    """
+    def __init__(self):
+        # Name the node
+        rospy.init_node('manual_ugv_drive', anonymous=True)
+
+        # Log the instructions
         rospy.loginfo('Beginning manual operation of the UGV.')
         rospy.loginfo('  Operate the UGV by pressing the following keys:')
         rospy.loginfo('    w - move forward')
@@ -46,27 +50,31 @@ class manual_orient():
         rospy.loginfo('    q - quit')
         rospy.loginfo('    z - return to autonomous operation')
 
-        # Enable shutdown in rospy
-        rospy.on_shutdown(self.shutdown_manops) # Set rospy to execute a shutdown function when exiting
+        # Set rospy to execute a shutdown function when exiting
+        rospy.on_shutdown(self.shutdown_manops)
 
+        # Start the key_puvlisher node
         self.get_keys = subprocess.Popen("rosrun mbzirc_c2_auto key_publisher.py", shell=True)
 
+        # Subscribe to the keys topic
         self.key_sub = rospy.Subscriber('keys',String,self.callback)
 
     def shutdown_manops(exit_str):
-        print exit_str
-        rospy.loginfo('Attempting to kill keyboard_driver')
-        rosnode.kill_nodes(['keyboard_driver'])
+        """Kill the key_publisher node
+        """
+        rospy.logdebug('Attempting to kill keyboard_driver')
+        rosnode.kill_nodes(['key_publisher'])
 
-    # callback_wrench is used to store the wrench topic into the class to be
-    # referenced by the other callback routines.
     def callback(self, data):
+        """Callback used when a key is pressed and published
+        """
+        # Get the current keystroke and make it lowercase for later comparisons
         self.curr_key = data.data.lower()
 
         if self.curr_key == 'q':
-            rospy.set_param('smach_state','noWrenches')
+            rospy.set_param('smach_state','stopManOps')
             rospy.sleep(1)
-            rospy.signal_shutdown('Ending node. Unable to find wrenches.')
+            rospy.signal_shutdown('Ending node. Unable to locate desired object.')
         elif self.curr_key == 'z':
             rospy.set_param('smach_state','backToAuto')
             rospy.sleep(1)
