@@ -123,7 +123,7 @@ class mbzirc_c2_auto():
 
         # Initialize parameters
         self.rest_time = 0.1            # Minimum pause at each location
-        self.stalled_threshold = 200    # Loops before stall
+        self.stalled_threshold = 5000   # Loops before stall
         self.current_waypoint = 0       # Current waypoint
         self.stall_counter = 0          # Stall counter
         self.detect_counter = 0         # Detection counter
