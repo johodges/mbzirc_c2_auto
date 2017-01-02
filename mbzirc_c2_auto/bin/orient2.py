@@ -147,7 +147,7 @@ class orient():
 
         #Initialize parameters
         self.rest_time = 0.1            # Minimum pause at each location
-        self.stalled_threshold = 500    # Loops before stall
+        self.stalled_threshold = 5000    # Loops before stall
         self.fake_smach = 0             # Flag to transition to diff actions
         self.wp = -1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
@@ -450,7 +450,7 @@ class orient():
                 rospy.set_param('wrenches_found',1)
                 rospy.sleep(self.rest_time)
                 self.ct_move = 0
-                wait_for_finish(100)
+                wait_for_finish(self.stalled_threshold)
                 valve = self.v_c[0]
                 wrenc = self.w_c[0]
                 vw_c = wrenc #(valve+wrenc)/2
@@ -493,7 +493,7 @@ class orient():
                     self.move_base.send_goal(self.goal)
                     rospy.loginfo("UGV is not centered on wrenches.")
                     rospy.loginfo("Backing up and moving more centered.")
-                    wait_for_finish(100)
+                    wait_for_finish(self.stalled_threshold)
                     rospy.sleep(self.rest_time*10)
 
             if self.fake_smach == 2:
@@ -625,7 +625,7 @@ class orient():
                     # Back up a bit to help the husky get to the target pos
                     back_it_up(-0.25,0.5)
                     self.move_base.send_goal(self.goal)
-                    wait_for_finish(100)
+                    wait_for_finish(self.stalled_threshold)
                 else:
                     rospy.loginfo("UGV is in position, check for wrenches.")
                     rospy.sleep(self.rest_time*10)

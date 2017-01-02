@@ -46,6 +46,7 @@ class move_arm_topic():
         rospy.set_param('arm_prefix', 'ur5_arm_')
         rospy.set_param('reference_frame', '/base_link')
         rospy.loginfo("Moving arm to desired position")
+	rospy.sleep(1)
 
         # Initialize the move_group API
         moveit_commander.roscpp_initialize(sys.argv)

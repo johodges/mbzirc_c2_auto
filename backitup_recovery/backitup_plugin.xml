@@ -1,0 +1,7 @@
+<library path="lib/libbackitup_recovery">
+  <class name="backitup_recovery/BackItUpRecovery" type="backitup_recovery::BackItUpRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>
+      A recovery behavior that moves the robot backwards 0.5m and rotates a bit.
+    </description>
+  </class>
+</library>
