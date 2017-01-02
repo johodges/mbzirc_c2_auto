@@ -3,8 +3,12 @@
     This file provides for testing states that can be used to test general functionality.
 
     Classes
-        FindBoard
+        TestArm
+        TestWrenchGrab
+        TestValveOps
+        TestManualOps
 
+    Author:
     Alan Lattimer (alattimer at jensenhughes dot com)
 
     This program is free software; you can redistribute it and/or modify
@@ -33,7 +37,7 @@ class TestArm(smach.State):
     Outcomes
     --------
         armTestComplete : arm tested
-
+        armTestFailed : something went wrong during the arm test
     """
 
     def __init__(self):
@@ -129,7 +133,7 @@ class TestWrenchGrab(smach.State):
     Outcomes
     --------
         wrenchTestComplete : at the board location ready to test the wrench
-
+        wrenchTestFailed : Test failed (not currently used)
     """
 
     def __init__(self):
@@ -139,6 +143,7 @@ class TestWrenchGrab(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo("*** START WRENCH TEST ***")
+
         subprocess.Popen("rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
         subprocess.Popen("rosrun mbzirc_c2_auto orient_scan.py", shell=True)
         rospy.sleep(5)
@@ -147,11 +152,12 @@ class TestWrenchGrab(smach.State):
 
 
 class TestValveOp(smach.State):
-    """Searches for and then navigates to the board
+    """Test the valve operation state machine
 
     Outcomes
     --------
-        atBoard : at the board location
+        valveOpTestComplete : completed the valve operation test
+        valveOpTestFailed : failed the valve operation test
 
     """
 
@@ -161,6 +167,40 @@ class TestValveOp(smach.State):
                                        'valveOpTestFailed'])
 
     def execute(self, userdata):
+        """Main execution function
+        NOTE: This test has not yet been implemented yet.
+        """
         rospy.loginfo("*** START VALVE TEST ***")
         return 'valveOpTestComplete'
 
+
+class TestManualOps(smach.State):
+    """Tests manual operations of the UGV and Arm
+
+    Outcomes
+    --------
+        manualOpsComplete : successfully completed manual operations
+        manualOpsFailed : quit before fully testing the manual operations
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['manualOpsComplete',
+                                       'manualOpsFailed'])
+
+    def execute(self, userdata):
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_ugv_drive.py", shell=True)
+        prc.wait()
+
+        curr_state = rospy.get_param('smach_state')
+        if curr_state != 'backToAuto':
+            return 'manualOpsFailed'
+
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_arm_move.py", shell=True)
+        prc.wait()
+
+        curr_state = rospy.get_param('smach_state')
+        if curr_state == 'endArmMove':
+            return 'manualOpsFailed'
+        else:
+            return 'manualOpsComplete'

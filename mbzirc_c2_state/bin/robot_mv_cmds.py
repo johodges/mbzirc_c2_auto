@@ -61,7 +61,7 @@ def moveArmTwist(x, y, z):
         if move_state == 'success':
             break
         else:
-            rospy.loginfo("Current move arm status is %s",move_state)
+            rospy.logdebug("Current move arm status is %s",move_state)
 
     return move_state
 

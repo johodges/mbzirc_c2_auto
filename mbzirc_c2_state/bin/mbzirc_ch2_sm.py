@@ -77,7 +77,8 @@ class InitSimulation(smach.State):
                              outcomes=['normal',
                                        'armTest',
                                        'wrenchTest',
-                                       'valveTest'],
+                                       'valveTest',
+                                       'manOpsTest'],
                              input_keys=['sim_type_in'])
 
     def execute(self, userdata):
@@ -101,7 +102,7 @@ class InitSimulation(smach.State):
         rospy.loginfo("Running in %s mode.", userdata.sim_type_in)
 
         # Sleep to allow the user to pause
-        rospy.sleep(5)
+        rospy.sleep(0.5)
         return userdata.sim_type_in
 
 
@@ -109,7 +110,14 @@ def main(sim_mode):
     """Defines the state machines for Smach
     """
 
-    rospy.init_node('mbzirc_simulation_state_machine', anonymous=True)
+    # Set the log level for the node
+    loglevel = rospy.get_param('node_logging')
+    if loglevel == 'DEBUG' or loglevel == 'SMACH_DEBUG':
+        rospy.init_node('mbzirc_ch2_sm', anonymous=True, log_level=rospy.DEBUG)
+    else:
+        rospy.init_node('mbzirc_ch2_sm', anonymous=True)
+
+    rospy.logdebug("SMACH logging in DEBUG mode.")
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['success', 'failure'])
@@ -118,10 +126,13 @@ def main(sim_mode):
     with sm:
 
         # Create the sub SMACH state machine for navigation
-        sm_nav = smach.StateMachine(outcomes=['readyToOrient'])
+        sm_nav = smach.StateMachine(outcomes=['readyToOrient',
+                                              'unableToLocalize',
+                                              'unableToFindBoard'])
 
         # Create the sub SMACH state machine for orienting
-        sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench'])
+        sm_orient = smach.StateMachine(outcomes=['readyToGrabWrench',
+                                                 'failedToOrient'])
 
         # Create the sub SMACH state machine for grabbing wrench
         sm_wrench = smach.StateMachine(outcomes=['readyToOperate',
@@ -144,9 +155,12 @@ def main(sim_mode):
         #   'armTest'    : Test the arm for range of motion and stability
         #   'wrenchTest' : Test the wrench manipulation
         #   'valveTest'  : Test the valve operation
+        #   'manOpsTest' : Test manual keyboard operation of the UGV
         sm.userdata.sim_type = sim_mode
 
         # Define userdata for the state machines
+        sm_orient.userdata.num_sides = 0
+
         sm_wrench.userdata.move_counter = 0
         sm_wrench.userdata.max_move_retries = 1
         sm_wrench.userdata.have_wrench = False
@@ -162,15 +176,19 @@ def main(sim_mode):
                                transitions={'normal' : 'NAVIGATE',
                                             'armTest' : 'TEST_ARM',
                                             'wrenchTest' : 'TEST_WRENCH',
-                                            'valveTest' : 'TEST_VALVE'},
+                                            'valveTest' : 'TEST_VALVE',
+                                            'manOpsTest' : 'TEST_MANUAL_OPS'},
                                remapping={'sim_type_in' : 'sim_type'})
 
 
         smach.StateMachine.add('NAVIGATE', sm_nav,
-                               transitions={'readyToOrient' : 'ORIENT'})
+                               transitions={'readyToOrient' : 'ORIENT',
+                                            'unableToLocalize' : 'failure',
+                                            'unableToFindBoard' : 'failure'})
 
         smach.StateMachine.add('ORIENT', sm_orient,
-                               transitions={'readyToGrabWrench' : 'GRAB_WRENCH'})
+                               transitions={'readyToGrabWrench' : 'GRAB_WRENCH',
+                                            'failedToOrient' : 'failure'})
 
         smach.StateMachine.add('GRAB_WRENCH', sm_wrench,
                                transitions={'readyToOperate' : 'OPERATE_VALVE',
@@ -200,20 +218,97 @@ def main(sim_mode):
                                transitions={'valveOpTestComplete' : 'OPERATE_VALVE',
                                             'valveOpTestFailed' : 'failure'})
 
+        smach.StateMachine.add('TEST_MANUAL_OPS', TestManualOps(),
+                               transitions={'manualOpsComplete' : 'success',
+                                            'manualOpsFailed' : 'failure'})
 
 
 
 
+
+
+        #******************************************************************
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
+            smach.StateMachine.add('NAV_SM_METHOD', NavSMMethod(),
+                                   transitions={'useOld' : 'FINDBOARD',
+                                                'useNew' : 'LOCALIZE'})
+
             smach.StateMachine.add('FINDBOARD', FindBoard(),
                                    transitions={'atBoard' : 'readyToOrient'})
 
+            smach.StateMachine.add('LOCALIZE', Localize(),
+                                   transitions={'localized' : 'INITIALIZE_DETECT',
+                                                'notLocalized' : 'VISUAL_LOCALIZATION'})
+
+            smach.StateMachine.add('VISUAL_LOCALIZATION', VisualLocalization(),
+                                   transitions={'localized' : 'INITIALIZE_DETECT',
+                                                'notLocalized' : 'unableToLocalize'})
+
+
+            smach.StateMachine.add('INITIALIZE_DETECT', InitializeDetect(),
+                                   transitions={'foundBoard' : 'MOVE_TO_BOARD',
+                                                'boardNotFound' : 'MOVE_TO_WAY_POINT'})
+
+            smach.StateMachine.add('MOVE_TO_WAY_POINT', MoveToWayPoint(),
+                                   transitions={'foundBoard' : 'MOVE_TO_BOARD',
+                                                'boardNotFound' : 'MOVE_TO_WAY_POINT',
+                                                'beenToAllWayPoints' : 'MANUAL_NAVIGATE'})
+
+
+            smach.StateMachine.add('MOVE_TO_BOARD', MoveToBoard(),
+                                   transitions={'atBoard' : 'readyToOrient',
+                                                'lostObject' : 'MOVE_TO_WAY_POINT'})
+
+
+            smach.StateMachine.add('MANUAL_NAVIGATE', ManualNavigate(),
+                                   transitions={'atBoard' : 'readyToOrient',
+                                                'noBoard' : 'unableToFindBoard'})
+        # END NAVIGATE State Machine
+        #******************************************************************
+
+
+        #******************************************************************
         # Define the ORIENT State Machine (sm_orient)
         with sm_orient:
-            smach.StateMachine.add('ORIENT_HUSKY', Orient(),
+            smach.StateMachine.add('ORIENT_SM_METHOD', OrientSMMethod(),
+                                   transitions={'useOld' : 'ORIENT_UGV',
+                                                'useNew' : 'GO_TO_NEW_SIDE'})
+
+            smach.StateMachine.add('ORIENT_UGV', Orient(),
                                    transitions={'oriented' : 'readyToGrabWrench'})
 
+            smach.StateMachine.add('GO_TO_NEW_SIDE', GoToNewSide(),
+                                   transitions={'atNewSide' : 'COMPUTE_SIDE_WP',
+                                                'allSidesScanned' : 'MANUAL_ORIENT'},
+                                   remapping={'num_sides_in' : 'num_sides',
+                                              'num_sides_out' : 'num_sides'})
+
+            smach.StateMachine.add('MANUAL_ORIENT', ManualOrient(),
+                                   transitions={'backToAuto' : 'DETECT_WRENCHES',
+                                                'noWrenches' : 'failedToOrient'})
+
+            smach.StateMachine.add('COMPUTE_SIDE_WP', ComputeSideWP(),
+                                   transitions={'computedWayPoint' : 'MOVE_TO_SIDE_WP'})
+
+            smach.StateMachine.add('MOVE_TO_SIDE_WP', MoveToSideWP(),
+                                   transitions={'atWayPoint' : 'DETECT_WRENCHES'})
+
+            smach.StateMachine.add('DETECT_WRENCHES', DetectWrenches(),
+                                   transitions={'foundWrenches' : 'MOVE_TO_WRENCHES',
+                                                'noWrenches' : 'MOVE_DOWN_SIDE'})
+
+            smach.StateMachine.add('MOVE_DOWN_SIDE', MoveDownSide(),
+                                   transitions={'finishedSide' : 'GO_TO_NEW_SIDE',
+                                                'nextWayPoint' : 'MOVE_TO_SIDE_WP'})
+
+            smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
+                                   transitions={'oriented' : 'readyToGrabWrench'})
+        # END ORIENT State Machine
+        #******************************************************************
+
+
+        #******************************************************************
         # Define the GRAB_WRENCH State Machine (sm_wrench)
         with sm_wrench:
             smach.StateMachine.add('MOVE_TO_READY', MoveToReady(),
@@ -252,7 +347,10 @@ def main(sim_mode):
                                                 'wrenchTestDone' : 'testWrench'},
                                    remapping={'got_wrench' : 'have_wrench',
                                               'sim_type_in' : 'sim_type_wrench'})
+        # END GRAB_WRENCH State Machine
+        #******************************************************************
 
+        #******************************************************************
         # Define the OPERATE_VALVE State Machine (sm_valve)
         with sm_valve:
             smach.StateMachine.add('STOW_ARM', StowArm(),
@@ -294,6 +392,8 @@ def main(sim_mode):
                                    transitions={'wrenchFell' : 'lostWrench',
                                                 'cantTurnValve' : 'valveStuck',
                                                 'turnedValve' : 'valveOperated'})
+        # END OPERATE_VALVE State Machine
+        #******************************************************************
 
     # Create the introspection server
     sis = smach_ros.IntrospectionServer('mbzirc_server', sm, '/CHALLENGE_TWO')

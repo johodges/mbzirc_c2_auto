@@ -40,8 +40,8 @@ import math
 class move2grasp():
     def __init__(self):
         # Name this node, it must be unique
-	rospy.init_node('move2grasp', anonymous=True)
-        
+        rospy.init_node('move2grasp', anonymous=True)
+
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting

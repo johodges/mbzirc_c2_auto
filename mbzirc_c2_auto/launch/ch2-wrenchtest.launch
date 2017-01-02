@@ -1,9 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-<!--   <env name="ROSCONSOLE_CONFIG_FILE"
-   value="$(find mbzirc_c2_auto)/params/debugconsole.config"/>
- -->
-   <include file="$(find mbzirc_c2_auto)/launch/h-arena2-wrench.launch">
+  <param name="node_logging" value="DEBUG"/>
+
+  <include file="$(find mbzirc_c2_auto)/launch/h-arena2-wrench.launch">
     <arg name="paused" value="true" />
     <arg name="ur5_camera_enabled" value="false"/>
     <arg name="kinectv2_enabled" value="true"/>

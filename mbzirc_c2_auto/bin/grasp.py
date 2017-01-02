@@ -21,18 +21,7 @@
 """
 
 import rospy
-import rospkg
-import actionlib
-from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
-from rospy.numpy_msg import numpy_msg
-from rospy_tutorials.msg import Floats
-import numpy as np
-from decimal import *
-import tf
-import math
-import random
+from geometry_msgs.msg import Twist
 
 if __name__ == '__main__':
     rospy.init_node('grasp')
@@ -51,7 +40,7 @@ if __name__ == '__main__':
     ct = 0
     rest_time = 0.1
     tot_time = 1
-    
+
     while ct*rest_time < tot_time:
         pub.publish(twist)
         rospy.sleep(0.1)
@@ -67,9 +56,6 @@ if __name__ == '__main__':
         rospy.sleep(0.1)
         ct = ct+1
 
-    #if random.random() < 0.1:
-    #    rospy.set_param('smach_state','gripFailure')
-    #else:
     rospy.set_param('smach_state','wrenchGrasped')
     rospy.signal_shutdown('Ending node.')
 
