@@ -1,0 +1,24 @@
+<launch>
+  <node pkg="arm_nav_correct" name="circle_detector" type="circle_detector.py" output="screen">
+
+    <remap from="input_rgb_image" to="/mybot/camera1/image_raw" />
+    <remap from="camera_frame_id" to="camera" />
+
+    <rosparam>
+       show_text: True
+       feature_size: 1
+       medianBlur_ksize: 9
+       GaussianBlur_ksize_width: 15
+       GaussianBlur_ksize_height: 15
+       GaussianBlur_sigmaX: 0
+       GaussianBlur_sigmaY: 0
+       HoughCircles_dp: 1
+       HoughCircles_minDist: 36
+       HoughCircles_param1: 200
+       HoughCircles_param2: 25
+       HoughCircles_minRadius: 30
+       HoughCircles_maxRadius: 42
+    </rosparam>
+
+  </node>
+</launch>

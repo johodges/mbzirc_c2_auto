@@ -25,7 +25,6 @@ from actionlib_msgs.msg import *
 import roslib
 roslib.load_manifest("rosparam")
 import rosparam
-import location
 
 class move_arm_param():
     def __init__(self):
@@ -72,7 +71,7 @@ class move_arm_param():
         self.target_pose = PoseStamped()
         self.target_pose.header.frame_id = reference_frame
         self.target_pose.header.stamp = rospy.Time.now()
-        ee_pos = rospy.get_param('locations')
+        ee_pos = rospy.get_param('ee_position')
         self.target_pose.pose.position.x = ee_pos[0]
         self.target_pose.pose.position.y = ee_pos[1]
         self.target_pose.pose.position.z = ee_pos[2]
@@ -103,95 +102,19 @@ class move_arm_param():
         if traj is not None:
             # Execute the planned trajectory
             self.arm.execute(traj)
-	    
+
             # Pause for a second
-            rospy.sleep(1.0)
+            # rospy.sleep(1.0)
             self.flag = 1
             #rospy.set_param('current_joint_state',jt)
-
-	    # Correction step
-	    try:
-		cjc = rospy.get_param('current_joint_state')	# get current joint state
-	    
-	    jtc = RobotState()
-            jtc.joint_state.header.frame_id = '/base_link'
-            jtc.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
-            jtc.joint_state.position = [0,0,0,0,cjc[0],cjc[1],cjc[2],cjc[3],cjc[4],cjc[5],0,0]
-	    
-	    # Set the start state to the current state
-	    self.arm.set_start_state(jtc)
-	    # Set the goal pose 
-	    self.target_pose = PoseStamped()
-            self.target_pose.header.frame_id = reference_frame
-            self.target_pose.header.stamp = rospy.Time.now()
-            #ee_pos = rospy.get_param('locations')
-            self.target_pose.pose.position.x = ee_pos[0] + locs[2] -10
-            self.target_pose.pose.position.y = ee_pos[1] + locs[1]
-            self.target_pose.pose.position.z = ee_pos[2] + locs[0]
-	   
-	    # Set the trajectory goal
-	    set.arm.set_goal_target(self.target_pose, end_effector_link)
-	    correct = self.arm.plan()
-	    correct_pts = len(correct.joint_trajectory.points)
-
-	    # Update current jont position for use in correction step
-	    rospy.set_param('current_joint_state', correct.joint_trajectory.points[correct_pts-1].position)
-	
-	    if correct is not None:
-	   	# Execute the planned trajectory
-		rospy.loginfo('Moving to wrench location')
-		self.arm.execute(correct)
-		# Pause for a second
-		rospy.sleep(3.0)
-		rospy.loginfo('Successfully moved')
-		self.flag = 1
-		
-		
-	    	# Approaching step
-	    	try:
-		    cjp = rospy.get_param('current_joint_state')	# get current joint state
-	    	except:
-		    cjp = [0,0,0,0,0,0]
-
-	    	jtp = RobotState()
-            	jtp.joint_state.header.frame_id = '/base_link'
-            	jtp.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
-            	jtp.joint_state.position = [0,0,0,0,cjp[0],cjp[1],cjp[2],cjp[3],cjp[4],cjp[5],0,0]
-	    
-	    	# Set the start state to the current state
-	    	self.arm.set_start_state(jtp)
-	    	# Set the goal pose 
-		self.arm_shift_pose_target(0,locs[2] - 10, self.end_effector_link)
-		rospy.loginfo('Approaching wrench')
-		arm.go()
-		rospy.sleep(3.0)
-		rospy.loginfo('Successfully approached')
-	   
-#	    	correct = self.arm.plan()
-#	    	correct_pts = len(correct.joint_trajectory.points)
-
-	    	# Update current jont position for use in correction step
-#	    	rospy.set_param('current_joint_state', correct.joint_trajectory.points[correct_pts-1].position)
-	
-#	    	if correct is not None:
-	   	# Execute the planned trajectory
-#		rospy.loginfo('Moving to wrench location')
-#		self.arm.execute(correct)
-		# Pause for a second
-		
-	    else:
-		rospy.loginfo('Unable to move to wrench location')
-
-		
-
     # callback_feedback is used to store the feedback topic into the class to be
     # referenced by the other callback routines.
     def callback(self, data):
         if self.flag == 1:
             self.status = data.status_list[0].status
-            
+
             if self.status == 3:
-                rospy.sleep(5)
+                # rospy.sleep(5)
                 rospy.set_param('move_arm_status','success')
                 self.flag = 2
             else:
@@ -200,17 +123,17 @@ class move_arm_param():
                     self.flag = 2
                 else:
                     self.ct = self.ct + 1
-                    rospy.sleep(0.5)
+                    # rospy.sleep(0.5)
         if self.flag == 2:
             self.cleanup()
             rospy.signal_shutdown('Ending node.')
 
     def cleanup(self):
         rospy.loginfo("Stopping the robot")
-    
+
         # Stop any current arm movement
         self.arm.stop()
-        
+
         #Shut down MoveIt! cleanly
         rospy.loginfo("Shutting down Moveit!")
         moveit_commander.roscpp_shutdown()
