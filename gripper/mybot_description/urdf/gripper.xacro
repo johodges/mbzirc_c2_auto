@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="mybot" xmlns:xacro="http://ros.org/wiki/xacro">
 
-<link name='base'>
+<link name='gripper_link'>
   <collision>
     <!-- origin xyz="0 -0.012 0" rpy="0 0 ${PI/2}"/ -->
     <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -27,7 +27,7 @@
 </link>
 
 <joint name="base_to_link1" type="fixed">
-  <parent link="base"/>
+  <parent link="gripper_link"/>
   <child link="link1"/>
  <!-- origin xyz="0 0 -0.07" rpy="0 0 ${PI/2}"/ -->
  <origin xyz="0 0.005 -0.07" rpy="0 0 ${PI/2}"/>
@@ -194,7 +194,7 @@
 
 <joint name="base_to_camera" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 ${PI/2}"/>
-  <parent link="base"/>
+  <parent link="gripper_link"/>
   <child link="camera"/>
 </joint>
 

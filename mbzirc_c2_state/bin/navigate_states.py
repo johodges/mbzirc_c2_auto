@@ -75,9 +75,17 @@ class FindBoard(smach.State):
     def execute(self, userdata):
 
         rospy.loginfo('Searching for board')
-        a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
-            stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-        #a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+        try:
+            lidar_to_use = rospy.get_param('lidar')
+        except:
+            lidar_to_use = 'sick'
+        if lidar_to_use == 'sick':
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            #a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
+        if lidar_to_use == 'velodyne':
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_velodyne.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         rospy.sleep(0.1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 

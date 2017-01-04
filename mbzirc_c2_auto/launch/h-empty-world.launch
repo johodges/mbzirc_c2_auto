@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="world_name" default="worlds/empty.world"/>
+  <arg name="velodyne_lidar" default="sick"/>
   <arg name="laser_enabled" default="true"/>
   <arg name="ur5_enabled" default="true"/>
   <arg name="ur5_camera_enabled" default="false"/>
@@ -18,6 +19,7 @@
   </include>
 
   <include file="$(find mbzirc_c2_auto)/launch/h-spawn.launch">
+    <arg name="velodyne_lidar" value="$(arg velodyne_lidar)"/>
     <arg name="laser_enabled" value="$(arg laser_enabled)"/>
     <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>
     <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>

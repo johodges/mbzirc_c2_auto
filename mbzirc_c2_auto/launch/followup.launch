@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find mbzirc_c2_auto)/launch/h-control.launch" />
+  <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch"/>
+  <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic.py" />
+</launch>

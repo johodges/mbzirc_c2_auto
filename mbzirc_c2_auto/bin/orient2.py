@@ -395,16 +395,30 @@ class orient():
                     camera_y_mn)+camera_y_mn
                 wrenc_z = (1-self.w_c[1]/self.camera_pix_v)*(camera_z_mx-
                     camera_z_mn)+camera_z_mn
-
-                if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
-                    t = self.tftree.getLatestCommonTime("/base_laser",
-                        "/camera")
-                    posi, quat = self.tftree.lookupTransform("/base_laser", 
-                        "/camera", t)
-                    rospy.logdebug("TF Position from base_link to camera:")
-                    rospy.logdebug(posi)
-                    rospy.logdebug("TF Quaternion from base_link to camera:")
-                    rospy.logdebug(quat)
+                try:
+                    lidar_to_use = rospy.get_param('lidar')
+                except:
+                    lidar_to_use = 'sick'
+                if lidar_to_use == 'sick':
+                    if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
+                        t = self.tftree.getLatestCommonTime("/base_laser",
+                            "/camera")
+                        posi, quat = self.tftree.lookupTransform("/base_laser", 
+                            "/camera", t)
+                        rospy.logdebug("TF Position from base_link to camera:")
+                        rospy.logdebug(posi)
+                        rospy.logdebug("TF Quaternion from base_link to camera:")
+                        rospy.logdebug(quat)
+                if lidar_to_use == 'velodyne':
+                    if self.tftree.frameExists("/laser_base_link") and self.tftree.frameExists("/camera"):
+                        t = self.tftree.getLatestCommonTime("/laser_base_link",
+                            "/camera")
+                        posi, quat = self.tftree.lookupTransform("/laser_base_link", 
+                            "/camera", t)
+                        rospy.logdebug("TF Position from base_link to camera:")
+                        rospy.logdebug(posi)
+                        rospy.logdebug("TF Quaternion from base_link to camera:")
+                        rospy.logdebug(quat)
                 tf_x = posi[0]
                 tf_y = posi[1]
                 tf_z = posi[2]

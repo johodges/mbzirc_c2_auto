@@ -31,6 +31,7 @@
     * sudo apt-get install ros-indigo-moveit-python ros-indigo-moveit-commander 
     * sudo apt-get install xdot
     * sudo apt-get install ros-indigo-moveit*
+    * sudo apt-get install ros-indigo-velodyn*
 
 7. Install our packages
     * cd ~/catkin_ws/src

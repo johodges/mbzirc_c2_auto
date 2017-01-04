@@ -33,9 +33,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <xacro:include filename="$(find husky_description)/urdf/accessories/kinectv2_camera.urdf.xacro"/>
   <xacro:include filename="$(find husky_description)/urdf/accessories/primesense_carmine_1-09_camera.urdf.xacro"/>
   <xacro:include filename="$(find husky_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro"/>
+  <xacro:include filename="$(find husky_description)/urdf/accessories/velodyne_vlp16_mount.urdf.xacro"/>
   <xacro:include filename="$(find husky_description)/urdf/accessories/sensor_arch.urdf.xacro"/>
   <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
   <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro" />
 
   <property name="M_PI" value="3.14159"/>
 
@@ -147,13 +149,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
       <!-- Spawn gripper-->
       <xacro:gripper />
-
       <!-- Join Gripper -->
-
-
         <joint name="base_to_arm" type="fixed">
           <parent link="ur5_arm_wrist_3_link"/>
-          <child link="base"/>
+          <child link="gripper_link"/>
           <origin xyz="0 0.09 0" rpy="0 0 0"/>
         </joint>
 
@@ -175,19 +174,31 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
     </xacro:if>
 
-    <!-- Spawn LIDAR if laser_enabled = "true" -->
+    <!-- Spawn sick_lms1xx -->
     <xacro:if value="$(arg laser_enabled)">
-
       <sick_lms1xx_mount prefix="base" topic="scan"/>
-
       <joint name="laser_mount_joint" type="fixed">
         <origin xyz="$(optenv HUSKY_LMS1XX_XYZ 0.415 0.0 -0.04)"
                 rpy="$(optenv HUSKY_LMS1XX_RPY 0.0 0.0 0.0)" />
         <parent link="top_plate_link" />
         <child link="base_laser_mount" />
       </joint>
-
     </xacro:if>
+    <!-- Spawn velodyne vlp-16 -->
+    <xacro:if value="$(arg velodyne_lidar)">
+
+      <VLP-16 parent="top_plate_link" name="laser" topic="velodyne_points" >
+        <origin xyz="0.415 0 -0.08" rpy="0 0 0" />
+      </VLP-16>
+      <!-- velodyne_vlp16_mount prefix="base" topic="velodyne_points"/ -->
+      <!-- joint name="laser_mount_joint" type="fixed">
+        <origin xyz="$(optenv HUSKY_LMS1XX_XYZ 0.415 0.0 -0.04)"
+                rpy="$(optenv HUSKY_LMS1XX_RPY 0.0 0.0 0.0)" />
+        <parent link="top_plate_link" />
+        <child link="base_laser_mount" />
+      </joint -->
+    </xacro:if>
+
 
     <!-- Spawn Kinect if kinect_enabled = "true" -->
     <xacro:if value="$(arg kinect_enabled)">
