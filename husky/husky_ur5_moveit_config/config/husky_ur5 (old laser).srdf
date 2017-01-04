@@ -65,37 +65,37 @@
     <disable_collisions link1="camera_mount_link" link2="ur5_arm_upper_arm_link" reason="Never" />
     <disable_collisions link1="camera_mount_link" link2="user_rail_link" reason="Never" />
     <disable_collisions link1="base_laser" link2="camera_mount_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="camera_mount_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="camera_mount_link" reason="Never" />
     <disable_collisions link1="base_link" link2="camera_mount_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="camera_mount_link" reason="Adjacent" /> -->
-    <disable_collisions link1="laser_base_link" link2="laser_base_link" reason="Adjacent" />
-    <disable_collisions link1="laser_base_link" link2="base_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="camera_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="front_left_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="front_right_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_bumper_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_left_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_right_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="sensor_arch_mount_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="top_chassis_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="top_plate_link" reason="Default" />
-    <disable_collisions link1="laser_base_link" link2="ur5_arm_base_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="ur5_arm_shoulder_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="user_rail_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="base_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="camera_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="front_left_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="front_right_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_bumper_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_left_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="rear_right_wheel_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="sensor_arch_mount_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="top_chassis_link" reason="Never" />
-    <disable_collisions link1="laser_base_link" link2="top_plate_link" reason="Adjacent" />
-    <disable_collisions link1="laser_base_link" link2="ur5_arm_base_link" reason="Default" />
-    <disable_collisions link1="laser_base_link" link2="ur5_arm_shoulder_link" reason="Default" />
-    <disable_collisions link1="laser_base_link" link2="ur5_arm_upper_arm_link" reason="Default" />
-    <disable_collisions link1="laser_base_link" link2="user_rail_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="base_laser_mount" reason="Adjacent" />
+    <disable_collisions link1="base_laser" link2="base_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="camera_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="front_left_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="front_right_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="rear_bumper_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="rear_left_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="rear_right_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="sensor_arch_mount_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="top_chassis_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="top_plate_link" reason="Default" />
+    <disable_collisions link1="base_laser" link2="ur5_arm_base_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="ur5_arm_shoulder_link" reason="Never" />
+    <disable_collisions link1="base_laser" link2="user_rail_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="base_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="camera_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="front_left_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="front_right_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="rear_bumper_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="rear_left_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="rear_right_wheel_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="sensor_arch_mount_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="top_chassis_link" reason="Never" />
+    <disable_collisions link1="base_laser_mount" link2="top_plate_link" reason="Adjacent" />
+    <disable_collisions link1="base_laser_mount" link2="ur5_arm_base_link" reason="Default" />
+    <disable_collisions link1="base_laser_mount" link2="ur5_arm_shoulder_link" reason="Default" />
+    <disable_collisions link1="base_laser_mount" link2="ur5_arm_upper_arm_link" reason="Default" />
+    <disable_collisions link1="base_laser_mount" link2="user_rail_link" reason="Never" />
     <disable_collisions link1="base_link" link2="camera_link" reason="Never" />
     <disable_collisions link1="base_link" link2="front_left_wheel_link" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="front_right_wheel_link" reason="Adjacent" />
@@ -213,10 +213,10 @@
     <disable_collisions link1="link2" link2="left_tip" reason="Never" />
     <disable_collisions link1="link2" link2="right_tip" reason="Never" />
     <disable_collisions link1="left_tip" link2="right_tip" reason="Adjacent" />
-    <disable_collisions link1="link2" link2="laser" reason="Adjacent" />
-    <disable_collisions link1="laser" link2="left_tip" reason="Never" />
-    <disable_collisions link1="laser" link2="right_tip" reason="Never" />
+    <disable_collisions link1="link2" link2="base" reason="Adjacent" />
+    <disable_collisions link1="base" link2="left_tip" reason="Never" />
+    <disable_collisions link1="base" link2="right_tip" reason="Never" />
     <disable_collisions link1="link1" link2="left_tip" reason="Never" />
     <disable_collisions link1="link1" link2="right_tip" reason="Never" />
-    <disable_collisions link1="link1" link2="laser" reason="Adjacent" />
+    <disable_collisions link1="link1" link2="base" reason="Adjacent" />
 </robot>
