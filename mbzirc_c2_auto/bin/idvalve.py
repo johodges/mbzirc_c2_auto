@@ -60,7 +60,7 @@ class move2op():
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
         self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
-        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
         self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
         self.image_circ_pub = rospy.Publisher("/output/valve_center",Image, queue_size=1)
         rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c, queue_size=1)

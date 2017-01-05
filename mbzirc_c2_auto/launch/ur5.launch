@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ur5_enabled" default="$(optenv HUSKY_UR5_ENABLED true)" />
+  <group if="$(arg ur5_enabled)">
+    <!-- Launches the drivers and sets parameters for the ur5 arm -->
+    <!-- Mostly taken from the ur_common.launch inside ur_common.launch -->
+
+    <arg name="robot_ip" default="192.168.1.17"/>
+    <arg name="reverse_port" default="50001"/>
+    <arg name="min_payload" default="0.0"/>
+    <arg name="max_payload" default="5.0"/>
+    <arg name="prefix" default="ur5_arm_"/>
+
+    <!-- The max_velocity parameter is only used for debugging in the ur_driver. It's not related to actual velocity limits -->
+    <arg name="max_velocity" default="10.0"/> <!-- [rad/s] -->
+
+    <!-- copy the specified IP address to be consistant with ROS-Industrial spec.
+    NOTE: The ip address is actually passed to the driver on the command line -->
+    <param name="robot_ip_address" type="str" value="$(arg robot_ip)"/>
+    <param name="robot_reverse_port" type="int" value="$(arg reverse_port)"/>
+
+    <!-- driver -->
+  <include file="$(find ur_modern_driver)/launch/ur_common.launch">
+    <arg name="prefix" value="$(arg prefix)"/> 
+    <arg name="robot_ip" value="$(arg robot_ip)"/>
+    <arg name="min_payload"  value="$(arg min_payload)"/>
+    <arg name="max_payload"  value="$(arg max_payload)"/>
+  </include>
+
+    <!-- Stow the arm -->
+    <!-- node pkg="husky_control" type="stow_ur5" name="stow_ur5"/-->
+  </group>
+</launch>

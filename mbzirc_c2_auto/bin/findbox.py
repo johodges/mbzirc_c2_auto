@@ -62,7 +62,7 @@ def callback(data):
     # Initialize parameters
     rate = rospy.Rate(10)
     scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_data = False
+    plot_data = True
 
     # Set max/min angle and increment
     scan_min = data.angle_min
@@ -116,7 +116,7 @@ def callback(data):
             dist2_sum = np.sum(dist2[i][1:xlen-1])
 
             # Check if this object is too small
-            if dist2_sum > 0.25 and dist2_sum < 1.5:
+            if dist2_sum > 0.25 and dist2_sum < 3:
                 ang = np.median(x2[i])
                 dis = np.median(y2[i])
                 mn = min(y2[i][1:xlen])
@@ -143,7 +143,7 @@ def callback(data):
                         plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',
                             linewidth=2.0)
                 else:
-                    if dist2_sum > 1.5:
+                    if dist2_sum > 3:
                         if plot_data:
                             plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',
                                 linewidth=2.0)

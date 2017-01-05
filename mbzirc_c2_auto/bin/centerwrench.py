@@ -9,7 +9,7 @@ camera [x,y,z].
 
 Subscribers:
     /bearing: array containing [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
-    /mybot/camera1/image_raw: raw image from webcam on gripper
+    /usb_cam/image_raw: raw image from webcam on gripper
     /tf: transform tree - stored using tf.TransformListener()
 
 Publishers:
@@ -82,7 +82,7 @@ class centerwrench():
     Subscribers:
         /bearing: array containing 
             [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
-        /mybot/camera1/image_raw: raw image from webcam on gripper
+        /usb_cam/image_raw: raw image from webcam on gripper
         /tf: transform tree - stored using tf.TransformListener()
 
     Publishers:
@@ -141,7 +141,7 @@ class centerwrench():
         self.tftree = tf.TransformListener()
         rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing,
             queue_size=1)
-        rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
 
     def shutdown(self):
         """This subroutine runs when the centerwrench node dies. It is not

@@ -55,7 +55,7 @@ class move2op():
 
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
 
     def shutdown(self):
         rospy.sleep(1)

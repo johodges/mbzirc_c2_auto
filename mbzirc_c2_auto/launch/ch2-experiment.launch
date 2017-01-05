@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="node_logging" value="INFO"/>
+  <param name="sm_version" value="old"/>
+  <include file="$(find lms1xx)/launch/LMS1xx.launch" />
+  <include file="$(find mbzirc_c2_auto)/launch/ur5.launch" />
+
+  <include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
+  <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
+    <arg name="no_static_map" value="true"/>
+    <arg name="oscillation_timeout" value="0.0"/>
+  </include>
+  <include file="$(find usb_cam)/launch/usb_cam-test.launch" />
+
+<!-- node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine.py" output='screen'/ -->
+
+  <node
+    name="state_machine"
+    pkg="mbzirc_c2_state"
+    type="mbzirc_ch2_sm.py"
+    args="normal"
+    output='screen'
+  />
+
+  <node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/>
+  <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
+<!--node name="image_view" pkg="image_view" type="image_view">
+  <remap from="image" to="/usb_cam/image_raw"/>
+</node -->
+</launch>

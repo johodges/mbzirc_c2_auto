@@ -68,7 +68,7 @@ class idwrench():
         self.binary_pub = rospy.Publisher("/output/wrench_binary_image",Image,queue_size = 1)
         self.prob_pub = rospy.Publisher("/output/wrench_prob_image",Image,queue_size = 1)
         self.probid_pub = rospy.Publisher("/output/wrench_prob_id_image",Image,queue_size = 1)
-        self.image_sub = rospy.Subscriber("/mybot/camera1/image_raw",Image,self.callback)
+        self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
         self.image_output = rospy.Publisher("/output/keyevent_image",Image, queue_size=1)
 
     # shutdown runs when this node dies
