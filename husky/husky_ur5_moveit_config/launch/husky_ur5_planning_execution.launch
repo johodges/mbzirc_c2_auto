@@ -1,7 +1,10 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="real" default="false" />
   <arg name="limited" default="true"/>
   <arg name="debug" default="false" />
+  <arg name="velodyne_lidar" default="true"/>
+  <arg name="laser_enabled" default="false"/>
 
   <!-- Remap follow_joint_trajectory -->
   <remap if="$(arg real)" from="arm_controller/follow_joint_trajectory" to="follow_joint_trajectory"/>
@@ -15,5 +18,7 @@
   <!-- Launch moveit -->
   <include file="$(find husky_ur5_moveit_config)/launch/move_group.launch">
     <arg name="debug" default="$(arg debug)" />
+    <arg name="velodyne_lidar" value="$(arg velodyne_lidar)"/>
+    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
   </include>
 </launch>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="mybot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <gazebo reference="base">
+  <gazebo reference="gripper_link">
   <material>Gazebo/Black</material>
   </gazebo>
 

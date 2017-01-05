@@ -213,10 +213,10 @@
     <disable_collisions link1="link2" link2="left_tip" reason="Never" />
     <disable_collisions link1="link2" link2="right_tip" reason="Never" />
     <disable_collisions link1="left_tip" link2="right_tip" reason="Adjacent" />
-    <disable_collisions link1="link2" link2="base" reason="Adjacent" />
-    <disable_collisions link1="base" link2="left_tip" reason="Never" />
-    <disable_collisions link1="base" link2="right_tip" reason="Never" />
+    <disable_collisions link1="link2" link2="gripper_link" reason="Adjacent" />
+    <disable_collisions link1="gripper_link" link2="left_tip" reason="Never" />
+    <disable_collisions link1="gripper_link" link2="right_tip" reason="Never" />
     <disable_collisions link1="link1" link2="left_tip" reason="Never" />
     <disable_collisions link1="link1" link2="right_tip" reason="Never" />
-    <disable_collisions link1="link1" link2="base" reason="Adjacent" />
+    <disable_collisions link1="link1" link2="gripper_link" reason="Adjacent" />
 </robot>

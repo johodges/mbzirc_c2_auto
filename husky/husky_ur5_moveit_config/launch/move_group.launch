@@ -1,6 +1,13 @@
+<?xml version="1.0"?>
 <launch>
 
-  <include file="$(find husky_ur5_moveit_config)/launch/planning_context.launch" />
+  <arg name="velodyne_lidar" default="true"/>
+  <arg name="laser_enabled" default="false"/>
+
+  <include file="$(find husky_ur5_moveit_config)/launch/planning_context.launch">
+    <arg name="velodyne_lidar" value="$(arg velodyne_lidar)"/>
+    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
+  </include>
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />
