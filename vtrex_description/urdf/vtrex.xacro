@@ -1,18 +1,25 @@
 <?xml version="1.0"?>
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:arg name="laser_enabled" default="true" />
-  <xacro:property name="PI" value="3.1415926535897931" />
+  <xacro:arg name="velodyne_lidar" default="true"/>
+  <xacro:arg name="laser_enabled" default="false" />
+  <xacro:arg name="ur5_enabled" default="true" />
+  <xacro:arg name="ur5_camera_enabled" default="false" />
 
-  <xacro:property name="wheelbase" value="0.70382" />
-  <xacro:property name="track" value="0.6296" />
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+
+  <xacro:property name="wheelbase" value="0.7" />
+  <xacro:property name="track" value="0.64" />
   <xacro:property name="wheel_vertical_offset" value="0.1651" />
   <xacro:property name="footprint_vertical_offset" value=".24866" />
 
-  <xacro:property name="wheel_radius" value="0.1648" />
-  <xacro:property name="wheel_width" value="0.127" />
+  <xacro:property name="wheel_cover_y_spacing" value="0.291" />
+  <xacro:property name="wheel_cover_z_spacing" value="0.344" />
 
-  <xacro:property name="chassis_length" value="0.97214" />
-  <xacro:property name="chassis_width" value="0.48381" />
+  <xacro:property name="wheel_radius" value="0.1651" />
+  <xacro:property name="wheel_width" value="0.1016" />
+
+  <xacro:property name="chassis_length" value="0.95" />
+  <xacro:property name="chassis_width" value="0.48" />
   <xacro:property name="chassis_height" value="0.28" />
 
   <xacro:property name="dummy_inertia" value="1e-09"/>
@@ -21,52 +28,51 @@
   <xacro:property name="cameraMass" value="0.05"/>
 
   <xacro:include filename="$(find vtrex_description)/urdf/vtrex.gazebo" />
-  <xacro:include filename="$(find vtrex_description)/urdf/materials.xacro" />
+  <xacro:include filename="$(find vtrex_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro"/>
+  <xacro:include filename="$(find husky_description)/urdf/accessories/velodyne_vlp16_mount.urdf.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
+  <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro" />
 
-
-
-<xacro:macro name="wheel" params="prefix *joint_pose">
+  <xacro:macro name="wheel" params="prefix *joint_pose">
 
     <link name="${prefix}_wheel_link">
       <visual>
-        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheel.STL"/>
-</geometry>
+        </geometry>
         <material name="black" />
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
         <geometry>
-         <cylinder radius="${wheel_radius}" length="${wheel_width/4}"/>
+         <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
       </collision>
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="2.637"/>
+        <mass value="3.4"/>
         <inertia
-          ixx="0.02467" ixy="0" ixz="0"
-          iyy="0.04411" iyz="0"
-          izz="0.02467"/>
+          ixx="0.03" ixy="0" ixz="0"
+          iyy="0.05" iyz="0"
+          izz="0.03"/>
       </inertial>
     </link>
 
     <gazebo reference="${prefix}_wheel_link">
       <material>Gazebo/DarkGrey</material>
-	<mu1 value="20.00"/>
-	<mu2 value="20.00"/>
-	<!--kp value="10000000.0"/>
-	<kd value="1.0" /-->
-	<fdir1 value="1 0 0"/>
     </gazebo>
 
     <joint name="${prefix}_wheel" type="continuous">
       <parent link="chassis_link"/>
-      <child link="${prefix}_wheel_link"/>
-      <xacro:insert_block name="joint_pose"/>
+      <child link="${prefix}_wheel_link" />
+      <xacro:insert_block name="joint_pose" />
       <axis xyz="0 1 0" />
     </joint>
 
+    <!-- In reality, VTREX has only two motors, one per side. However, it's more
+         straightforward for Gazebo to simulate as if there's an actuator per wheel. -->
     <transmission name="${prefix}_wheel_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${prefix}_wheel">
@@ -101,30 +107,31 @@
   </joint>
 
 
-  <xacro:property name="chassis_cg_offset_y" value="0.013" />
-  <xacro:property name="chassis_cg_offset_x" value="0.029" />
 
   <link name="chassis_link">
     <visual>
-      <origin xyz="-${chassis_cg_offset_x} ${chassis_cg_offset_y} ${footprint_vertical_offset}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${footprint_vertical_offset}" rpy="0 0 0"/>
       <geometry>
-       <mesh filename="package://vtrex_description/meshes/TREX.STL"/>
+       <mesh filename="package://vtrex_description/meshes/Chassis.STL"/>
       </geometry>
 <material name="black" />
      </visual>
     <collision>
-      <origin xyz="-${chassis_cg_offset_x} ${chassis_cg_offset_y} ${footprint_vertical_offset}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${footprint_vertical_offset}" rpy="0 0 0"/>
       <geometry>
-       <mesh filename="package://vtrex_description/meshes/TREX.STL"/>
+       <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
       </geometry>
     </collision>
     <inertial>
-      <origin xyz="0  ${chassis_cg_offset_y} ${footprint_vertical_offset}" rpy="${PI/2} 0 0"/>
-      <mass value="50.18"/>
+      <!-- Center of mass -->
+      <origin xyz="0.00  0.00 ${footprint_vertical_offset}" rpy="0 0 0"/>
+       <!--<origin xyz="0.012  0.002 0.067" rpy="0 0 0"/>-->
+      <mass value="40"/>
+      <!-- Moments of inertia: ( chassis without wheels ) -->
       <inertia
-        ixx="1.82808624" ixy="0.05708591" ixz="-0.01280581"
-        iyy="5.010635369" iyz="0.00370272"
-        izz="3.90064832"/>
+        ixx="2" ixy="-0.01" ixz="-0.00"
+        iyy="3.68" iyz="-0.0000"
+        izz="4.85"/>
       </inertial>
   </link>
     <gazebo reference="chassis_link">
@@ -132,19 +139,17 @@
     </gazebo>
 <!--############################################wheelscover#################################################-->
 
-  <xacro:property name="wheel_cover_y_spacing" value="0.2350" />
-  <xacro:property name="wheel_cover_z_spacing" value="0.3427" />
 
     <link name="left_wheel_cover_link">
       <visual>
-        <origin xyz="0 -${wheel_cover_y_spacing} ${wheel_cover_z_spacing}" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
         <material name="red" />
       </visual>
       <collision>
-        <origin xyz="0 -${wheel_cover_y_spacing} ${wheel_cover_z_spacing}" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
         <geometry>
          <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
@@ -161,14 +166,14 @@
 
     <link name="right_wheel_cover_link">
       <visual>
-        <origin xyz="0 -${wheel_cover_y_spacing} ${wheel_cover_z_spacing}" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
         <material name="red" />
       </visual>
       <collision>
-        <origin xyz="0 -${wheel_cover_y_spacing} ${wheel_cover_z_spacing}" rpy="${PI/2} 0 0"/>
+        <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
         <geometry>
          <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
@@ -196,57 +201,67 @@
       <child link="left_wheel_cover_link" />
     </joint>
     <joint name="right_wheel_cover" type="fixed">
-      <origin xyz="0 0 0" rpy="0 0 ${PI}" />
+      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
       <parent link="chassis_link"/>
       <child link="right_wheel_cover_link" />
     </joint>
   
 
-<!-- ###################################### imu ########################################## -->
+<!--############################################wheelscover#################################################-->
 
-  <link name="imu_link">
-    <inertial>
-      <mass value="0.001"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
-    </inertial>
-  </link>
-  <joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="chassis_link" />
-    <child link="imu_link" />
-  </joint>
+    <link name="imu_link">
+      <inertial>
+        <mass value="0.001"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
+      </inertial>
+    </link>
+    <joint name="imu_joint" type="fixed">
+      <parent link="chassis_link" />
+      <child link="imu_link" />
+    </joint>
 
-<!-- ###################################### laser ########################################## -->
+    <xacro:if value="$(arg laser_enabled)">
+      <sick_lms1xx_mount prefix="base" topic="scan"/>
+      <joint name="laser_mount_joint" type="fixed">
+        <origin xyz="$(optenv vtrex_LMS1XX_XYZ 0.5206 0.0 0.1135)"
+                rpy="$(optenv vtrex_LMS1XX_RPY 0.0 0.0 0.0)" />
+        <parent link="chassis_link" />
+        <child link="base_laser_mount" />
+      </joint>
+    </xacro:if>
 
-  <link name="laser_mount_link">
-	<visual>
-         <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="package://vtrex_description/meshes/accessories/laser_mount.STL"/>
-          </geometry>
-        </visual>
-        <collision>
-         <origin xyz="0 -${wheel_cover_y_spacing} ${wheel_cover_z_spacing}" rpy="${PI/2} 0 0"/>
-         <geometry>
-          <mesh filename="package://vtrex_description/meshes/accessories/laser_mount.STL"/>
-         </geometry>
-        </collision>
-    <inertial>
-      <mass value="0.001"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
-    </inertial>
-  </link>
+    <xacro:if value="$(arg ur5_enabled)">
 
-<gazebo reference="laser_mount_link">
-      <material>Gazebo/DarkGrey</material>
-    </gazebo>
+      <xacro:property name="reflect" value="-1" />
 
-  <joint name="laser_mount_joint" type="fixed">
-    <origin xyz="${0.496+chassis_cg_offset_x} 0 ${footprint_vertical_offset+0.031}" rpy="0 0 0" />
-    <parent link="chassis_link" />
-    <child link="laser_mount_link" />
-  </joint>
+      <!-- Spawn arm -->
+      <xacro:ur5_robot prefix="ur5_arm_" joint_limited="true"/>
+
+      <!-- Join arm -->
+      <joint name="ur5_arm_base" type="fixed">
+        <parent link="chassis_link" />
+        <child link="ur5_arm_base_link" />
+        <origin xyz="0.3058 0 0.375" rpy="0.0 0.0 -1.57079632679" />
+      </joint>
+
+      <!--Spawn gripper-->
+      <xacro:gripper />
+      <!-- Join Gripper -->
+        <joint name="base_to_arm" type="fixed">
+          <parent link="ur5_arm_wrist_3_link"/>
+          <child link="gripper_link"/>
+          <origin xyz="0 0.09 0" rpy="0 0 0"/>
+        </joint>
+
+    </xacro:if>
+
+    <!-- Spawn velodyne vlp-16 -->
+    <xacro:if value="$(arg velodyne_lidar)">
+
+      <VLP-16 parent="chassis_link" name="laser" topic="velodyne_points" >
+        <origin xyz="0.5206 0.0 0.1135" rpy="0 0 0" />
+      </VLP-16>
+    </xacro:if>
 
 </robot>

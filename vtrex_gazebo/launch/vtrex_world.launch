@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<launch>
+<launch>	
+  
   <include file="$(find gazebo_ros)/launch/empty_world.launch">	    
     <arg name="world_name" value="$(find vtrex_gazebo)/worlds/mbzirc_arena_task_2.world"/>	    
     <arg name="gui" value="true"/>	  
@@ -11,7 +12,7 @@
 
 <!-- push robot_description to factory and spawn robot in gazebo -->
 <node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
- args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex" />
+ args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex"/>
 
 <!-- ros_control vtrex launch file -->
 <include file="$(find vtrex_control)/launch/vtrex_control.launch" />
