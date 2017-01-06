@@ -12446,12 +12446,12 @@
     </geometry>
   </library_geometries>
   <library_visual_scenes>
-    <visual_scene id="base" name="base">
+    <visual_scene id="gripper_link" name="gripper_link">
       <node name="ur5fix" id="ur5fix" sid="ur5fix"><rotate sid="rotateZ">0 0 1 180.000000</rotate><rotate sid="rotateY">0 1 0 0.000009</rotate><rotate sid="rotateX">1 0 0 180.000000</rotate><node id="ur5fix-Pivot" name="ur5fix-Pivot"><translate>0.000006 0.000000 41.171551</translate><rotate>0.000000 0.000000 0.000000 0.000000</rotate><instance_geometry url="#ur5fix-lib"/></node><extra><technique profile="FCOLLADA"><visibility>1.000000</visibility></technique></extra></node>
       <extra><technique profile="MAX3D"><frame_rate>30.000000</frame_rate></technique><technique profile="FCOLLADA"><start_time>0.000000</start_time><end_time>3.333333</end_time></technique></extra>
     </visual_scene>
   </library_visual_scenes>
   <scene>
-    <instance_visual_scene url="#base"></instance_visual_scene>
+    <instance_visual_scene url="#gripper_link"></instance_visual_scene>
   </scene>
 </COLLADA>

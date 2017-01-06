@@ -12,7 +12,10 @@
     <arg name="no_static_map" value="true"/>
     <arg name="oscillation_timeout" value="0.0"/>
   </include>
-  <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch"/>
+  <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch">
+    <arg name="velodyne_lidar" value="true"/>
+    <arg name="laser_enabled" value="false"/>
+  </include>
   <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic.py" />
 
   <node

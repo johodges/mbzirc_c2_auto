@@ -7,80 +7,7 @@
 
 	<include>
 		<uri>model://ground_plane</uri>
- <collision name='collision'>
-          <geometry>
-            <plane>
-              <normal>0 0 1</normal>
-              <size>100 100</size>
-            </plane>
-          </geometry>
-          <surface>
-            <friction>
-              <ode>
-                <mu>100</mu>
-                <mu2>50</mu2>
-              </ode>
-            </friction>
-            <bounce/>
-            <contact>
-              <ode/>
-            </contact>
-          </surface>
-          <max_contacts>10</max_contacts>
-        </collision>
 	</include>
-<model name='ground_plane'>
-      <static>1</static>
-      <link name='link'>
-        <collision name='collision'>
-          <geometry>
-            <plane>
-              <normal>0 0 1</normal>
-              <size>100 100</size>
-            </plane>
-          </geometry>
-          <surface>
-            <friction>
-              <ode>
-                <mu>100</mu>
-                <mu2>50</mu2>
-              </ode>
-            </friction>
-            <bounce/>
-            <contact>
-              <ode/>
-            </contact>
-          </surface>
-          <max_contacts>10</max_contacts>
-        </collision>
-        <visual name='visual'>
-          <cast_shadows>0</cast_shadows>
-          <geometry>
-            <plane>
-              <normal>0 0 1</normal>
-              <size>100 100</size>
-            </plane>
-          </geometry>
-          <material>
-            <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
-            </script>
-          </material>
-        </visual>
-        <velocity_decay>
-          <linear>0</linear>
-          <angular>0</angular>
-        </velocity_decay>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-        <gravity>1</gravity>
-      </link>
-    </model>
-
-
-
-
 <model name='Board'>
       <static>1</static>
       <link name='link'>
@@ -181,5 +108,210 @@
 
     </model>
 
+<!--
+ <model name='wrench1'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+     <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>      
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w1.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w1.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.247 0.501206 0 0 1.57109</pose>
+    </model>
+
+    <model name='wrench2'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+       <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>     
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w2.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w2.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.297 0.475666 0 0 1.57109</pose>
+    </model>
+
+ <model name='wrench3'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+        <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>     
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w3.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w3.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.347 0.480774 0 0 1.57109</pose>
+    </model>
+
+ <model name='wrench4'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+       <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>     
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w4.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w4.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.397 0.48526 0 0 1.57109</pose>
+    </model>
+
+ <model name='wrench5'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+        <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>     
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w5.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w5.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.447 0.488819 0 0 1.57109</pose>
+    </model>
+
+ <model name='wrench6'>
+      <static>0</static>
+      <link name='link'>
+ <inertial>
+        <mass>.5</mass>
+        <inertia> 
+          <ixx>0.018758</ixx>   
+          <ixy>0.0</ixy>     
+          <ixz>0.0</ixz>        
+          <iyy>0.01919375</iyy>    
+          <iyz>0.0</iyz>       
+          <izz>0.0081875</izz>     
+        </inertia>
+      </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file://w6.DAE</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file://w6.DAE</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.729 0.497 0.496975 0 0 1.57109</pose>
+    </model>
+-->
 </world>
 </sdf>
