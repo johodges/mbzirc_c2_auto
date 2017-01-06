@@ -52,7 +52,7 @@ def moveArmTwist(x, y, z):
     tw.linear.y = y
     tw.linear.z = z
 
-    for i in range(5):
+    for i in range(20):
         for k in range(5):
             # Publish the goal five times
             goal_pub.publish(tw)
