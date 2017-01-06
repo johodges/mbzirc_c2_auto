@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-  <param name="node_logging" value="INFO"/>
+  <param name="node_logging" value="DEBUG"/>
   <param name="sm_version" value="old"/>
+  <param name="physical_robot" value="true"/>
+
   <include file="$(find lms1xx)/launch/LMS1xx.launch" />
   <include file="$(find mbzirc_c2_auto)/launch/ur5.launch" />
 
@@ -10,15 +12,17 @@
     <arg name="no_static_map" value="true"/>
     <arg name="oscillation_timeout" value="0.0"/>
   </include>
-  <include file="$(find usb_cam)/launch/usb_cam-test.launch" />
-
-<!-- node name="state_machine" pkg="mbzirc_c2_state" type="mbzirc_simulation_state_machine.py" output='screen'/ -->
+  <include file="$(find mbzirc_c2_auto)/launch/usb_cam-test.launch" />
+  <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch">
+    <arg name="physical_robot" value="true"/>
+  </include>
+  <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic_phys.py" />
 
   <node
     name="state_machine"
     pkg="mbzirc_c2_state"
     type="mbzirc_ch2_sm.py"
-    args="normal"
+    args="wrenchTest"
     output='screen'
   />
 

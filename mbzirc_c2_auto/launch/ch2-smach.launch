@@ -50,7 +50,7 @@
     name="state_machine"
     pkg="mbzirc_c2_state"
     type="mbzirc_ch2_sm.py"
-    args="normal"
+    args="wrenchTest"
     output='screen'
   />
 
