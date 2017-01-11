@@ -82,7 +82,7 @@ class move_arm_topic():
 
         self.jt = RobotState()
         self.jt.joint_state.header.frame_id = '/base_link'
-        self.jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel', 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint', 'left_tip_hinge', 'right_tip_hinge']
+        self.jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'left_tip_hinge', 'rear_left_wheel', 'rear_right_wheel', 'right_tip_hinge' 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
         cjs = [0,0,0,0,0,0]
         self.jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
         self.joint_pub.publish(self.jt.joint_state)
