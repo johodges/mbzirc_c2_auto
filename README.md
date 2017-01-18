@@ -37,6 +37,8 @@
 7. Install our packages
     * cd ~/catkin_ws/src
     * git clone https://github.com/johodges/mbzirc_c2_auto
+    * for the physical husky: git clone https://github.com/johodges/mbzirc_c2_physical
+    * for the simulation husky: git clone https://github.com/johodges/mbzirc_c2_simulation
     * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
     * sudo chmod +x *.py
     * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
