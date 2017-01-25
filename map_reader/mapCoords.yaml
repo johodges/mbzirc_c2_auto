@@ -1,0 +1,6 @@
+startingPoint: [2010, 2000]
+arenaTopLeft: [1650, 1705]
+arenaBotRight: [4850, 3250]
+deadZoneTopLeft: [2000, 1950]
+deadZoneBotRight: [2200, 2080]
+metersToPixels: 24
