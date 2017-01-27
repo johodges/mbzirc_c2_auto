@@ -191,3 +191,5 @@ catkin_install_python(PROGRAMS scripts/move_arm_param.py DESTINATION ${CATKIN_PA
 catkin_install_python(PROGRAMS scripts/move_arm_param_valve.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS scripts/test_output.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS scripts/rotate_valve.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/move_off_valve.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/wrench_drop.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
