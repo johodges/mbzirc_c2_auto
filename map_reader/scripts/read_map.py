@@ -52,27 +52,33 @@ def main():
 	rate = rospy.Rate(10.0)
 	while not rospy.is_shutdown():
 		try:
+			(trans, rotate) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+			print "Didn't work"
+			continue
+		print listener.lookupTransform('/map', '/odom', rospy.Time(0))
+		try:
 			(trans, rotate) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
 		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 			continue
-		print rotate[2]
+		#print rotate[2]
 		rospy.set_param("/currentRobotAngle", rotate[2])
 		
 		roboX = initialX + (trans[0] * 24)
 		roboY = initialY - (trans[1] * 24)
-		print roboX
-		print roboY
+		#print roboX
+		#print roboY
 
 		rospy.set_param("/currentRobotX", roboX)
 		rospy.set_param("/currentRobotY", roboY)
 
-		if roboX > arenaPnt1[0] and roboX < arenaPnt2[0] and roboY > arenaPnt1[1] and roboY < arenaPnt2[1]:
-			print "Inside the arena"
-		else:
-			print "Outside the arena"
+		#if roboX > arenaPnt1[0] and roboX < arenaPnt2[0] and roboY > arenaPnt1[1] and roboY < arenaPnt2[1]:
+			#print "Inside the arena"
+		#else:
+			#print "Outside the arena"
 
-		if roboX > badSquare1[0] and roboX < badSquare2[0] and roboY > badSquare1[1] and roboY < badSquare2[1]:
-			print "Should not be here"
+		#if roboX > badSquare1[0] and roboX < badSquare2[0] and roboY > badSquare1[1] and roboY < badSquare2[1]:
+			#print "Should not be here"
 
 		rate.sleep()
 
