@@ -1,0 +1,12 @@
+<launch>
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joystick" default="true" />
+
+  <node pkg="manual_drive" name="joy_ur5" type="joyUR5.py" output="screen">
+  </node>
+
+  <node pkg="joy" type="joy_node" name="joy_node">
+      <param name="dev" value="$(arg joy_dev)" />
+  </node>
+  
+</launch>
