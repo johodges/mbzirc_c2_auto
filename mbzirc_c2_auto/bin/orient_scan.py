@@ -60,11 +60,20 @@ class laser_listener():
         """
         # Name this node, it must be unique
         rospy.init_node('orient_scan', anonymous=True)
-
+        try:
+            fake_lidar = rospy.get_param('fake_lidar')
+        except:
+            fake_lidar = 'False'
         # Set up ROS subscriber callback routines
-        rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback,
-            queue_size=1)
+        if not fake_lidar:
+            rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback,
+                queue_size=1)
         self.pub = rospy.Publisher("/bearing",numpy_msg(Floats), queue_size=1)
+        if fake_lidar:
+            while not rospy.is_shutdown():
+                bearing = np.array([0,0.69,0,0,0,0,0,0],dtype=np.float32)
+                self.pub.publish(bearing)
+                rospy.sleep(0.1)
 
     def callback(self, data):
         """callback (/scan) is used to segment a laser scan into continuous

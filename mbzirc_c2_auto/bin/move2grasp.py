@@ -67,7 +67,7 @@ class move2grasp():
         except CvBridgeError as e:
             print(e)
         rospy.set_param('smach_state','readyToGrasp')
-        rospy.sleep(10)
+        rospy.sleep(1)
         rospy.signal_shutdown('Ending node.')
 
 if __name__ == '__main__':
