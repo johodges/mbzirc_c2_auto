@@ -109,6 +109,7 @@ class move_arm_topic():
 
             # Plan the trajectory to the goal
             traj = self.arm.plan()
+            print traj
             traj_pts = len(traj.joint_trajectory.points)
             
             if traj is not None:

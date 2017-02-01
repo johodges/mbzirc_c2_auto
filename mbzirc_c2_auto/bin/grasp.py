@@ -25,36 +25,41 @@ from geometry_msgs.msg import Twist
 
 if __name__ == '__main__':
     rospy.init_node('grasp')
-    pub = rospy.Publisher('gripper/cmd_vel', Twist, queue_size = 1)
-    twist = Twist()
-    speed = .5; turn = 1
-    x = 0; y = 0; z = 0;
-    th = 1 # To open gripper (1) use th = 1
-    twist.linear.x = x*speed;
-    twist.linear.y = y*speed;
-    twist.linear.z = z*speed;
-    twist.angular.x = 0;
-    twist.angular.y = 0;
-    twist.angular.z = th*turn
+    try:
+        physical_robot = rospy.get_param('physical_robot')
+    except:
+        physical_robot = 'False'
+    if not physical_robot:
+        pub = rospy.Publisher('gripper/cmd_vel', Twist, queue_size = 1)
+        twist = Twist()
+        speed = .5; turn = 1
+        x = 0; y = 0; z = 0;
+        th = 1 # To open gripper (1) use th = 1
+        twist.linear.x = x*speed;
+        twist.linear.y = y*speed;
+        twist.linear.z = z*speed;
+        twist.angular.x = 0;
+        twist.angular.y = 0;
+        twist.angular.z = th*turn
 
-    ct = 0
-    rest_time = 0.1
-    tot_time = 1
+        ct = 0
+        rest_time = 0.1
+        tot_time = 1
+    
+        while ct*rest_time < tot_time:
+            pub.publish(twist)
+            rospy.sleep(0.1)
+            ct = ct+1
+    
+        th = -1
+        twist.angular.z = th*turn
+        ct = 0
+        tot_time = 30000
 
-    while ct*rest_time < tot_time:
-        pub.publish(twist)
-        rospy.sleep(0.1)
-        ct = ct+1
-
-    th = -1
-    twist.angular.z = th*turn
-    ct = 0
-    tot_time = 30000
-
-    while ct*rest_time < tot_time:
-        pub.publish(twist)
-        rospy.sleep(0.1)
-        ct = ct+1
+        while ct*rest_time < tot_time:
+            pub.publish(twist)
+            rospy.sleep(0.1)
+            ct = ct+1
 
     rospy.set_param('smach_state','wrenchGrasped')
     rospy.signal_shutdown('Ending node.')
