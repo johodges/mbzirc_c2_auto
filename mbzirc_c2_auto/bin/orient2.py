@@ -152,7 +152,7 @@ class orient():
         self.wp = -1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
         self.big_board_offset = 0       # Offset for a large board
-        
+
         # Hardware Parameters
         self.camera_fov_h = 1.5708
         self.camera_fov_v = 1.5708
@@ -276,12 +276,12 @@ class orient():
             """This subroutine manually moves the husky forward or backward
             a fixed amount at a fixed velocity by bypassing the move_base
             package and sending a signal directly to the wheels.
-                
+
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
-            """ 
+            """
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.linear.x = ve
@@ -358,7 +358,6 @@ class orient():
             update_rot()
             """Extract points of interest from the /bearing topic:
             point A: median point of laser scan
-            point C: unused in this routine
             mn/mx: minimum/maximum extents of the object
             """
             ang = bearing.data[0]
@@ -403,7 +402,7 @@ class orient():
                     if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
                         t = self.tftree.getLatestCommonTime("/base_laser",
                             "/camera")
-                        posi, quat = self.tftree.lookupTransform("/base_laser", 
+                        posi, quat = self.tftree.lookupTransform("/base_laser",
                             "/camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
@@ -413,7 +412,7 @@ class orient():
                     if self.tftree.frameExists("/laser_base_link") and self.tftree.frameExists("/camera"):
                         t = self.tftree.getLatestCommonTime("/laser_base_link",
                             "/camera")
-                        posi, quat = self.tftree.lookupTransform("/laser_base_link", 
+                        posi, quat = self.tftree.lookupTransform("/laser_base_link",
                             "/camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
@@ -490,7 +489,7 @@ class orient():
                     rospy.loginfo("Object in local coord (x,y): (%f,%f)",
                         x_loc, y_loc)
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.8 # Distance off board we want to be 
+                    po = 0.8 # Distance off board we want to be
                     back_it_up(0.25,(x_loc-po))
                     self.fake_smach = 4
                 else:
@@ -597,7 +596,7 @@ class orient():
                 """
                 # Check if we see wrenches
                 if np.shape(self.wrench)[0] > 5:
-                    
+
                     self.wrench_counter = self.wrench_counter+1
                     rospy.sleep(self.rest_time)
                     # Make sure we saw wrenches 5 times through the loop

@@ -62,7 +62,7 @@ class mbzirc_c2_auto():
         detect_counter: counter for LIDAR detection scans
         noise_counter: counter for LIDAR empty scans
         state: current state of move_base node
-        twi_pub: Publisher to manually control the robot 
+        twi_pub: Publisher to manually control the robot
         move_base: move_base action server
         goal: move_base goal
         ct_move: manually movement counter
@@ -78,7 +78,7 @@ class mbzirc_c2_auto():
     Publishers:
         /joy_teleop/cmd_vel: topic to manually move the robot
         /move_base/goal: goal sent to the move_base node in ROS
-            
+
     """
 
     def __init__(self):
@@ -106,7 +106,7 @@ class mbzirc_c2_auto():
         # Set up the waypoint locations. Poses are defined in the map frame.
         self.locations = dict()
         self.waypoint_name = dict()
-        
+
         f = open(rospack.get_path(
             'mbzirc_c2_auto')+'/params/pre-defined-path.txt','r')
         line_counter = 0
@@ -122,23 +122,24 @@ class mbzirc_c2_auto():
                 line_counter = line_counter+1
 
         # Initialize parameters
-        self.rest_time = 0.1            # Minimum pause at each location
-        self.stalled_threshold = 5000   # Loops before stall
-        self.current_waypoint = 0       # Current waypoint
-        self.stall_counter = 0          # Stall counter
-        self.detect_counter = 0         # Detection counter
-        self.noise_counter = 0          # Noise counter
-        self.state = 3                  # move_base current state
+        self.rest_time = 0.1                    # Minimum pause at each location
+        self.stalled_threshold = 5000           # Loops before stall
+        self.current_waypoint = 0               # Current waypoint
+        self.max_waypoint = line_counter - 1    # Total number of waypoints
+        self.stall_counter = 0                  # Stall counter
+        self.detect_counter = 0                 # Detection counter
+        self.noise_counter = 0                  # Noise counter
+        self.state = 3                          # move_base current state
 
         # Set up ROS publishers and subscribers
-        # Publisher to manually control the robot 
+        # Publisher to manually control the robot
         self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
             queue_size=5)
         # Subscribe to object detection topic
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, 
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback,
             queue_size=1)
         # Subscribe to the move_base action server
-        self.move_base = actionlib.SimpleActionClient("move_base", 
+        self.move_base = actionlib.SimpleActionClient("move_base",
             MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
 
@@ -147,7 +148,7 @@ class mbzirc_c2_auto():
         self.goal = MoveBaseGoal()
 
         rospy.loginfo("Connected to move base server")
-        rospy.loginfo("Starting navigation test")
+        rospy.loginfo("Starting autonomous navigation")
 
         rospy.sleep(self.rest_time)
 
@@ -172,12 +173,12 @@ class mbzirc_c2_auto():
             """This subroutine manually moves the husky forward or backward
             a fixed amount at a fixed velocity by bypassing the move_base
             package and sending a signal directly to the wheels.
-                
+
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
-            """ 
+            """
             sleep_time = 0.1
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
@@ -223,13 +224,21 @@ class mbzirc_c2_auto():
             if self.state == 3:
                 # If move_base is registering 'SUCCEEDED' move to next waypoint
                 self.current_waypoint = self.current_waypoint+1
-                location = self.waypoint_name[self.current_waypoint]
-                self.goal.target_pose.pose = self.locations[location]
-                self.goal.target_pose.header.frame_id = 'odom'
-                rospy.loginfo("Going to: " + str(location))
-                self.move_base.send_goal(self.goal)
-                self.stall_counter = 0
-                self.detect_counter = 0
+
+                if self.current_waypoint > self.max_waypoint:
+                    # We have visited all waypoints. Exit autonomy so we can shift to manual
+                    rospy.set_param('smach_state','beenToAllWayPoints')
+                    rospy.signal_shutdown('*** Searched all way points, shift to manual. ***')
+                else:
+                    # Get the next waypoint and start moving
+                    location = self.waypoint_name[self.current_waypoint]
+                    self.goal.target_pose.pose = self.locations[location]
+                    self.goal.target_pose.header.frame_id = 'odom'
+                    rospy.loginfo("Going to: " + str(location))
+                    self.move_base.send_goal(self.goal)
+                    self.stall_counter = 0
+                    self.detect_counter = 0
+
                 rospy.sleep(2)
             else:
                 # If not registering 'SUCCEEDED', increment stall_counter
@@ -301,5 +310,5 @@ if __name__ == '__main__':
         mbzirc_c2_auto()
         rospy.spin()
     except rospy.ROSInterruptException:
-        rospy.loginfo("mbzirc_c2_auto finished.")
+        rospy.loginfo("Autonomous navigation to panel finished.")
 

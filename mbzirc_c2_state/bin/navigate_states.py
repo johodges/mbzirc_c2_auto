@@ -30,34 +30,34 @@ import signal
 import sys
 
 
-class NavSMMethod(smach.State):
-    """Determine if old or new state machine should be used
+# class NavSMMethod(smach.State):
+#     """Determine if old or new state machine should be used
 
-    This should be removed as soon as the new state machine logic for navigation
-    has been implemented
+#     This should be removed as soon as the new state machine logic for navigation
+#     has been implemented
 
-    Outcomes
-    --------
-        useNew : use the new state machine
-        useOld : use the old state machine
-    """
+#     Outcomes
+#     --------
+#         useNew : use the new state machine
+#         useOld : use the old state machine
+#     """
 
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['useNew',
-                                       'useOld'])
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['useNew',
+#                                        'useOld'])
 
-    def execute(self, userdata):
-        try:
-            sm_to_use = rospy.get_param('sm_version')
-        except:
-            print sys.exc_info()[0]
-            return 'useOld'
+#     def execute(self, userdata):
+#         try:
+#             sm_to_use = rospy.get_param('sm_version')
+#         except:
+#             print sys.exc_info()[0]
+#             return 'useOld'
 
-        if sm_to_use == 'new' or sm_to_use == 'newNavigate':
-            return 'useNew'
-        else:
-            return 'useOld'
+#         if sm_to_use == 'new' or sm_to_use == 'newNavigate':
+#             return 'useNew'
+#         else:
+#             return 'useOld'
 
 
 class FindBoard(smach.State):
@@ -94,117 +94,118 @@ class FindBoard(smach.State):
         os.killpg(os.getpgid(a.pid), signal.SIGTERM)
         rospy.sleep(0.1)
 
-        return 'atBoard'
+        ret_state = rospy.get_param('smach_state')
+        return ret_state
 
 
-class Localize(smach.State):
-    """Automatically localize the UGV in the arena
+# class Localize(smach.State):
+#     """Automatically localize the UGV in the arena
 
-    Use IMU and GPS to localize the UGV in the arena
+#     Use IMU and GPS to localize the UGV in the arena
 
-    Outcomes
-    --------
-        localized : UGV localized in the arena
-        notLocalized : unable to automatically localize the UGV in the arena
-    """
+#     Outcomes
+#     --------
+#         localized : UGV localized in the arena
+#         notLocalized : unable to automatically localize the UGV in the arena
+#     """
 
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['localized',
-                                       'notLocalized'])
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['localized',
+#                                        'notLocalized'])
 
-    def execute(self, userdata):
-        return 'localized'
-
-
-class VisualLocalization(smach.State):
-    """Visually localize the UGV in the arena
-
-    Attempt to use visual localization to orient the UGV in the arena
-
-    Outcomes
-    --------
-        localized : UGV localized in the environment
-        notLocalized : unable to perform visual localization of the UGV
-    """
-
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['localized',
-                                       'notLocalized'])
-
-    def execute(self, userdata):
-        return 'localized'
+#     def execute(self, userdata):
+#         return 'localized'
 
 
-class InitializeDetect(smach.State):
-    """Initialize LiDAR and Visual detectors and perform initial arena scan
+# class VisualLocalization(smach.State):
+#     """Visually localize the UGV in the arena
 
-    First initialize the LiDAR detector and the PTZ camera for visual detection. Perform
-    an initial scan of the arena to see if the board can be located
+#     Attempt to use visual localization to orient the UGV in the arena
 
-    Outcomes
-    --------
-        boardFound : board found on the initial scan of the arena
-        boardNotFound : unable to locate the board on initial scan
-    """
+#     Outcomes
+#     --------
+#         localized : UGV localized in the environment
+#         notLocalized : unable to perform visual localization of the UGV
+#     """
 
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['foundBoard',
-                                       'boardNotFound'])
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['localized',
+#                                        'notLocalized'])
 
-    def execute(self, userdata):
-        return 'boardFound'
-
-
-class MoveToWayPoint(smach.State):
-    """Moves the UGV to the next navigation way point while searching for the board
-
-    This moves the UGV along a predetermined list of way points that define a search
-    pattern for locating the board.  Additionally it continually checks to see if the
-    board is located by the detector and if it has then it stops and hands the logic
-    off to drive to the board.  If all the way points have been visited then the
-    navigation is turned over to manual operations.
-
-    Outcomes
-    --------
-        foundBoard : board located while moving to the next way point
-        boardNotFound : at the way point and was unable to find the board
-        beenToAllWayPoints : visited every predefined way point and was unable to
-                             find the board
-    """
-
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['foundBoard',
-                                       'boardNotFound',
-                                       'beenToAllWayPoints'])
-
-    def execute(self, userdata):
-        return 'foundBoard'
+#     def execute(self, userdata):
+#         return 'localized'
 
 
-class MoveToBoard(smach.State):
-    """Moves the UGV to the predicted board location
+# class InitializeDetect(smach.State):
+#     """Initialize LiDAR and Visual detectors and perform initial arena scan
 
-    The location of the board is predicted based on a combination of LiDAR and
-    visual detection.  This state drives the UGV towards the object and continually
-    checks the detectors to ensure that it is on a good course
+#     First initialize the LiDAR detector and the PTZ camera for visual detection. Perform
+#     an initial scan of the arena to see if the board can be located
 
-    Outcomes
-    --------
-        atBoard : completed the navigation to the board
-        lostObject : lost the object or determined it was the wrong object
-    """
+#     Outcomes
+#     --------
+#         boardFound : board found on the initial scan of the arena
+#         boardNotFound : unable to locate the board on initial scan
+#     """
 
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['atBoard',
-                                       'lostObject'])
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['foundBoard',
+#                                        'boardNotFound'])
 
-    def execute(self, userdata):
-        return 'atBoard'
+#     def execute(self, userdata):
+#         return 'boardFound'
+
+
+# class MoveToWayPoint(smach.State):
+#     """Moves the UGV to the next navigation way point while searching for the board
+
+#     This moves the UGV along a predetermined list of way points that define a search
+#     pattern for locating the board.  Additionally it continually checks to see if the
+#     board is located by the detector and if it has then it stops and hands the logic
+#     off to drive to the board.  If all the way points have been visited then the
+#     navigation is turned over to manual operations.
+
+#     Outcomes
+#     --------
+#         foundBoard : board located while moving to the next way point
+#         boardNotFound : at the way point and was unable to find the board
+#         beenToAllWayPoints : visited every predefined way point and was unable to
+#                              find the board
+#     """
+
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['foundBoard',
+#                                        'boardNotFound',
+#                                        'beenToAllWayPoints'])
+
+#     def execute(self, userdata):
+#         return 'foundBoard'
+
+
+# class MoveToBoard(smach.State):
+#     """Moves the UGV to the predicted board location
+
+#     The location of the board is predicted based on a combination of LiDAR and
+#     visual detection.  This state drives the UGV towards the object and continually
+#     checks the detectors to ensure that it is on a good course
+
+#     Outcomes
+#     --------
+#         atBoard : completed the navigation to the board
+#         lostObject : lost the object or determined it was the wrong object
+#     """
+
+#     def __init__(self):
+#         smach.State.__init__(self,
+#                              outcomes=['atBoard',
+#                                        'lostObject'])
+
+#     def execute(self, userdata):
+#         return 'atBoard'
 
 
 class ManualNavigate(smach.State):
