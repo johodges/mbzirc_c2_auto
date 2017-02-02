@@ -23,6 +23,7 @@ class find_wrench:
     self.ct = 0
     self.ct2 = 0
     self.bridge = CvBridge()
+    self.indir = '/home/jonathan/'
     self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
 
   def callback(self,data):
@@ -31,10 +32,10 @@ class find_wrench:
     except CvBridgeError as e:
       print(e)
     rospack = rospkg.RosPack()
-
     cascade = cv2.CascadeClassifier(rospack.get_path('mbzirc_c2_auto')+'/params/wrench.xml')
     cv_image = cv2.resize(cv_image, (0,0), fx=2, fy=2);
-    rects = cascade.detectMultiScale(cv_image, 1.3, 4, cv2.cv.CV_HAAR_SCALE_IMAGE, (35, 200))
+    img_invert = 255 - cv_image
+    rects = cascade.detectMultiScale(img_invert, 1.3, 4, cv2.cv.CV_HAAR_SCALE_IMAGE, (35, 200))
     cv_image2 = cv_image.copy()
     #print 'I am trying!'
     if len(rects) == 0:
@@ -52,11 +53,48 @@ class find_wrench:
         x_avg = 0
         y_avg = 0
         ct = 0
+        sz = np.shape(rects)
+        locs = np.empty([sz[0],2])
+        width = np.empty([sz[0],2])
+        locs[:,0] = (rects[:,2]+rects[:,0])/2
+        locs[:,1] = (rects[:,3]+rects[:,1])/2
+        width[:,0] = rects[:,2]-rects[:,0]
+        width[:,1] = rects[:,3]-rects[:,1]
+        locs2 = np.empty([len(locs[:,0]),2])
+        width2 = np.empty([len(width[:,0]),2])
+        print "LOCS:"
+        print np.power(np.power(locs[:,1]-locs[1,1],2),0.5)
+        for i in range(0,sz[0]):
+            dist = np.power(np.power(locs[:,0]-locs[i,0],2),0.5)
+            dist[dist == 0] = 99999
+            """
+            dist_min = np.min(np.extract(dist>0,dist))
+            dist_arg = np.argwhere(dist==dist_min)
+            dist_min = np.min(np.extract(dist>0,dist))
+            """
+            dist_arg = np.argwhere(dist<100)
+            if dist_arg.size == 0:
+                locs2[ct,:] = locs[i,:]
+                width2[ct,:] = width[i,:]
+                ct = ct+1
+            else:
+                if np.min(dist_arg) > i:
+                    loc_temp = np.mean(locs[dist_arg,0])
+                    locs2[ct,:] = [np.mean(locs[dist_arg,0]),np.mean(locs[dist_arg,1])]
+                    width2[ct,:] = [np.mean(width[dist_arg,0]),np.mean(width[dist_arg,1])]
+                    ct = ct+1
+        width = np.abs(np.floor(width2[0:ct,:]))
+        locs = np.floor(locs2[0:ct,:])
+        rects2 = np.transpose(np.array([locs[:,0]-width[:,0]/2,locs[:,1]-width[:,1]/2,locs[:,0]+width[:,0]/2,locs[:,1]+width[:,1]/2]))
+        rects = np.int_(rects2)
         for x1, y1, x2, y2 in rects:
-            cv2.rectangle(cv_image2, (x1, y1), (x2, y2), (127, 255, 0), 2)
-            x_avg = x_avg + (x1+x2)/2
-            y_avg = y_avg + (y1+y2)/2
-            ct = ct+1
+            area = (x2-x1)/2*(y2-y1)/2
+            print area
+            if area > 10000:
+                cv2.rectangle(cv_image2, (x1, y1), (x2, y2), (127, 255, 0), 2)
+                x_avg = x_avg + (x1+x2)/2
+                y_avg = y_avg + (y1+y2)/2
+                ct = ct+1
         x_avg = x_avg/ct
         y_avg = y_avg/ct
     wrenchpub = rospy.Publisher('/wrench_centroids', numpy_msg(Floats), queue_size=5)
@@ -88,7 +126,7 @@ class find_wrench:
     try:
       self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
       self.w.publish(w_loc)
-
+      cv2.imwrite('%scascade_result2.png' % (self.indir),cv_image2)
       if np.shape(cents)[0] > 6 and self.ct2 == 0:
         self.image_output.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
         self.ct2 = 1

@@ -151,6 +151,16 @@ class mbzirc_c2_auto():
         rospy.loginfo("Starting autonomous navigation")
 
         rospy.sleep(self.rest_time)
+        # If move_base is registering 'SUCCEEDED' move to next waypoint
+        self.current_waypoint = self.current_waypoint+1
+        location = self.waypoint_name[self.current_waypoint]
+        self.goal.target_pose.pose = self.locations[location]
+        self.goal.target_pose.header.frame_id = 'odom'
+        rospy.loginfo("Going to: " + str(location))
+        self.move_base.send_goal(self.goal)
+        self.stall_counter = 0
+        self.detect_counter = 0
+        rospy.sleep(self.rest_time)
 
     def shutdown(self):
         """This subroutine runs when the autonomous node shutdown. It is

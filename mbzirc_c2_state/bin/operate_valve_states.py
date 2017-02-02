@@ -32,6 +32,7 @@ import subprocess
 import numpy as np
 from geometry_msgs.msg import Twist
 from mbzirc_c2_auto.msg import kf_msg
+from robot_mv_cmds import *
 
 class StowArm(smach.State):
     """Moves the arm to stow position
@@ -46,44 +47,48 @@ class StowArm(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['armStowed',
-                                       'stowArmFailed'])
+                                       'stowArmFailed',
+                                       'physicalRobot'])
 
     def execute(self, userdata):
-        stow_pos = rospy.get_param('stow_position')
-        rospy.set_param('ee_position', [float(stow_pos[0]),
-                                        float(stow_pos[1]),
-                                        float(stow_pos[2])])
-        move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
-        goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
-        tw = Twist()
-        tw.linear.x = stow_pos[0]
-        tw.linear.y = stow_pos[1]
-        tw.linear.z = stow_pos[2]
-        flag = 0; ct = 0; ct2 = 0
+        try:
+            physical_robot = rospy.get_param('physical_robot')
+        except:
+            physical_robot = 'False'
+        if not physical_robot:
+            stow_pos = rospy.get_param('stow_position')
+            rospy.set_param('ee_position', [float(stow_pos[0]),
+                                            float(stow_pos[1]),
+                                            float(stow_pos[2])])
+            move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
+            goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
+            tw = Twist()
+            tw.linear.x = stow_pos[0]
+            tw.linear.y = stow_pos[1]
+            tw.linear.z = stow_pos[2]
+            flag = 0; ct = 0; ct2 = 0
         
-        while flag == 0:
-            while ct < 5:
-                goal_pub.publish(tw)
-                ct = ct+1
-                rospy.sleep(0.1)
-            move_state = rospy.get_param('move_arm_status')
-            if move_state == 'moveFailed':
-                ct = 0
-                ct2 = ct2+1
-            if move_state == 'success':
-                flag = 1
-            if ct2 > 5:
-                flag = 1
-        #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-        #prc.wait()
+            while flag == 0:
+                while ct < 5:
+                    goal_pub.publish(tw)
+                    ct = ct+1
+                    rospy.sleep(0.1)
+                move_state = rospy.get_param('move_arm_status')
+                if move_state == 'moveFailed':
+                    ct = 0
+                    ct2 = ct2+1
+                if move_state == 'success':
+                    flag = 1
+                if ct2 > 5:
+                    flag = 1
 
-        move_arm_state = rospy.get_param('move_arm_status')
-        #move_arm_state = 'success'
-        if move_arm_state == 'success':
-            return 'armStowed'
+            move_arm_state = rospy.get_param('move_arm_status')
+            if move_arm_state == 'success':
+                return 'armStowed'
+            else:
+                return 'stowArmFailed'
         else:
-            return 'stowArmFailed'
-
+            return 'physicalRobot'
 
 
 class DriveToValve(smach.State):
@@ -136,24 +141,24 @@ class MoveToValveReady(smach.State):
 
     def execute(self, userdata):
 
-        valve_ID_ready_pos = rospy.get_param('valve2')
+        valve_ID_ready_pos = rospy.get_param('valve')
         rospy.sleep(0.1)
         ee_position = rospy.get_param('ee_position')
         rospy.sleep(0.1)
-        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.4
+        valve_ID_ready_pos[0] = valve_ID_ready_pos[0]-0.35
         valve_ID_ready_pos[2] = valve_ID_ready_pos[2]
         print "Valve ID ready pos: ", valve_ID_ready_pos
         print "ee_position: ", ee_position
         rospy.set_param('ee_position', [float(valve_ID_ready_pos[0]),
                                         float(valve_ID_ready_pos[1]),
-                                        0.3])
+                                        float(valve_ID_ready_pos[2])])
                                         #float(valve_ID_ready_pos[2])])
-
+        rospy.set_param('move_arm_status','Pending')
         rospy.loginfo("Moving to Valve Ready at: %s",
                       " ".join(str(x) for x in valve_ID_ready_pos))
-
+        move_state = moveArmTwist(valve_ID_ready_pos[0], valve_ID_ready_pos[1], valve_ID_ready_pos[2])
         # rospy.spin()
-
+        """
         move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
         goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
         tw = Twist()
@@ -180,7 +185,7 @@ class MoveToValveReady(smach.State):
         #prc.wait()
 
         move_state = rospy.get_param('move_arm_status')
-
+        """
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
         #move_state = 'success'
@@ -192,7 +197,7 @@ class MoveToValveReady(smach.State):
             kf.initial_pos = [0,0,0,0,0,0]
             kf.initial_covar = [0.001,0.001]
             kf.covar_motion = [0.001,0.001]
-            kf.covar_observer = [0.001,0.001]
+            kf.covar_observer = [0.01,0.01]
 
             kf_pub.publish(kf)
             rospy.sleep(0.1) # Wait for 0.1s to ensure init topic is published
@@ -229,9 +234,16 @@ class IDValve(smach.State):
                              output_keys=['valve_centered_out'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
-        prc.wait()
-
+        try:
+            physical_robot = rospy.get_parm('physical_robot')
+        except:
+            physical_robot = 'False'
+        if not physical_robot:
+            prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
+            prc.wait()
+        if physical_robot:
+            prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve_phys.py", shell=True)
+            prc.wait()
         # smach_state will be set to valveNotFound, valveCenter, valveOffCenter
         sm_state = rospy.get_param('smach_state')
         if sm_state == "valveNotFound":
@@ -272,18 +284,28 @@ class MoveToValve(smach.State):
         valve = rospy.get_param('valve')
         ee_position = rospy.get_param('ee_position')
 
-        if valve[0] > 0.35 or valve[1] != 0 or valve[2] != 0:
+        if valve[0] > 0.35 or valve[1] != 0 or valve[2] != 0: #was 35 instead of 55
             print "Distance from board from camera: ", valve[0]
-            ee_position[0] = ee_position[0]+0.5*(valve[0]-0.25)
+            rospy.loginfo("********************************************************")
+            rospy.loginfo("VALVE LOCATION")
+            rospy.loginfo(valve)
+            rospy.loginfo("********************************************************")
+            ee_position[0] = ee_position[0]+0.5*(valve[0]-0.30
+) #was 25 instead of 35
+            #ee_position[0] = ee_position[0]+0.025
             print "ee_position before Kalman filter", ee_position
             print "************************************************"
             ee_twist = Twist()
             ee_twist.linear.x = ee_position[0]
             ee_twist.linear.y = valve[1]
             ee_twist.linear.z = valve[2]
+            rospy.loginfo("ee_twist before Kalman filter:")
+            rospy.loginfo(ee_twist)
             ee_pub.publish(ee_twist)
             rospy.sleep(0.1)
             tw = self.valve_pos_kf
+            rospy.loginfo("ee_twist after Kalman filter:")
+            rospy.loginfo(tw)
             print "Estimated pose from Kalman filter: ", tw
 
             ee_position[1] = ee_position[1]+tw.linear.y
@@ -320,6 +342,9 @@ class ServoToValve(smach.State):
     def execute(self, userdata):
         # Execute the arm servo
         ee_position = rospy.get_param('ee_position')
+        rospy.set_param('move_arm_status','Pending')
+        move_state = moveArmTwist(ee_position[0], ee_position[1], ee_position[2])
+        """
         move_state = 'SendGoal'; rospy.set_param('move_arm_status',move_state);
         goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
         tw = Twist()
@@ -348,6 +373,7 @@ class ServoToValve(smach.State):
         # Return the state outcome
 
         move_state = rospy.get_param('move_arm_status')
+        """
         if move_state == 'success':
             return 'moveSuccess'
         else:
@@ -379,13 +405,14 @@ class MoveToOperate(smach.State):
         self.xA = valve[0]
         self.dist = self.arm+self.xA
         print "self.dist: ", self.dist
-        while (self.dist-ee_position[0]) > 0.22:
+        while (self.dist-ee_position[0]) > 0.23:
             ee_position = rospy.get_param('ee_position')
             rospy.set_param('ee_position', [float(ee_position[0]+0.005),
                                             float(ee_position[1]),
                                             float(ee_position[2])])
-            prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
-            prc.wait()
+            move_state = moveArmTwist(ee_position[0], ee_position[1], ee_position[2])
+            #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
+            #prc.wait()
             
         return 'wrenchOnValve'
 

@@ -13,18 +13,18 @@
     <arg name="oscillation_timeout" value="0.0"/>
   </include>
   <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch">
-    <arg name="velodyne_lidar" value="true"/>
-    <arg name="laser_enabled" value="false"/>
+    <arg name="velodyne_lidar" value="false"/>
+    <arg name="laser_enabled" value="true"/>
   </include>
   <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic.py" />
 
-  <node
+  <!--node
     name="state_machine"
     pkg="mbzirc_c2_state"
     type="mbzirc_ch2_sm.py"
     args="normal"
     output='screen'
-  />
+  /-->
 
   <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py" />
 

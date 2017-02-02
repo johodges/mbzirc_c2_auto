@@ -42,7 +42,10 @@ def moveArmTwist(x, y, z):
     # Prepare system for a new goal
     move_state = 'SendGoal'
     rospy.set_param('move_arm_status',move_state)
-
+    try:
+        physical_robot = rospy.get_param('physical_robot')
+    except:
+        physical_robot = 'false'
     # Set up publisher
     goal_pub = rospy.Publisher("/move_arm/goal",Twist, queue_size=1)
 
@@ -51,12 +54,31 @@ def moveArmTwist(x, y, z):
     tw.linear.x = x
     tw.linear.y = y
     tw.linear.z = z
-
-    for i in range(20):
-        for k in range(5):
+    if physical_robot:
+        try:
+            sawyer = rospy.get_param('sawyer')
+        except:
+            sawyer = 'False'
+        if sawyer:
+            tw.angular.x = 1.57
+            tw.angular.y = 1.57
+            tw.angular.z = 1.57
+        if not sawyer:
+            tw.angular.x = 0
+            tw.angular.y = 0
+            tw.angular.z = -1.57
+    """
+    print "Physical?"
+    print physical_robot
+    print "Twist:", tw
+    """
+    rospy.set_param('move_arm_status','Sent')
+    while move_state != 'success':
+    #for i in range(50):
+        #for k in range(5):
             # Publish the goal five times
-            goal_pub.publish(tw)
-            rospy.sleep(sleep_time)
+        goal_pub.publish(tw)
+        rospy.sleep(sleep_time)
         move_state = rospy.get_param('move_arm_status')
         if move_state == 'success':
             break

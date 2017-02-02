@@ -121,7 +121,8 @@ def callback(data):
                 dis = np.median(y2[i])
                 mn = min(y2[i][1:xlen])
                 mx = max(y2[i][1:xlen])
-                bearing = np.array([ang,dis], dtype=np.float32)
+                if ang > -3.14/2 and ang < 3.14/2:
+                    bearing = np.array([ang,dis], dtype=np.float32)
 
     # Check if bearing exists. Store [0,0] if no object was found
     if 'bearing' not in locals():

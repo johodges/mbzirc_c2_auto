@@ -81,22 +81,19 @@ class Orient(smach.State):
             lidar_to_use = rospy.get_param('lidar')
         except:
             lidar_to_use = 'sick'
-        rospy.sleep(1)
+        rospy.sleep(0.1)
         e = subprocess.Popen(
             "rosrun mbzirc_c2_auto wrench_detect.py", shell=True)
-        rospy.sleep(5)
+        rospy.sleep(0.1)
         if lidar_to_use == 'sick':
             d = subprocess.Popen(
                 "rosrun mbzirc_c2_auto orient_scan.py", shell=True)
         if lidar_to_use == 'velodyne':
             d = subprocess.Popen(
                 "rosrun mbzirc_c2_auto orient_scan_velodyne.py", shell=True)
-        d = subprocess.Popen(
-            "rosrun mbzirc_c2_auto orient_scan.py", shell=True)
-        rospy.sleep(1)
+        rospy.sleep(0.1)
         c = subprocess.Popen(
             "rosrun mbzirc_c2_auto orient2.py", shell=True)
-
 
         c.wait()
         rospy.loginfo('Completed Orientation')
