@@ -1,23 +1,23 @@
-<?xml version="1.0"?>
-<launch>	
-  
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">	    
-    <arg name="world_name" value="$(find vtrex_gazebo)/worlds/mbzirc_arena_task_2.world"/>	    
-    <arg name="gui" value="true"/>	  
-    <arg name="use_sim_time" default="true" />
-  </include>	
+<launch>	  
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">	    
+		<arg name="world_name" value="$(find vtrex_gazebo)/worlds/vtrex.world"/>	    
+		<arg name="gui" value="true"/>	  
+		<arg name="use_sim_time" default="true" />
+	</include>	
 
 <!-- urdf xml robot description loaded on the Parameter Server, converting the xacro into a proper urdf file-->
 <param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro'" />
 
 <!-- push robot_description to factory and spawn robot in gazebo -->
 <node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
- args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex"/>
+ args="-urdf -param robot_description -model vtrex" />
 
 <!-- ros_control vtrex launch file -->
 <include file="$(find vtrex_control)/launch/vtrex_control.launch" />
   <include file="$(find vtrex_control)/launch/teleop.launch">
     <arg name="joystick" value="false"/>
   </include>
+<!---->
+<node name="vtrex_script" pkg="vtrex_gazebo" type="vtrex_script.sh" />
 
 </launch>
