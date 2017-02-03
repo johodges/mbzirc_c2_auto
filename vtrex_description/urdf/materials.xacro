@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-<material name="blue"><color rgba="0.0 0.0 0.8 1.0"/></material>
-<material name="green"><color rgba="0.0 0.8 0.0 1.0"/></material>
-<material name="grey"><color rgba="0.2 0.2 0.2 1.0"/></material>
-<material name="orange"><color rgba="${255/255} ${108/255} ${10/255} 1.0"/></material>
-<material name="red"><color rgba="0.8 0.0 0.0 1.0"/></material>
-<material name="white"><color rgba="1.0 1.0 1.0 1.0"/></material>
-<material name="dark_grey"><color rgba="0.2 0.2 0.2 1.0" /></material>
-<material name="light_grey"><color rgba="0.4 0.4 0.4 1.0" /></material>
-<material name="black"><color rgba="0.15 0.15 0.15 1.0" /></material>
+<material name="vtrex_blue"><color rgba="0.0 0.0 0.8 1.0"/></material >
+<material name="vtrex_green"><color rgba="0.0 0.8 0.0 1.0"/></material >
+<material name="vtrex_grey"><color rgba="0.2 0.2 0.2 1.0"/></material >
+<material name="vtrex_orange"><color rgba="${255/255} ${108/255} ${10/255} 1.0"/></material>
+<material name="vtrex_red"><color rgba="0.8 0.0 0.0 1.0"/></material>
+<material name="vtrex_white"><color rgba="1.0 1.0 1.0 1.0"/></material>
+<material name="vtrex_dark_grey"><color rgba="0.2 0.2 0.2 1.0" /></material>
+<material name="vtrex_light_grey"><color rgba="0.4 0.4 0.4 1.0" /></material>
+<material name="vtrex_black"><color rgba="0.15 0.15 0.15 1.0" /></material>
 
 </robot>

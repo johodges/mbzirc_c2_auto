@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
-        
+  <xacro:arg name="sawyer_enabled" default="true" />        
   <xacro:property name="PI" value="3.1415926535897931" />
 
   <xacro:property name="wheelbase" value="0.7" />
@@ -26,6 +26,8 @@
   <xacro:include filename="$(find vtrex_description)/urdf/vtrex.gazebo" />
   <xacro:include filename="$(find vtrex_description)/urdf/materials.xacro" />
   <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro" />
+  <xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" />
+  <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
 
 <!--############################################sicklms1xx#################################################
 <xacro:include filename="$(find LMS1xx)/urdf/sick_lms1xx.urdf.xacro" />
@@ -39,7 +41,7 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheel.STL"/>
         </geometry>
-        <material name="black" />
+        <material name="vtrex_black" />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
@@ -111,7 +113,7 @@
       <geometry>
        <mesh filename="package://vtrex_description/meshes/Chassis.STL"/>
       </geometry>
-<material name="black" />
+<material name="vtrex_black" />
      </visual>
     <collision>
       <origin xyz="0 0 ${footprint_vertical_offset}" rpy="0 0 0"/>
@@ -143,7 +145,7 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
-        <material name="red" />
+        <material name="vtrex_red" />
       </visual>
       <collision>
         <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
@@ -167,7 +169,7 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
-        <material name="red" />
+        <material name="vtrex_red" />
       </visual>
       <collision>
         <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
@@ -224,5 +226,29 @@
       <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
     </HDL-32E>
 
+<!--############################################SAWYER##################################################-->
+
+    <xacro:if value="$(arg sawyer_enabled)">
+
+      <xacro:property name="reflect" value="-1" />
+
+      <!-- Spawn arm -->
+      
+      <joint name="sawyer_arm_base" type="fixed">
+        <parent link="chassis_link" />
+        <child link="base" />
+        <origin xyz="0.3058 0 0.375" rpy="0.0 0.0 0" />
+      </joint>
+
+      <!--Spawn gripper-->
+      <xacro:gripper />
+      <!-- Join Gripper -->
+        <joint name="base_to_arm" type="fixed">
+          <parent link="right_l6"/>
+          <child link="gripper_link"/>
+          <origin xyz="0.0 0.0 0.05" rpy="1.57 0 1.57"/>
+        </joint>
+
+    </xacro:if>
 
 </robot>
