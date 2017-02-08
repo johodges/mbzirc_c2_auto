@@ -27,7 +27,7 @@ def main():
 	rospy.set_param("/deadZone1", badSquare1)
 	rospy.set_param("/deadZone2", badSquare2)
 
-	rospy.set_param("/currentRobotR", '0.0')
+	rospy.set_param("/currentRobotR", 0.0)
 
 	rate = rospy.Rate(10.0)
  	while not rospy.is_shutdown():
