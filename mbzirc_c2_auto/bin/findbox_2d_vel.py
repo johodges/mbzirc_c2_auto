@@ -71,7 +71,7 @@ def callback(data):
     scan_inc = data.angle_increment
 
     # Build angle array
-    x = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
+    x = np.arange(scan_min,scan_max,scan_inc)
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)
@@ -84,8 +84,8 @@ def callback(data):
     y_diff1 = np.power(np.diff(y),2)
 
     # Convert range and bearing measurement to cartesian coordinates
-    x_coord = y*xsin[0:720]
-    y_coord = y*xcos[0:720]
+    x_coord = y*xsin
+    y_coord = y*xcos
 
     # Compute difference between consecutive values in cartesian coordinates
     x_diff = np.power(np.diff(x_coord),2)

@@ -5,6 +5,7 @@ import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf
+import math
 
 def main():
 	rospy.init_node('odom_reader', anonymous=True)
@@ -38,11 +39,14 @@ def main():
  		
  		roboX = trans[0]
  		roboY = trans[1]
+		roboR = rotate[2] * math.pi
 		print roboX
 		print roboY
+		print roboR
  
  		rospy.set_param("/currentRobotX", roboX)
  		rospy.set_param("/currentRobotY", roboY)
+		rospy.set_param("/currentRobotR", roboR)
  
  		rate.sleep()
 
