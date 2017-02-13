@@ -110,10 +110,13 @@ def moveUGVvel(vel, dist_to_move, move_type='linear'):
     else:
         vel_twist.angular.z = vel
 
-    vel_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+    vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
     ct_move = 0
     while ct_move*sleep_time < time_to_move:
         vel_pub.publish(vel_twist)
         ct_move = ct_move+1
         rospy.sleep(sleep_time)
+    vel_twist = Twist()
+    vel_pub.publish(vel_twist)
+    rospy.sleep(sleep_time)

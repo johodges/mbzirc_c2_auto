@@ -78,7 +78,7 @@
 	     </link>
 
 	     <joint name="${prefix}base_link_link_1_joint" type="fixed">
-	       <parent link="${prefix}base_link"/>
+	       <parent link="gripper_link"/>
 	       <child link="${prefix}link_1"/>
 	       <origin xyz="0 0.005 -0.07" rpy="0 0 ${PI/2}"/>
 	     </joint>
@@ -189,7 +189,7 @@
 
 	    <joint name="${prefix}base_link_camera_joint" type="fixed">
 	      <origin xyz="0 0 0" rpy="0 0 0"/>
-	      <parent link="${prefix}base_link"/>
+	      <parent link="gripper_link"/>
 	      <child link="${prefix}camera_link"/>
 	    </joint>
 

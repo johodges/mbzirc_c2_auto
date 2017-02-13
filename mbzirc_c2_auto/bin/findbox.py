@@ -50,6 +50,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import urllib, base64
 import os
 import sys
+import math
 
 def callback(data):
     """
@@ -62,7 +63,7 @@ def callback(data):
     # Initialize parameters
     rate = rospy.Rate(10)
     scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_data = True
+    plot_data = False
 
     # Set max/min angle and increment
     scan_min = data.angle_min
@@ -70,7 +71,7 @@ def callback(data):
     scan_inc = data.angle_increment
 
     # Build angle array
-    x = np.arange(scan_min,scan_max,scan_inc)
+    x = np.arange(scan_min,scan_max,scan_inc)-1.57
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)

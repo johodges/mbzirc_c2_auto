@@ -44,6 +44,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
 from decimal import *
+import tf
 
 class mbzirc_c2_auto():
     """MBZIRC Challenge 2 autonomous searching routine.
@@ -116,9 +117,10 @@ class mbzirc_c2_auto():
                 nome = [x.strip() for x in line.split(',')]
                 self.waypoint_name[line_counter] = nome[0]
                 x=Decimal(nome[1]); y=Decimal(nome[2]); z=Decimal(nome[3])
-                X=Decimal(nome[4]); Y=Decimal(nome[5]); Z=Decimal(nome[6])
+                X=float(nome[4]); Y=float(nome[5]); Z=float(nome[6])
+                q = tf.transformations.quaternion_from_euler(X, Y, Z) 
                 self.locations[self.waypoint_name[line_counter]] = Pose(
-                    Point(x,y,z), Quaternion(X,Y,Z,1))
+                    Point(x,y,z), Quaternion(q[0],q[1],q[2],q[3]))
                 line_counter = line_counter+1
 
         # Initialize parameters
@@ -157,9 +159,11 @@ class mbzirc_c2_auto():
         self.goal.target_pose.header.frame_id = 'odom'
         rospy.loginfo("Going to: " + str(location))
         self.move_base.send_goal(self.goal)
+        print "Going to: "
+        print self.goal
         self.stall_counter = 0
         self.detect_counter = 0
-        rospy.sleep(self.rest_time)
+        rospy.sleep(self.rest_time*10)
 
     def shutdown(self):
         """This subroutine runs when the autonomous node shutdown. It is
@@ -238,6 +242,8 @@ class mbzirc_c2_auto():
                 self.goal.target_pose.header.frame_id = 'odom'
                 rospy.loginfo("Going to: " + str(location))
                 self.move_base.send_goal(self.goal)
+                print "Going to: "
+                print self.goal
                 self.stall_counter = 0
                 self.detect_counter = 0
                 rospy.sleep(2)

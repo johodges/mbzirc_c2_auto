@@ -16,7 +16,7 @@ if __name__ == '__main__':
     twist = Twist()
     twist.linear.x = 0.6
     twist.linear.y = -0.1
-    twist.linear.z = 0.6
+    twist.linear.z = 1.0
     twist.angular.x = 0
     twist.angular.y = 0
     twist.angular.z = 0

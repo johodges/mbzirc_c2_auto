@@ -32,8 +32,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
   <arg name="kinect_enabled" default="false"/>
   <arg name="kinectv2_enabled" default="false"/>
   <arg name="primesense_enabled" default="false"/ -->
+  <arg name="sawyer_enabled" default="false" />
+  <arg name="velodyne_enabled" default="true" />  
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro'
+    velodyne_enabled:=$(arg velodyne_enabled)
+    sawyer_enabled:=$(arg sawyer_enabled)
     " />
 
   <!--param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro)'
@@ -46,6 +50,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     primesense_enabled:=$(arg primesense_enabled)
     " / -->
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" / -->
 
 </launch>
