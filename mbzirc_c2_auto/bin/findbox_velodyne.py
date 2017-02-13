@@ -171,7 +171,7 @@ def callback(data):
                         arenaPnt2 = rospy.get_param("/arenaPnt2")
                         deadZone1 = rospy.get_param("/deadZone1")
                         deadZone2 = rospy.get_param("/deadZone2")
-                        roboR = math.pi * rospy.get_param("/currentRobotR")
+                        roboR = rospy.get_param("/currentRobotR")
 
                         detectX = roboX + (dis * math.cos(ang + roboR))
                         detectY = roboY - (dis * math.sin(ang + roboR))
