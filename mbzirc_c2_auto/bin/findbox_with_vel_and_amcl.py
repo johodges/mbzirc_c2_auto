@@ -148,7 +148,7 @@ def callback(data):
     		arenaPnt2 = rospy.get_param("/arenaPnt2")
     		deadZone1 = rospy.get_param("/deadZone1")
     		deadZone2 = rospy.get_param("/deadZone2")
-    		roboR = math.pi * rospy.get_param("/currentRobotR")
+    		roboR = rospy.get_param("/currentRobotR")
 
 		print "RoboX"
 		print roboX
@@ -197,9 +197,26 @@ def callback(data):
                             plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',
                                 linewidth=2.0)
                     else:
-                        if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',
-                                linewidth=2.0)
+                        ang = np.median(x2[i])# - (math.pi / 2.0)
+                        dis = np.median(y2[i])
+
+                        roboX = rospy.get_param("/currentRobotX")
+                        roboY = rospy.get_param("/currentRobotY")
+                        arenaPnt1 = rospy.get_param("/arenaPnt1")
+                        arenaPnt2 = rospy.get_param("/arenaPnt2")
+                        deadZone1 = rospy.get_param("/deadZone1")
+                        deadZone2 = rospy.get_param("/deadZone2")
+                        roboR = rospy.get_param("/currentRobotR")
+
+                        detectX = roboX + (dis * math.cos(ang + roboR))
+                        detectY = roboY - (dis * math.sin(ang + roboR))
+
+                        if ang > -1.4 and ang < 1.4 and detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
+                            if plot_data:
+                                plt.plot(x2[i][1:xlen],y2[i][1:xlen],'g-', linewidth=2.0)
+                        else:
+                            if plot_data:
+                                plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-', linewidth=2.0)
         plt.ylim([0,20])
         plt.xlim([-5,5])
         plt.gca().invert_xaxis()

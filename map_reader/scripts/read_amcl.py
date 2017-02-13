@@ -4,12 +4,12 @@ import rospy
 import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
+import math
 
 def callback(data):
-	print "Made it here"
 	currentX = data.pose.pose.position.x
 	currentY = data.pose.pose.position.y
-	currentR = data.pose.pose.orientation.z
+	currentR = data.pose.pose.orientation.z * math.pi
 
 	rospy.set_param("/currentRobotX", currentX)
 	rospy.set_param("/currentRobotY", currentY)
