@@ -7,10 +7,11 @@
   <arg name="frame_id" default="base_link"/>
 
   <!-- start nodelet manager and driver nodelets -->
-  <include file="$(find velodyne_driver)/launch/nodelet_manager.launch">
+  <include file="$(find but_velodyne_proc)/launch/nodelet_manager.launch">
     <arg name="model" value="32E"/>
     <arg name="pcap" value="$(arg pcap)"/>
     <arg name="frame_id" value="$(arg frame_id)"/>
+    <arg name="min_range" value="0.25"/>
   </include>
 
   <!-- start cloud nodelet -->

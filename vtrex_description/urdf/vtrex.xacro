@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:arg name="sawyer_enabled" default="true" />        
+  <xacro:arg name="sawyer_enabled" default="false" />     
+  <xacro:arg name="ur5_enabled" default="true" />
+  <xacro:arg name="velodyne_enabled" default="true" />
   <xacro:property name="PI" value="3.1415926535897931" />
 
   <xacro:property name="wheelbase" value="0.7" />
@@ -25,8 +27,10 @@
 
   <xacro:include filename="$(find vtrex_description)/urdf/vtrex.gazebo" />
   <xacro:include filename="$(find vtrex_description)/urdf/materials.xacro" />
+  <xacro:include filename="$(find vtrex_description)/urdf/microstrain.xacro" />
   <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro" />
-  <xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" />
+  <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
+  <!--xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" / -->
   <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
 
 <!--############################################sicklms1xx#################################################
@@ -208,7 +212,10 @@
 
 <!--############################################wheelscover#################################################-->
 
-  <link name="imu_link">
+<!--############################################IMU####################################################-->
+
+<!--xacro:microstrain_sensor sensorName="mstrain" parentLink="imu_link" origin_xyz="0 0 0" origin_rpy="0 0 0"/ -->
+  <link name="imu">
     <inertial>
       <mass value="0.001"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -217,17 +224,43 @@
   </link>
   <joint name="imu_joint" type="fixed">
     <parent link="chassis_link" />
-    <child link="imu_link" />
+    <origin xyz="-0.145 0.000 0.15" rpy="0 0 0" />
+    <child link="imu" />
   </joint>
 
 <!--############################################VELODYNE##################################################-->
+      <HDL-32E parent="base_link" name="velodyne_link" topic="velodyne_points" >
+        <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
+      </HDL-32E>
 
-    <HDL-32E parent="base_link" name="velodyne_link" topic="velodyne_points" >
-      <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
-    </HDL-32E>
+<!--############################################UR5##################################################-->
+
+    <xacro:if value="$(arg ur5_enabled)">
+
+      <xacro:property name="reflect" value="-1" />
+
+      <!-- Spawn arm -->
+      <xacro:ur5_robot prefix="ur5_arm_" joint_limited="true"/>
+
+      <!-- Join arm -->
+      <joint name="ur5_arm_base" type="fixed">
+        <parent link="chassis_link" />
+        <child link="ur5_arm_base_link" />
+        <origin xyz="0.335 0 0.375" rpy="0.0 0.0 -1.57079632679" />
+      </joint>
+
+      <!--Spawn gripper-->
+      <xacro:gripper />
+        <joint name="base_to_arm" type="fixed">
+          <parent link="ur5_arm_wrist_3_link"/>
+          <child link="gripper_link"/>
+          <origin xyz="0.0 0.0823 0.0" rpy="0 0 0"/>
+        </joint>
+
+    </xacro:if>
+
 
 <!--############################################SAWYER##################################################-->
-
     <xacro:if value="$(arg sawyer_enabled)">
 
       <xacro:property name="reflect" value="-1" />

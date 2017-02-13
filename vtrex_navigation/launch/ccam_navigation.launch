@@ -1,0 +1,12 @@
+<launch>
+  <!-- Navigation requires at least one map.
+       In addition, it is sometimes desirable to have a "keepout" map
+       which is used for costmaps, but not localization -->
+  <arg name="map_file" default="$(find husky_maps)/maps/rand_basement.yaml" />
+  <arg name="map_keepout_file" default="" />
+
+  <include file="$(find husky_navigation)/launch/husky_nav.launch" />
+
+  <!-- Start the demo navigation -->
+  <node pkg="husky_navigation" type="ccam_navigation.py" name="ccam_navigation" output="screen" />
+</launch>

@@ -8,9 +8,30 @@
   </node>
   
   
+
+
+  <node pkg="tele_controller" type="odom_pub_node" name="odom_pub_node"/>
   <node pkg="tele_controller" type="joy_teleop2.py" name="teleop_node"/>
-  
   <node pkg="joy" type="joy_node" name="joy_node"/>
-  <include file="$(find vtrex_description)/launch/description.launch"/>
+  <!--include file="$(find vtrex_description)/launch/description.launch"/-->
+  
+  <!--node pkg="microstrain_3dmgx2_imu" type="imu_node" name="imu_node">
+    <param name="time_offset" value="-0.040" />
+    <param name="port"  type="string" value="/dev/ttyUSB0" />
+    <param name="autostart" type="bool" value="true" />
+    <param name="frameid"  type="string" value="imu_link" />
+    <param name="autocalibrate" type="bool" value="true" />
+    <param name="angular_velocity_stdev" type="double" value="0.00017" />
+  </node-->
+ 
+ <!--node pkg="um7" type="um7_driver" name="imu_node">
+    <param name="port" value="/dev/ttyUSB0"/>
+    <param name="zero_gyros" value="true"/>
+    <param name="covariance" value="0 0 0 0 0 0.00000001 0 0odo 0.000000001"/>
+  </node>
+
+  <node pkg="robot_localization" type="ukf_localization_node" name="ekf_se" clear_params="true" >
+    <rosparam command="load" file="$(find vtrex_control)/config/vtrex_ekf.yaml" />
+  </node-->
 
 </launch>
