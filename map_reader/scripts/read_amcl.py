@@ -4,12 +4,14 @@ import rospy
 import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
-import math
+import tf
 
 def callback(data):
 	currentX = data.pose.pose.position.x
 	currentY = data.pose.pose.position.y
-	currentR = data.pose.pose.orientation.z * math.pi
+	quart = (data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
+	euler = tf.transformations.euler_from_quaternion(quart)
+	currentR = euler[2]
 
 	rospy.set_param("/currentRobotX", currentX)
 	rospy.set_param("/currentRobotY", currentY)

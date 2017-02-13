@@ -5,7 +5,6 @@ import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf
-import math
 
 def main():
 	rospy.init_node('odom_reader', anonymous=True)
@@ -36,10 +35,13 @@ def main():
  			(trans, rotate) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
  		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
  			continue
+
+		print type(rotate)
+		euler = tf.transformations.euler_from_quaternion(rotate)
  		
  		roboX = trans[0]
  		roboY = trans[1]
-		roboR = rotate[2] * math.pi
+		roboR = euler[2]
 		print roboX
 		print roboY
 		print roboR
