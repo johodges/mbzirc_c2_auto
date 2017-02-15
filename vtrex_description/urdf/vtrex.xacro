@@ -2,6 +2,7 @@
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="sawyer_enabled" default="false" />     
   <xacro:arg name="ur5_enabled" default="true" />
+  <xacro:arg name="ur5_camera_enabled" default="false" />
   <xacro:arg name="velodyne_enabled" default="true" />
   <xacro:arg name="sick_enabled" default="true" />
   <xacro:arg name="kinectv2_enabled" default="true" />
