@@ -71,7 +71,7 @@ def callback(data):
     scan_inc = data.angle_increment
 
     # Build angle array
-    x = np.arange(scan_min,scan_max,scan_inc)-1.57
+    x = np.arange(scan_min,scan_max+0.1*scan_inc,scan_inc)#-1.57
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)

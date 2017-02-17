@@ -3,6 +3,8 @@
   <xacro:arg name="sawyer_enabled" default="false" />     
   <xacro:arg name="ur5_enabled" default="true" />
   <xacro:arg name="velodyne_enabled" default="true" />
+  <xacro:arg name="sick_enabled" default="true" />
+  <xacro:arg name="kinectv2_enabled" default="true" />
   <xacro:property name="PI" value="3.1415926535897931" />
 
   <xacro:property name="wheelbase" value="0.7" />
@@ -30,12 +32,11 @@
   <xacro:include filename="$(find vtrex_description)/urdf/microstrain.xacro" />
   <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro" />
   <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
+  <xacro:include filename="$(find husky_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro"/>
+  <xacro:include filename="$(find husky_description)/urdf/accessories/sensor_arch.urdf.xacro"/>
   <!--xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" / -->
-  <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
+  <xacro:include filename="$(find gripper_description)/urdf/gripper.urdf.xacro" />
 
-<!--############################################sicklms1xx#################################################
-<xacro:include filename="$(find LMS1xx)/urdf/sick_lms1xx.urdf.xacro" />
--->
 
 <xacro:macro name="wheel" params="prefix *joint_pose">
 
@@ -129,7 +130,7 @@
       <!-- Center of mass -->
       <origin xyz="0.00  0.00 ${footprint_vertical_offset}" rpy="0 0 0"/>
        <!--<origin xyz="0.012  0.002 0.067" rpy="0 0 0"/>-->
-      <mass value="35"/>
+      <mass value="67"/>
       <!-- Moments of inertia: ( chassis without wheels ) -->
       <inertia
         ixx="2" ixy="-0.00" ixz="-0.00"
@@ -228,33 +229,41 @@
     <child link="imu" />
   </joint>
 
+<!--############################################sicklms1xx#################################################
+-->
+    <xacro:if value="$(arg sick_enabled)">
+      <sick_lms1xx_mount prefix="base" topic="scan"/>
+      <joint name="laser_mount_joint" type="fixed">
+        <origin xyz="0.6 0 0.23"
+                rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="base_laser_mount" />
+      </joint>
+    </xacro:if>
+
 <!--############################################VELODYNE##################################################-->
+    <xacro:if value="$(arg velodyne_enabled)">
       <HDL-32E parent="base_link" name="velodyne_link" topic="velodyne_points" >
         <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
       </HDL-32E>
-
+    </xacro:if>
 <!--############################################UR5##################################################-->
 
     <xacro:if value="$(arg ur5_enabled)">
 
       <xacro:property name="reflect" value="-1" />
-
-      <!-- Spawn arm -->
       <xacro:ur5_robot prefix="ur5_arm_" joint_limited="true"/>
-
-      <!-- Join arm -->
       <joint name="ur5_arm_base" type="fixed">
         <parent link="chassis_link" />
         <child link="ur5_arm_base_link" />
         <origin xyz="0.335 0 0.375" rpy="0.0 0.0 -1.57079632679" />
       </joint>
-
-      <!--Spawn gripper-->
-      <xacro:gripper />
+      <!-- Spawn gripper-->
+      <xacro:gripper_spawn prefix="ur5_arm_gripper_"/>
         <joint name="base_to_arm" type="fixed">
           <parent link="ur5_arm_wrist_3_link"/>
-          <child link="gripper_link"/>
-          <origin xyz="0.0 0.0823 0.0" rpy="0 0 0"/>
+          <child link="ur5_arm_gripper_base_link"/>
+          <origin xyz="0 0.09 0" rpy="0 0 0"/>
         </joint>
 
     </xacro:if>
@@ -273,15 +282,20 @@
         <origin xyz="0.3058 0 0.375" rpy="0.0 0.0 0" />
       </joint>
 
-      <!--Spawn gripper-->
-      <xacro:gripper />
-      <!-- Join Gripper -->
+      <!-- Spawn gripper-->
+      <xacro:gripper_spawn prefix="ur5_arm_gripper_"/>
         <joint name="base_to_arm" type="fixed">
-          <parent link="right_l6"/>
-          <child link="gripper_link"/>
-          <origin xyz="0.0 0.0 0.05" rpy="1.57 0 1.57"/>
+          <parent link="ur5_arm_wrist_3_link"/>
+          <child link="ur5_arm_gripper_base_link"/>
+          <origin xyz="0 0.09 0" rpy="0 0 0"/>
         </joint>
 
+    </xacro:if>
+<!--############################################KINECT##################################################-->
+    <xacro:if value="$(arg kinectv2_enabled)">
+      <xacro:sensor_arch prefix="" parent="chassis_link">
+        <origin xyz="-0.45 0 0.88" rpy="0 0 -3.14159265359"/>
+      </xacro:sensor_arch>
     </xacro:if>
 
 </robot>

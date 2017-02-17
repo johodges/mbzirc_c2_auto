@@ -120,7 +120,7 @@ class centerwrench():
         self.segment_area_threshold = 30    # Minimum area threshold
         self.segment_kernel_sz = 8          # Kernel size
         self.save_flag = False              # Should we save images
-        self.preview_flag = False           # Should we preview images
+        self.preview_flag = True           # Should we preview images
         self.preview_result = False
         self.all_circles = False
         self.save_result = True
@@ -276,87 +276,312 @@ class centerwrench():
             them into NUMBER_OF_WRENCHES bins and returns the (row,col)
             coordinates of the centers and the mean radius of each group.
             """
-            # Detect the circles using a hough transform
-            circles = cv2.HoughCircles(img_gray_hou, cv2.cv.CV_HOUGH_GRADIENT,
-                1,1,np.array([]),self.canny_param[0],self.canny_param[1],self.min_circ_diam,
-                self.max_circ_diam)
-            img_hou_all = cv2.cvtColor(img_gray_hou.copy(), cv2.COLOR_GRAY2BGR)
-            center_x = circles[0,:,0]
-            center_y = circles[0,:,1]
-            radius = circles[0,:,2]
-            img_hou_km = img_orig.copy()#img_hou_all.copy()
-            rad_med = np.median(radius)
-            for n in range(len(circles[0,:,1])):
-                cv2.circle(img_hou_all,(center_x[n],center_y[n]), radius[n],
-                    (0,0,244), 2, cv2.CV_AA)
-                cv2.circle(img_hou_km,(center_x[n],center_y[n]), radius[n],
-                    (0,0,244), 2, cv2.CV_AA)
 
-            # Establish matrix of features to use for quanitzation
-            ind = np.argsort(radius)
-            center_x = center_x[ind]
-            center_y = center_y[ind]
-            radius = radius[ind]
-            length = np.floor(len(center_x)/2)
-            #print radius, length
-            #z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
-            z = np.transpose(np.vstack((center_x[length:],center_y[length:])))
-            print z
-            # Run K-means to det. centers and to which group each point belongs
+            img_train = cv2.imread('/home/jonathan/train_img2.jpg',0)
+            img_detect = img_orig.copy()
+            orb = cv2.ORB()
+            """
+            # USE ORB ON ITS OWN
+            kp1, des1 = orb.detectAndCompute(img_train,None)
+            kp2, des2 = orb.detectAndCompute(A,None)
+            """
+            # USE FAST + ORB
+            fast1 = cv2.FastFeatureDetector(1)
+            fast2 = cv2.FastFeatureDetector(1)
+            kp1 = fast1.detect(img_train,None)
+            kp2 = fast2.detect(img_detect,None)
+            kp1, des1 = orb.compute(img_train,kp1)
+            kp2, des2 = orb.compute(img_detect,kp2)
+            bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+            matches = bf.match(des1,des2)
+            matches = sorted(matches, key= lambda x:x.distance)
+            print "TOTAL NUMBER OF FEATURES: ", len(kp2)
+            print "TOTAL NUMBER OF MATCHES: ", len(matches)
+            center_x = []
+            center_y = []
+            kp = []
+            for i in range(0,len(matches)/2):
+                idx = matches[i].trainIdx
+                center_x.append(kp2[idx].pt[0])
+                center_y.append(kp2[idx].pt[1])
+                kp.append(kp2[idx])
+            if self.preview_flag:
+                A3 = cv2.drawKeypoints(img_train,kp1,color=(0,255,0), flags=0)
+                cv2.imshow('img',A3)
+                cv2.waitKey(0)
+
+            img_hou_km = cv2.drawKeypoints(img_orig.copy(),kp,color=(0,0,255), flags=0)
+            if self.preview_flag:
+                cv2.imshow('img',img_hou_km)
+                print "A2"
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+
+            img_hou_all = cv2.cvtColor(img_gray_hou.copy(), cv2.COLOR_GRAY2BGR)
+            #img_hou_km = img_orig.copy()#img_hou_all.copy()
+            z = np.transpose(np.vstack((np.round(center_x),np.round(center_y))))
+            z = np.float32(z)
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
             ret = []
             ret_old = 99999999999
             ret_flag = 0
-            for i in range(1,self.n_wr+10):
+            for i in range(1,10):
+                print "i = ", i
                 ret2, labels, centers = cv2.kmeans(z, i, term_crit, 1000, flag)
                 print "ret2: ", ret2
-                #print "ret2/ret_old: ", ret2/ret_old
-                #if ret2/ret_old < 0.1 and i > 2:
-                if ret2 < 40000:
+                #if ret2 < 2000000:
+                #if ret2 < 100000:
+                print "ret2/ret_old", ret2/ret_old
+                if ret2 < 100000:# and ret2/ret_old < 0.7:
                     ret_flag = 1
                     break
                 if ret_flag == 0:
                     ret.append(ret2)
                     ret_old = ret2
-            #ret = np.asarray(ret)
-            #ret_ind = np.argmin(ret)
-            #k = ret_ind+1
             k = i
             print "Best number of clusters is: ", k
             print "Best ret is: ", ret2
             ret, labels, centers = cv2.kmeans(z, k, term_crit, 1000, flag)
+            print "ALL CENTERS: ", centers
+
+            centers2 = centers.copy()
             ct = 0
-            print "CENTERS: ", centers
-            centers2 = np.empty([len(centers[:,0]),2], dtype=int)
-            for i in range(0,len(centers[:,0])):
-                dist = np.power(np.sum(np.power(centers[:,:] - centers[i,:],2),axis=1)/2,0.5)
-                dist_min = np.min(np.extract(dist>0,dist))
-                dist_arg = np.argwhere(dist==dist_min)
-                if dist_min > 100:
-                    centers2[ct,:] = centers[i,:]
-                    ct = ct+1
-                else:
-                    if dist_arg > i:
-                        centers2[ct,:] = (centers[i,:]+centers[dist_arg,:])/2
-                        ct = ct+1
-            center_x = circles[0,:,0]
-            center_y = circles[0,:,1]
-            radius = circles[0,:,2]
-            if not self.all_circles:
-                img_hou_km = img_orig.copy()
-            """
+            dist_thresh = (self.camera_pix_h/2)/(self.xA*np.tan(self.camera_fov_h/2))*(0.05)
+            print "dist_thresh: ", dist_thresh
             for n in range(0,k):
-                print "Trying", centers[n,0], centers[n,1]
-                cv2.circle(img_hou_km,(centers[n][0],centers[n][1]), np.median(radius),
-                    (255,0,0), 2, cv2.CV_AA)
+                cent_dist = centers2.copy()
+                cent_dist = cent_dist-cent_dist[n,:]
+                cent_dist = np.multiply(cent_dist,cent_dist)
+                dist = np.zeros([k,1])
+                for i in range(0,k):
+                    dist[i] = np.power(cent_dist[i,0]+cent_dist[i,1],0.5)/2
+                print "dist: ", dist[:,0]
+                dist_loc = np.where(dist[:,0] < dist_thresh)
+                print "dist_loc: ", dist_loc
+                print "len(dist_loc[0]): ", len(dist_loc[0])
+                print "centers[n,:]: ", centers2[n,:]
+                ct = 1
+                for i in range(0,len(dist_loc[0])):
+                    print dist_loc[0][i]
+                    if dist_loc[0][i] > n:
+                        labels[labels == dist_loc[0][i]] = n
+                        ct = ct + 1
+                        print "centers[dist_loc[0][i],:]", centers2[dist_loc[0][i],:]
+                        centers2[n,:] = centers2[n,:]+centers2[dist_loc[0][i],:]
+                        centers2[dist_loc[0][i],:] = [0,0]
+                centers2[n,:] = centers2[n,:]/ct
+                print "INTERMEDIATE CENTERS: ", centers2
+            centers3 = centers.copy()
+            
+            ct = 0
+            for n in range(0,k):
+                if centers2[n,0] != 0:
+                    centers3[ct,:] = centers2[n,:]
+                    labels[labels == n] = ct
+                    ct = ct+1
+            k = ct
+                #dist_loc = np.argmin(dist)
+                #dist_min = np.array(dist[dist_loc],dtype=np.float32)
+            centers = centers3[:ct,:]
+            print "CENTERS AFTER RE-GROUPING BASED ON DISTANCE: ", centers
             """
-            print "CENTERS2: ", centers2
-            for n in range(0,ct):
-                if centers2[n,0] > 0:
-                    cv2.circle(img_hou_km,(centers2[n][0],centers2[n][1]), np.median(radius),
-                    (0,255,0), 2, cv2.CV_AA)
-            return centers, img_hou_km, k
+            centers2 = np.empty([len(centers[:,0]),2], dtype=int)
+            ct = 0
+            for n in range(0,k):
+                idx = np.where(labels == n)
+                print np.count_nonzero(idx)
+                if np.count_nonzero(idx) > 5:
+                    centers2[ct,:] = centers[n,:]
+                    ct = ct+1
+            centers = centers2[:ct,:]
+            print "CENTERS AFTER SMALL CLUSTER REMOVAL: ", centers
+            k = ct
+            """
+            box2 = np.empty([len(centers[:,0]),4], dtype=int)
+            ct = 0
+            for n in range(0,k):
+                idx = np.where(labels == n)
+                center_x_k = z[idx,0]
+                center_y_k = z[idx,1]
+                center_x_k = center_x_k[0]
+                center_y_k = center_y_k[0]
+                colo = np.float(n)/np.float(k)*255
+                x_mn = np.min(center_x_k)
+                x_mx = np.max(center_x_k)
+                y_mn = np.min(center_y_k)
+                y_mx = np.max(center_y_k)
+                cv2.rectangle(img_hou_km,(x_mn,y_mn),(x_mx,y_mx), (255-colo,colo,0),2,0,0)
+                box2[ct,:] = [x_mn,x_mx,y_mn,y_mx]
+                ct = ct+1
+                for j in range(0,len(center_x_k)):
+                    cx = center_x_k[j]
+                    cy = center_y_k[j]
+                    cv2.circle(img_hou_km,(cx, cy), 5, (255-colo,colo,0), 2, cv2.CV_AA)
+            
+            box1 = box2[:ct,:]
+
+            #for n in range(0,len(centers)):
+                #cv2.circle(img_hou_km,(centers[n][0],centers[n][1]), 20,
+                #    (0,0,255), 2, cv2.CV_AA)
+            if self.preview_flag:
+                cv2.imshow('img',img_hou_km)
+                cv2.waitKey(0)
+
+            # Find which cluster is closest to the center
+            sz_circs = np.shape(centers)
+            #centers = centers[centers[:,0].argsort()]
+            rospy.logdebug("Center locations:")
+            rospy.logdebug(centers)
+
+            cents = centers.copy()
+            cents[:,0] = centers[:,0] - self.sz_full[1]/2
+            cents[:,1] = centers[:,1] - self.sz_full[0]/2
+
+            cents = np.multiply(cents,cents)
+            dist = np.zeros([ct,1])
+
+            for i in range(0,ct):
+                dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
+
+            dist_loc = np.argmin(dist)
+            dist_min = np.array(dist[dist_loc],dtype=np.float32)
+
+            rospy.logdebug("The minimum distance is: %f", dist_min)
+            rospy.logdebug("The index of minimum distance is: %f", dist_loc)
+            wrench_ind = centers[dist_loc,:]
+            print "dist_loc: ",dist_loc
+            rospy.logdebug("Circle closest to center is (row,col): (%f,%f)",
+                wrench_ind[0], wrench_ind[1])
+
+            print "A2"
+            print box1[dist_loc,:]
+            print "x_mx-x_mn, dist_thresh: ", x_mx-x_mn, dist_thresh
+            if (box1[dist_loc,1]-box1[dist_loc,0]) > dist_thresh*3:
+                return
+            center_image = img_orig[box1[dist_loc,2]:box1[dist_loc,3],box1[dist_loc,0]:box1[dist_loc,1]].copy()
+            scale_factor = 4
+            center_image = cv2.resize(center_image, (0,0), fx=scale_factor, fy=scale_factor);
+            edges = cv2.Canny(center_image,50,100)
+            if self.preview_flag:
+                cv2.imshow('img',edges)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+            minLineLength = 100
+            maxLineGap = 50
+            lines = cv2.HoughLines(edges,1,np.pi/180,30)
+            print np.max(lines[:,1])
+            print np.max(lines[:,0])
+            sz = np.shape(edges)
+            horz_line = 0
+            vert_line1 = 0
+            vert_line2 = sz[1]
+            for rho,theta in lines[0]:
+                if abs(theta) > 3.00 and abs(theta) < 3.08:
+                    a = np.cos(theta)
+                    x0 = a*rho
+                    if x0 > vert_line1:
+                        vert_theta1 = theta
+                        vert_rho1 = rho
+                        vert_line1 = x0
+                    if x0 < vert_line2:
+                        vert_theta2 = theta
+                        vert_rho2 = rho
+                        vert_line2 = x0
+                if abs(theta) > 1.52 and abs(theta) < 1.60:
+                    b = np.sin(theta)
+                    y0 = b*rho
+                    if y0 > horz_line:
+                        horz_theta = theta
+                        horz_rho = rho
+                        horz_line = y0
+            #HORIZONTAL LINE
+            a = np.cos(horz_theta)
+            b = np.sin(horz_theta)
+            x0 = a*horz_rho
+            y0 = b*horz_rho
+            x1 = float(x0 + 1000*(-b))
+            y1 = float(y0 + 1000*(a))
+            x2 = float(x0 - 1000*(-b))
+            y2 = float(y0 - 1000*(a))
+            horz_m = (y2-y1)/(x2-x1)
+            horz_b = y1-horz_m*x1
+
+            #RIGHT VERTICAL LINE
+            a = np.cos(vert_theta1)
+            b = np.sin(vert_theta1)
+            x0 = a*vert_rho1
+            y0 = b*vert_rho1
+            x1 = float(x0 + 1000*(-b))
+            y1 = float(y0 + 1000*(a))
+            x2 = float(x0 - 1000*(-b))
+            y2 = float(y0 - 1000*(a))
+            vert_x1 = x1
+            vert_y1 = y1
+            vert_m1 = (y2-y1)/(x2-x1)
+            vert_b1 = y1-vert_m1*x1
+            ybot1 = sz[0]
+            xbot1 = (ybot1-vert_b1)/vert_m1
+            x_int1 = (vert_b1 - horz_b)/(horz_m-vert_m1)
+            y_int1 = vert_m1 * x_int1 + vert_b1
+
+            #LEFT VERTICAL LINE
+            a = np.cos(vert_theta2)
+            b = np.sin(vert_theta2)
+            x0 = a*vert_rho2
+            y0 = b*vert_rho2
+            x1 = float(x0 + 1000*(-b))
+            y1 = float(y0 + 1000*(a))
+            x2 = float(x0 - 1000*(-b))
+            y2 = float(y0 - 1000*(a))
+            vert_x2 = x1
+            vert_y2 = y1
+            vert_m2 = (y2-y1)/(x2-x1)
+            vert_b2 = y1-vert_m2*x1
+            x_int2 = (horz_b - vert_b2)/(horz_m-vert_m2)
+            y_int2 = vert_m2 * x_int2 + vert_b2
+            ybot2 = sz[0]
+            xbot2 = (ybot2-vert_b2)/vert_m2
+            x_int2 = (vert_b2 - horz_b)/(horz_m-vert_m2)
+            y_int2 = vert_m2 * x_int2 + vert_b2
+
+            #CALCULATE CENTER
+            cent_x = (x_int1+x_int2+xbot1+xbot2)/4
+            cent_y = (y_int1+y_int2+ybot1+ybot2)/4
+
+            #DRAW LINES
+            """
+            cv2.line(center_image,(int(x_int1),int(y_int1)),(int(x_int2),int(y_int2)),(0,0,255),2)
+            cv2.line(center_image,(int(xbot1),int(ybot1)),(int(x_int1),int(y_int1)),(0,0,255),2)
+            cv2.line(center_image,(int(xbot2),int(ybot2)),(int(x_int2),int(y_int2)),(0,0,255),2)
+            cv2.circle(center_image,(int(cent_x),int(cent_y)),5,(0,0,255),-1,cv2.CV_AA)
+            """
+            
+            #SCALE BACK TO FULL SIZE IMAGE AND COORDINATES
+            cent_x = cent_x/scale_factor+box1[dist_loc,0]
+            cent_y = cent_y/scale_factor+box1[dist_loc,2]
+            x_int1 = x_int1/scale_factor+box1[dist_loc,0]
+            y_int1 = y_int1/scale_factor+box1[dist_loc,2]
+            x_int2 = x_int2/scale_factor+box1[dist_loc,0]
+            y_int2 = y_int2/scale_factor+box1[dist_loc,2]
+            xbot1 = xbot1/scale_factor+box1[dist_loc,0]
+            ybot1 = ybot1/scale_factor+box1[dist_loc,2]
+            xbot2 = xbot2/scale_factor+box1[dist_loc,0]
+            ybot2 = ybot2/scale_factor+box1[dist_loc,2]
+
+            if (abs(xbot1-xbot2)) < dist_thresh/2:
+                return
+            cv2.line(img_hou_km,(int(x_int1),int(y_int1)),(int(x_int2),int(y_int2)),(0,255,0),2)
+            cv2.line(img_hou_km,(int(xbot1),int(ybot1)),(int(x_int1),int(y_int1)),(0,255,0),2)
+            cv2.line(img_hou_km,(int(xbot2),int(ybot2)),(int(x_int2),int(y_int2)),(0,255,0),2)
+            cv2.circle(img_hou_km,(int(cent_x),int(cent_y)),5,(0,255,0),-1,cv2.CV_AA)
+            if self.preview_flag:
+                cv2.imshow('img',img_orig)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+            cv2.imwrite('/home/jonathan/center_wrench.png',center_image)
+            #img_hou_km = img_orig.copy()
+            return [cent_x,cent_y], img_hou_km, ct
 
         def quantize_image(img):
             """This subroutine quantizes an image into 3 kmeans color groups
@@ -396,13 +621,85 @@ class centerwrench():
             A = im_out #img_edge2
             return A, B
 
+        def drawMatches(img1, kp1, img2, kp2, matches):
+            """
+            My own implementation of cv2.drawMatches as OpenCV 2.4.9
+            does not have this function available but it's supported in
+            OpenCV 3.0.0
+
+            This function takes in two images with their associated 
+            keypoints, as well as a list of DMatch data structure (matches) 
+            that contains which keypoints matched in which images.
+    
+            An image will be produced where a montage is shown with
+            the first image followed by the second image beside it.
+    
+            Keypoints are delineated with circles, while lines are connected
+            between matching keypoints.
+    
+            img1,img2 - Grayscale images
+            kp1,kp2 - Detected list of keypoints through any of the OpenCV keypoint 
+                    detection algorithms
+            matches - A list of matches of corresponding keypoints through any
+                      OpenCV keypoint matching algorithm
+            """
+            
+            # Create a new output image that concatenates the two images together
+            # (a.k.a) a montage
+            rows1 = img1.shape[0]
+            cols1 = img1.shape[1]
+            rows2 = img2.shape[0]
+            cols2 = img2.shape[1]
+            
+            out = np.zeros((max([rows1,rows2]),cols1+cols2,3), dtype='uint8')
+            
+            # Place the first image to the left
+            out[:rows1,:cols1] = np.dstack([img1, img1, img1])
+        
+            # Place the next image to the right of it
+            out[:rows2,cols1:] = np.dstack([img2, img2, img2])
+        
+            # For each pair of points we have between both images
+            # draw circles, then connect a line between them
+            for mat in matches:
+        
+                # Get the matching keypoints for each of the images
+                img1_idx = mat.queryIdx
+                img2_idx = mat.trainIdx
+        
+                # x - columns
+                # y - rows
+                (x1,y1) = kp1[img1_idx].pt
+                (x2,y2) = kp2[img2_idx].pt
+        
+                # Draw a small circle at both co-ordinates
+                # radius 4
+                # colour blue
+                # thickness = 1
+                cv2.circle(out, (int(x1),int(y1)), 4, (255, 0, 0), 1)   
+                cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (255, 0, 0), 1)
+        
+                # Draw a line in between the two points
+                # thickness = 1
+                # colour blue
+                cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), (255, 0, 0), 1)
+        
+        
+            # Show the image
+            cv2.imshow('Matched Features', out)
+            cv2.waitKey(0)
+            cv2.destroyWindow('Matched Features')
+    
+            # Also return the image if you'd like a copy
+            return out
+
         # Convert ROS image to opencv image
         try:
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        try:
-            sz_full = np.shape(img)
+        if True:
+            self.sz_full = np.shape(img)
             if self.save_flag:
                 cv2.imwrite('%scenter_%s.png' % (self.indir, str(int(1000*self.xA))),img)
             # Crop image to remove gripper and edge of box
@@ -434,13 +731,14 @@ class centerwrench():
             A[A == 255] = img_gray_orig[A == 255]
             if self.preview_flag:
                 cv2.imshow('img',A)
+                print "A"
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
             # Crop image for circle detection
             img_gray_hou = np.copy(img_gray) 
             # Detect circles
             #centers, img_all_circles, k = detect_circle(img_gray_hou, img_crop.copy())
-            centers, img_all_circles, k = detect_circle(A, img_crop.copy())
+            wrench_ind, img_all_circles, k = detect_circle(A, img_crop.copy())
             if self.preview_flag:
                 cv2.imshow('img',img_all_circles)
                 cv2.waitKey(0)
@@ -453,31 +751,6 @@ class centerwrench():
             if self.save_result:
                 cv2.imwrite('%scenter_result.png' % (self.indir),img_all_circles)
             rospy.sleep(0.1)
-            # Find which cluster is closest to the center
-            sz_circs = np.shape(centers)
-            centers = centers[centers[:,0].argsort()]
-            rospy.logdebug("Center locations:")
-            rospy.logdebug(centers)
-
-            cents = centers.copy()
-            cents[:,0] = centers[:,0] - sz_full[1]/2
-            cents[:,1] = centers[:,1] - sz_full[0]/2
-
-            cents = np.multiply(cents,cents)
-            dist = np.zeros([k,1])
-
-            for i in range(0,k):
-                dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
-
-            dist_loc = np.argmin(dist)
-            dist_min = np.array(dist[dist_loc],dtype=np.float32)
-
-            rospy.logdebug("The minimum distance is: %f", dist_min)
-            rospy.logdebug("The index of minimum distance is: %f", dist_loc)
-            wrench_ind = centers[dist_loc,:]
-            rospy.logdebug("Circle closest to center is (row,col): (%f,%f)",
-                wrench_ind[0], wrench_ind[1])
-
             ee_position = rospy.get_param('ee_position')
             xA_tf = np.array(self.xA + 0.461 - ee_position[0], dtype=np.float32)
             rospy.set_param('xA',float(self.xA))
@@ -500,7 +773,7 @@ class centerwrench():
                 float(self.wrench_id_px[1])])
             rospy.set_param('wrench_ID_m',[float(self.wrench_id_m[0]), 
                 float(self.wrench_id_m[1]), float(self.wrench_id_m[2])])
-            rospy.set_param('wrench_ID_dist',[float(dist_min)])
+            #rospy.set_param('wrench_ID_dist',[float(dist_min)])
             rospy.loginfo("Wrench pos. in camera coord. (x,y,z): (%f,%f,%f)", 
                 self.wrench_id_m[0],self.wrench_id_m[1],self.wrench_id_m[2])
             # Save images if desired
@@ -513,7 +786,7 @@ class centerwrench():
                 cv2.imwrite('~/wrenchID_6_allcircles.png',img_all_circles)
             print "4"
             rospy.signal_shutdown('Ending node.')
-        except:
+        else:
             # Increment error counter if bad things happen
             self.error_counter = self.error_counter+1
             if self.error_counter > 100:

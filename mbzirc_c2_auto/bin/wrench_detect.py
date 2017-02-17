@@ -62,8 +62,8 @@ class find_wrench:
         width[:,1] = rects[:,3]-rects[:,1]
         locs2 = np.empty([len(locs[:,0]),2])
         width2 = np.empty([len(width[:,0]),2])
-        print "LOCS:"
-        print np.power(np.power(locs[:,1]-locs[1,1],2),0.5)
+        #print "LOCS:"
+        #print np.power(np.power(locs[:,1]-locs[1,1],2),0.5)
         for i in range(0,sz[0]):
             dist = np.power(np.power(locs[:,0]-locs[i,0],2),0.5)
             dist[dist == 0] = 99999
@@ -72,7 +72,7 @@ class find_wrench:
             dist_arg = np.argwhere(dist==dist_min)
             dist_min = np.min(np.extract(dist>0,dist))
             """
-            dist_arg = np.argwhere(dist<100)
+            dist_arg = np.argwhere(dist<10)
             if dist_arg.size == 0:
                 locs2[ct,:] = locs[i,:]
                 width2[ct,:] = width[i,:]
@@ -89,8 +89,8 @@ class find_wrench:
         rects = np.int_(rects2)
         for x1, y1, x2, y2 in rects:
             area = (x2-x1)/2*(y2-y1)/2
-            print area
-            if area > 10000:
+            #print area
+            if area > 1000:
                 cv2.rectangle(cv_image2, (x1, y1), (x2, y2), (127, 255, 0), 2)
                 x_avg = x_avg + (x1+x2)/2
                 y_avg = y_avg + (y1+y2)/2
@@ -110,8 +110,8 @@ class find_wrench:
         idx = np.argwhere(circles[0,:,0] == mn)
         i = circles[0,:][idx][0][0]
 
-        val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)/2
-        w_loc = np.array([x_avg,y_avg], dtype=np.float32)/2
+        val_loc = np.array([i[0],i[1],i[2]], dtype=np.float32)
+        w_loc = np.array([x_avg,y_avg], dtype=np.float32)
     # Publish /valve topic
         val = rospy.Publisher("/valve",numpy_msg(Floats), queue_size=1)
         val.publish(val_loc)

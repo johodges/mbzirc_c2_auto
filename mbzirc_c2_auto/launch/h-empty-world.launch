@@ -18,7 +18,7 @@
     <arg name="debug" value="false"/>
   </include>
 
-  <include file="$(find mbzirc_c2_auto)/launch/h-spawn.launch">
+  <include file="$(find mbzirc_c2_auto)/launch/h-spawn-wrench.launch">
     <arg name="velodyne_lidar" value="$(arg velodyne_lidar)"/>
     <arg name="laser_enabled" value="$(arg laser_enabled)"/>
     <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>

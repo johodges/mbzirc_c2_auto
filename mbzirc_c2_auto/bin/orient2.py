@@ -172,7 +172,7 @@ class orient():
         rospy.loginfo("Starting orientation.")
 
         # Establish publishers and subscribers
-        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+        self.twi_pub = rospy.Publisher("/cmd_vel", Twist,
             queue_size=5)
         self.wpub = rospy.Publisher('/wrench_mm', numpy_msg(Floats),
             queue_size=5)
@@ -400,21 +400,21 @@ class orient():
                 except:
                     lidar_to_use = 'sick'
                 if lidar_to_use == 'sick':
-                    if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
-                        t = self.tftree.getLatestCommonTime("/base_laser",
-                            "/camera")
-                        posi, quat = self.tftree.lookupTransform("/base_laser", 
-                            "/camera", t)
+                    if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
+                        t = self.tftree.getLatestCommonTime("/base_link",
+                            "/gripper_camera")
+                        posi, quat = self.tftree.lookupTransform("/base_link", 
+                            "/gripper_camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
                         rospy.logdebug("TF Quaternion from base_link to camera:")
                         rospy.logdebug(quat)
                 if lidar_to_use == 'velodyne':
-                    if self.tftree.frameExists("/laser_base_link") and self.tftree.frameExists("/camera"):
-                        t = self.tftree.getLatestCommonTime("/laser_base_link",
-                            "/camera")
-                        posi, quat = self.tftree.lookupTransform("/laser_base_link", 
-                            "/camera", t)
+                    if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
+                        t = self.tftree.getLatestCommonTime("/base_link",
+                            "/gripper_camera")
+                        posi, quat = self.tftree.lookupTransform("/base_link", 
+                            "/gripper_camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
                         rospy.logdebug("TF Quaternion from base_link to camera:")
@@ -480,6 +480,7 @@ class orient():
                     camera_y_mn)+camera_y_mn
                 wrenc_z = (1-self.w_c[1]/self.camera_pix_v)*(camera_z_mx-
                     camera_z_mn)+camera_z_mn
+                rospy.loginfo("WRENCH_Y+OFFSET = %f", wrenc_y+offset)
                 # Check if we are centered between valve and wrenches
                 if abs(wrenc_y+offset) <= 0.15:
                     rospy.loginfo("UGV is centered on the wrenches.")
@@ -496,8 +497,8 @@ class orient():
                 else:
                     q = tf.transformations.quaternion_from_euler(
                         0,0,self.theta+ang)
+                    rospy.loginfo("UGV is not centered on wrenches.")
                     back_it_up(-0.25,1)
-
                     tar_glo = np.dot(self.R,[bearing.data[1]-2,wrenc_y+offset])
                     x_wre = tar_glo[0]+self.x0
                     y_wre = tar_glo[1]+self.y0
@@ -505,7 +506,7 @@ class orient():
                         Quaternion(q[0],q[1],q[2],q[3]))
                     self.goal.target_pose.header.frame_id = 'odom'
                     self.move_base.send_goal(self.goal)
-                    rospy.loginfo("UGV is not centered on wrenches.")
+
                     rospy.loginfo("Backing up and moving more centered.")
                     wait_for_finish(self.stalled_threshold)
                     rospy.sleep(self.rest_time*10)

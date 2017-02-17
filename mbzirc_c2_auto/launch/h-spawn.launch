@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="velodyne_lidar" default="true"/>
-  <arg name="laser_enabled" default="false"/>
+  <arg name="velodyne_enabled" default="false"/>
+  <arg name="sick_enabled" default="false"/>
   <arg name="ur5_enabled" default="false"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
-  <arg name="kinectv2_enabled" default="false"/>
+  <arg name="kinectv2_enabled" default="true"/>
   <arg name="primesense_enabled" default="false"/>
+  <arg name="sawyer_enabled" default="false"/>
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(env HUSKY_GAZEBO_DESCRIPTION)'
-    velodyne_lidar:=$(arg velodyne_lidar)
-    laser_enabled:=$(arg laser_enabled)
+    velodyne_enabled:=$(arg velodyne_enabled)
+    sick_enabled:=$(arg sick_enabled)
     ur5_enabled:=$(arg ur5_enabled)
     ur5_camera_enabled:=$(arg ur5_camera_enabled)
     kinect_enabled:=$(arg kinect_enabled)

@@ -83,7 +83,7 @@ void BackItUpRecovery::runBehavior(){
 
   ros::Rate r(frequency_);
   ros::NodeHandle n;
-  ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("joy_teleop/cmd_vel", 1);
+  ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
   tf::Stamped<tf::Pose> global_pose;
   local_costmap_->getRobotPose(global_pose);

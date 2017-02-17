@@ -2,11 +2,12 @@
 <launch>
 
   <rosparam command="load" file="$(find vtrex_control)/config/vtrex_control.yaml" />
+
   <node name="base_controller_spawner" pkg="controller_manager" type="spawner"
         args="vtrex_joint_publisher vtrex_velocity_controller --shutdown-timeout 1" />
 
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization"> 
-    <rosparam command="load" file="$(find vtrex_control)/config/vtrex_ekf.yaml" />
+    <rosparam command="load" file="$(find vtrex_control)/config/localization.yaml" />
   </node>
 
   <node pkg="topic_tools" type="relay" name="cmd_vel_relay"

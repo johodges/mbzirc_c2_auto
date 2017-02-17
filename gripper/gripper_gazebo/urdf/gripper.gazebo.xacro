@@ -12,11 +12,11 @@
   <xacro:property name="wheelMass" value="2.5"/>
 
   <!-- Gazebo plugin for ROS Control -->
-  <gazebo>
+  <!--gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/gripper</robotNamespace>
     </plugin>
-  </gazebo>
+  </gazebo-->
 
   <xacro:gripper_gazebo />
 
@@ -68,10 +68,10 @@
       <sensor type="camera" name="${prefix}">
         <update_rate>30.0</update_rate>
         <camera name="${prefix}">
-          <horizontal_fov>1.50763708044</horizontal_fov>
+          <horizontal_fov>1.5708</horizontal_fov>
           <image>
             <width>1920</width>
-            <height>1200</height>
+            <height>1080</height>
             <format>R8G8B8</format>
           </image>
           <clip>
@@ -90,10 +90,10 @@
         <plugin name="gripper_${prefix}_controller" filename="libgazebo_ros_camera.so">
           <alwaysOn>true</alwaysOn>
           <updateRate>30.0</updateRate>
-          <cameraName>${prefix}</cameraName>
-          <imageTopicName>/${prefix}/image_raw</imageTopicName>
+          <cameraName>usb_cam</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>/${prefix}/camera_info</cameraInfoTopicName>
-          <frameName>${prefix}_optical_frame</frameName>
+          <frameName>gripper_camera</frameName>
 	  <hackBaseline>0.07</hackBaseline>
           <distortion_k1>0.0</distortion_k1>
           <distortion_k2>0.0</distortion_k2>
@@ -106,7 +106,7 @@
   </xacro:macro>
 
   <xacro:macro name="gripper_motor_gazebo" params="prefix">
-    <!-- Differential Drive Motor -->
+
     <gazebo>
       <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <alwaysOn>true</alwaysOn>

@@ -1,6 +1,7 @@
 <launch>
   <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
   <arg name="load_robot_description" default="false"/>
+  <arg name="joint_limit" default="false"/>
 
   <!-- The name of the parameter under which the URDF is loaded -->
   <arg name="robot_description" default="robot_description"/>
@@ -12,7 +13,7 @@
   <param name="$(arg robot_description)_semantic" textfile="$(find vtrex_ur5_moveit)/config/vtrex.srdf" />
   
   <!-- Load updated joint limits (override information from URDF) -->
-  <group ns="$(arg robot_description)_planning">
+  <group if="$(arg joint_limit)" ns="$(arg robot_description)_planning">
     <rosparam command="load" file="$(find vtrex_ur5_moveit)/config/joint_limits.yaml"/>
   </group>
 

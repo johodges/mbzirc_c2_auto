@@ -33,14 +33,15 @@ class idwrench():
         self.lim_type = 0
         self.n_wr = 6
         self.segment_median_value = 3
-        self.segment_area_threshold = 30
+        self.segment_area_threshold = 10
         self.segment_kernel_sz = 8
         self.save_flag = 1
+        self.preview_flag = False           # Should we preview images
 
         # Tweaking parameters - Need to adjust for different distances from camera
-        self.area_min_thresh = 3000 # Minimum contour area to be a wrench
+        self.area_min_thresh = 1000 # Minimum contour area to be a wrench
         self.max_circ_diam = 100 # Maximum circle diameter considered
-        self.canny_param = [100, 30] # Canny edge detection thresholds
+        self.canny_param = [50, 25] # Canny edge detection thresholds
         self.p2crop = 3 # Portion of image to crop for circle detection
 
         self.d_mu = 22.0 # Diameter of correct wrench in pixels
@@ -88,7 +89,7 @@ class idwrench():
             img_edge = cv2.Canny(img,self.canny_param[0],self.canny_param[1])
             nnz = np.zeros([sz[1],1])
             kernel = np.ones((1,5), np.uint8)
-            img_edge2 = cv2.dilate(img_edge, kernel, iterations=2)
+            img_edge2 = cv2.dilate(img_edge, kernel, iterations=10)
             for i in range(0,sz[1]):
                 tmp = np.count_nonzero(img_edge2[:,i])
                 if tmp:
@@ -121,13 +122,13 @@ class idwrench():
                 while val < one_perc:
                     val = val+hist[j]
                     j = j +1
-                lims[i,0] = j
+                lims[i,0] = j+40
                 if flag == 0:
                     val = 0; j = 0;
                     while val < one_perc:
                         val = val+hist[254-j]
                         j = j + 1
-                    lims[i,1] = 254-j+20
+                    lims[i,1] = 254-j+40
                 if flag == 1:
                     lims[i,1] = 255
             return lims
@@ -211,6 +212,7 @@ class idwrench():
             circles = cv2.HoughCircles(img_gray_hou, cv2.cv.CV_HOUGH_GRADIENT,1,1,
                 np.array([]),self.canny_param[0],self.canny_param[1],0,self.max_circ_diam)
             img_hou_all = img_gray_hou.copy()
+            print "NUMBER OF CIRCLES: ", np.shape(circles)
             center_x = circles[0,:,0]
             center_y = circles[0,:,1]
             radius = circles[0,:,2]
@@ -273,7 +275,8 @@ class idwrench():
                 cen3 = cen2[:,1]
                 cen2 = cen3[np.nonzero(cen3)]
                 print "STD: ", cen2_std
-                if cen2_std > 300:
+                print "NUMBER OF CONTOURS: ", len(cen2)
+                if len(cen2) > 6:
                     bad_flag = 1
                     ind = np.argsort(cen2)
                     cnt3 = []
@@ -346,7 +349,7 @@ class idwrench():
         def visualize_probability(img, vote_result, n, params, cnt):
             img_kmeans = img.copy()
             # Visualize the probabilities
-            for i in range(self.n_wr):
+            for i in range(min(self.n_wr,len(cnt))):
                 c = int(round(vote_result[i]*255))
                 #cv2.circle(img_kmeans,(int(circs[i,0]),int(circs[i,1])), 
                 #    int(circs[i,2]), (0,c,255-c), 2, cv2.CV_AA)
@@ -362,14 +365,22 @@ class idwrench():
             img_id = img.copy()
             #cv2.circle(img_id,(int(circs[n,0]),int(circs[n,1])), 
             #    int(circs[n,2]), (0,255,0), 2, cv2.CV_AA)
+            print "N EQUALS: ", n
+            print "NUMBER OF CONTOURS EQUALS: ", len(cnt)
             cv2.circle(img_id,(int(params[n,6]),int(params[n,7])), 
                     int(params[n,5]), (0,255,0), 2, cv2.CV_AA)
-            cv2.drawContours(img_id, cnt[n], -1, (0,255,0), 3)
+            try:
+                cv2.drawContours(img_id, cnt[n], -1, (0,255,0), 3)
+            except:
+                pass
             #cv2.circle(img_kmeans_id,(int(circs[n,0]),int(circs[n,1])), 
             #    int(circs[n,2]), (255,0,0), 2, cv2.CV_AA)
             cv2.circle(img_kmeans_id,(int(params[n,6]),int(params[n,7])), 
                     int(params[n,5]), (255,0,0), 2, cv2.CV_AA)
-            cv2.drawContours(img_kmeans_id, cnt[n], -1, (255,0,0), 3)
+            try:
+                cv2.drawContours(img_kmeans_id, cnt[n], -1, (255,0,0), 3)
+            except:
+                pass
             return img_kmeans, img_id, img_kmeans_id
 
         # Convert ROS image to opencv image
@@ -377,19 +388,33 @@ class idwrench():
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        try:
+        if self.save_flag == 1:
             #img=cv2.imread('/home/jonathan/frame0000.jpg',1); # Image to read
             cv2.imwrite('/home/jonathan/wrenchID_0_raw.png',img)
             # Crop image to remove gripper and edge of box
             img_crop = detect_box_edge(img.copy())
-            cv2.imwrite('/home/jonathan/wrenchID_1_crop.png',img_crop)
+            img_crop_invert = 255-img_crop.copy()
+            cv2.imwrite('/home/jonathan/wrenchID_1_crop.png',img_crop_invert)
+            if self.preview_flag:
+                cv2.imshow('img',img_crop_invert)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
             # Determine ideal limits for brightness/contrast adjustment
-            lims = stretchlim(img_crop,self.lim_type)
+            lims = stretchlim(img_crop_invert,self.lim_type)
             # Adjust the brightness/contrast of the RGB image based on limits
-            img_adj = imadjust(img_crop.copy(),lims)
+            img_adj = imadjust(img_crop_invert.copy(),lims)
+            if self.preview_flag:
+                cv2.imshow('img',img_adj)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
             cv2.imwrite('/home/jonathan/wrenchID_2_adj.png',img_adj)
             # Remove Background from adjusted brightness/contrast image
             img_remove = back_ground_remove(img_adj.copy())
+            img_remove = img_adj.copy()
+            if self.preview_flag:
+                cv2.imshow('img',img_remove)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
             cv2.imwrite('/home/jonathan/wrenchID_3_bg.png',img_remove)
             # Convert the image to binary
             img_seg, img_gray = image_segmentation(img_remove.copy(),
@@ -401,6 +426,10 @@ class idwrench():
             img_gray_hou = np.copy(img_gray[0:sz[0]/self.p2crop, 0:sz[1]]) 
             # Detect circles
             circles, img_all_circles = detect_circle(img_gray_hou)
+            if self.preview_flag:
+                cv2.imshow('img',img_gray_hou)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
             cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
             # Detect geometry
             params, contours = detect_geometry(img_seg)
@@ -434,7 +463,7 @@ class idwrench():
             ee_position = rospy.get_param('ee_position')
             wrench_position = rospy.get_param('wrench')
             xA = wrench_position[0]-ee_position[0]
-            row = int(round(params[wrench_ind,7]))
+            row = int(round(params[wrench_ind,7]+params[wrench_ind,3]))
             col = int(round(params[wrench_ind,6]))
             self.wrench_id_px = np.array([row,col],dtype=np.float32)
             camera_y_mx = xA*np.arctan(self.camera_fov_h/2)
@@ -466,7 +495,7 @@ class idwrench():
                 cv2.imwrite('/home/jonathan/wrenchID_7_prob.png',img_kmeans)
                 cv2.imwrite('/home/jonathan/wrenchID_8_id.png',img_kmeans_id)
             rospy.signal_shutdown('Ending node.')
-        except:
+        else:
             self.ct = self.ct+1
             if self.ct > 100:
                 rospy.set_param('smach_state','wrenchNotFound')

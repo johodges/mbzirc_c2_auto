@@ -136,9 +136,6 @@ class mbzirc_c2_auto():
         # Publisher to manually control the robot 
         self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
             queue_size=5)
-        # Subscribe to object detection topic
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, 
-            queue_size=1)
         # Subscribe to the move_base action server
         self.move_base = actionlib.SimpleActionClient("move_base", 
             MoveBaseAction)
@@ -150,7 +147,9 @@ class mbzirc_c2_auto():
 
         rospy.loginfo("Connected to move base server")
         rospy.loginfo("Starting navigation test")
-
+        # Subscribe to object detection topic
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, 
+            queue_size=1)
         rospy.sleep(self.rest_time)
         # If move_base is registering 'SUCCEEDED' move to next waypoint
         self.current_waypoint = self.current_waypoint+1

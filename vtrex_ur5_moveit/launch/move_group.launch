@@ -1,6 +1,9 @@
+<?xml version="1.0"?>
 <launch>
-
-  <include file="$(find vtrex_ur5_moveit)/launch/planning_context.launch" />
+  <arg name="joint_limit" default="false"/>
+  <include file="$(find vtrex_ur5_moveit)/launch/planning_context.launch">
+    <arg name="joint_limit" value="$(arg joint_limit)"/>
+  </include>
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />
