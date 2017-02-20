@@ -92,6 +92,7 @@ class InitSimulation(smach.State):
             rospy.set_param('valve',[1.3494152516567712, 0.4806854679264738, 0.21677653795777196])
             #rospy.set_param('valve',[1.35, 0.1, 0.75])
             #rospy.set_param('valve',[1.1, 0.1, 0.1])
+            """
             rospy.set_param('ugv_position',[2.264628423236346-3.639,
                                            -1.3395932893079656+1.3967,
                                             0.0,
@@ -99,6 +100,14 @@ class InitSimulation(smach.State):
                                             0.0,
                                            -0.04051637848621451,
                                             0.9991788744135666])
+            """
+            rospy.set_param('ugv_position',[-1.4,
+                                            -0.1,
+                                            0.0,
+                                            0.0,
+                                            0.0,
+                                            0.0,
+                                            1.0])
             rospy.set_param('ee_position',[0.486, 0.109, 0.620])
             #rospy.set_param('ee_position',[0.336, 0.109, 0.620])
             #rospy.set_param('ee_position',[0.336, 0.109, 0.2])

@@ -119,15 +119,15 @@ class centerwrench():
         self.segment_median_value = 3       # Number for median filtering
         self.segment_area_threshold = 30    # Minimum area threshold
         self.segment_kernel_sz = 8          # Kernel size
-        self.save_flag = False              # Should we save images
-        self.preview_flag = True           # Should we preview images
+        self.save_flag = True              # Should we save images
+        self.preview_flag = False           # Should we preview images
         self.preview_result = False
         self.all_circles = False
         self.save_result = True
         self.indir = '/home/jonathan/'
         self.area_min_thresh = 3000
         self.xA = 0.68
-        self.lim_adjust = 60
+        self.lim_adjust = 0
 
         # Tweaking parameters
         self.min_circ_diam = 25
@@ -139,6 +139,11 @@ class centerwrench():
         self.camera_fov_v = 1.5708
         self.camera_pix_h = 1920
         self.camera_pix_v = 1080
+
+        try:
+            self.image_count = rospy.get_param('image_count')
+        except:
+            self.image_count = 0
 
         # Counters
         self.error_counter = 0
@@ -173,7 +178,7 @@ class centerwrench():
         def detect_box_edge(img):
             offset = 0
             sz = np.shape(img)
-            img = img[0:sz[0]*69/96,offset:sz[1]]
+            img = img[0:sz[0],offset:sz[1]]
             sz = np.shape(img)
             img_edge = cv2.Canny(img,self.canny_param[0],self.canny_param[1])
             nnz = np.zeros([sz[1],1])
@@ -305,19 +310,19 @@ class centerwrench():
                 center_x.append(kp2[idx].pt[0])
                 center_y.append(kp2[idx].pt[1])
                 kp.append(kp2[idx])
-            if self.preview_flag:
-                A3 = cv2.drawKeypoints(img_train,kp1,color=(0,255,0), flags=0)
-                cv2.imshow('img',A3)
-                cv2.waitKey(0)
+            #if self.preview_flag:
+            #    A3 = cv2.drawKeypoints(img_train,kp1,color=(0,255,0), flags=0)
+            #    cv2.imshow('img',A3)
+            #    cv2.waitKey(0)
 
             img_hou_km = cv2.drawKeypoints(img_orig.copy(),kp,color=(0,0,255), flags=0)
             if self.preview_flag:
                 cv2.imshow('img',img_hou_km)
                 print "A2"
                 cv2.waitKey(0)
-                cv2.destroyAllWindows()
+                #cv2.destroyAllWindows()
 
-            img_hou_all = cv2.cvtColor(img_gray_hou.copy(), cv2.COLOR_GRAY2BGR)
+            #img_hou_all = cv2.cvtColor(img_gray_hou.copy(), cv2.COLOR_GRAY2BGR)
             #img_hou_km = img_orig.copy()#img_hou_all.copy()
             z = np.transpose(np.vstack((np.round(center_x),np.round(center_y))))
             z = np.float32(z)
@@ -326,6 +331,7 @@ class centerwrench():
             ret = []
             ret_old = 99999999999
             ret_flag = 0
+            """
             for i in range(1,10):
                 print "i = ", i
                 ret2, labels, centers = cv2.kmeans(z, i, term_crit, 1000, flag)
@@ -342,12 +348,26 @@ class centerwrench():
             k = i
             print "Best number of clusters is: ", k
             print "Best ret is: ", ret2
+            """
+            k = 10
             ret, labels, centers = cv2.kmeans(z, k, term_crit, 1000, flag)
             print "ALL CENTERS: ", centers
 
+            centers2 = np.empty([len(centers[:,0]),2], dtype=int)
+            ct = 0
+            for n in range(0,k):
+                idx = np.where(labels == n)
+                print np.count_nonzero(idx)
+                if np.count_nonzero(idx) > 1:
+                    centers2[ct,:] = centers[n,:]
+                    ct = ct+1
+            centers = centers2[:ct,:]
+            print "CENTERS AFTER SMALL CLUSTER REMOVAL: ", centers
+            k = ct
+
             centers2 = centers.copy()
             ct = 0
-            dist_thresh = (self.camera_pix_h/2)/(self.xA*np.tan(self.camera_fov_h/2))*(0.05)
+            dist_thresh = (self.camera_pix_h/2)/(self.xA*np.tan(self.camera_fov_h/2))*(0.1)
             print "dist_thresh: ", dist_thresh
             for n in range(0,k):
                 cent_dist = centers2.copy()
@@ -385,19 +405,7 @@ class centerwrench():
                 #dist_min = np.array(dist[dist_loc],dtype=np.float32)
             centers = centers3[:ct,:]
             print "CENTERS AFTER RE-GROUPING BASED ON DISTANCE: ", centers
-            """
-            centers2 = np.empty([len(centers[:,0]),2], dtype=int)
-            ct = 0
-            for n in range(0,k):
-                idx = np.where(labels == n)
-                print np.count_nonzero(idx)
-                if np.count_nonzero(idx) > 5:
-                    centers2[ct,:] = centers[n,:]
-                    ct = ct+1
-            centers = centers2[:ct,:]
-            print "CENTERS AFTER SMALL CLUSTER REMOVAL: ", centers
-            k = ct
-            """
+
             box2 = np.empty([len(centers[:,0]),4], dtype=int)
             ct = 0
             for n in range(0,k):
@@ -426,7 +434,7 @@ class centerwrench():
                 #    (0,0,255), 2, cv2.CV_AA)
             if self.preview_flag:
                 cv2.imshow('img',img_hou_km)
-                cv2.waitKey(0)
+                #cv2.waitKey(0)
 
             # Find which cluster is closest to the center
             sz_circs = np.shape(centers)
@@ -456,26 +464,77 @@ class centerwrench():
 
             print "A2"
             print box1[dist_loc,:]
-            print "x_mx-x_mn, dist_thresh: ", x_mx-x_mn, dist_thresh
-            if (box1[dist_loc,1]-box1[dist_loc,0]) > dist_thresh*3:
+            print "x_mx-x_mn, dist_thresh: ", box1[dist_loc,1]-box1[dist_loc,0], dist_thresh
+            if (box1[dist_loc,1]-box1[dist_loc,0]) > dist_thresh*4:
                 return
             center_image = img_orig[box1[dist_loc,2]:box1[dist_loc,3],box1[dist_loc,0]:box1[dist_loc,1]].copy()
             scale_factor = 4
             center_image = cv2.resize(center_image, (0,0), fx=scale_factor, fy=scale_factor);
-            edges = cv2.Canny(center_image,50,100)
+
+            center_image_invert = 255-center_image.copy()
+            if self.preview_flag:
+                cv2.imshow('img',center_image_invert)
+                cv2.waitKey(0)
+
+            # Determine ideal limits for brightness/contrast adjustment
+            lims = stretchlim(center_image_invert)
+            # Adjust the brightness/contrast of the RGB image based on limits
+            img_adj = imadjust(center_image_invert.copy(),lims)
+            if self.preview_flag:
+                cv2.imshow('img',img_adj)
+                print "img_adj"
+                cv2.waitKey(0)
+            # Remove Background from adjusted brightness/contrast image
+            img_remove = back_ground_remove(img_adj.copy(),center_image.copy())
+            if self.preview_flag:
+                cv2.imshow('img',img_remove)
+                print "img_remove"
+                cv2.waitKey(0)
+            edges = cv2.Canny(img_remove,10,60)
             if self.preview_flag:
                 cv2.imshow('img',edges)
                 cv2.waitKey(0)
-                cv2.destroyAllWindows()
+                #cv2.destroyAllWindows()
             minLineLength = 100
             maxLineGap = 50
-            lines = cv2.HoughLines(edges,1,np.pi/180,30)
+            lines = cv2.HoughLines(edges,1,np.pi/180,40)
+            lines_horz = cv2.HoughLines(edges,1,np.pi/180,20)
             print np.max(lines[:,1])
             print np.max(lines[:,0])
             sz = np.shape(edges)
             horz_line = 0
             vert_line1 = 0
             vert_line2 = sz[1]
+
+            for rho,theta in lines[0]:
+                if abs(theta) > 3.00 and abs(theta) < 3.08:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0 + 1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 - 1000*(a))
+                    cv2.line(img_remove,(x1,y1),(x2,y2),(0,0,255),2)
+
+            for rho,theta in lines_horz[0]:
+                if abs(theta) > 1.52 and abs(theta) < 1.60:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0 + 1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 - 1000*(a))
+                    cv2.line(img_remove,(x1,y1),(x2,y2),(0,0,255),2)
+                
+            if self.preview_flag:
+                cv2.imshow('img',img_remove)
+                cv2.waitKey(0)
+                #cv2.destroyAllWindows()
+
             for rho,theta in lines[0]:
                 if abs(theta) > 3.00 and abs(theta) < 3.08:
                     a = np.cos(theta)
@@ -544,10 +603,17 @@ class centerwrench():
             xbot2 = (ybot2-vert_b2)/vert_m2
             x_int2 = (vert_b2 - horz_b)/(horz_m-vert_m2)
             y_int2 = vert_m2 * x_int2 + vert_b2
+            d = np.power(np.power(x_int1-x_int2,2)+np.power(y_int1-y_int2,2),0.5)
+            d_tip1 = np.power(np.power(x_int1-xbot1,2)+np.power(y_int1-ybot1,2),0.5)
+            d_tip2 = np.power(np.power(x_int2-xbot2,2)+np.power(y_int2-ybot2,2),0.5)
+            x_tip1 = x_int1-(x_int1-xbot1)*d/d_tip1
+            x_tip2 = x_int2-(x_int2-xbot2)*d/d_tip2
+            y_tip1 = y_int1-(y_int1-ybot1)*d/d_tip1
+            y_tip2 = y_int2-(y_int2-ybot2)*d/d_tip2
 
             #CALCULATE CENTER
-            cent_x = (x_int1+x_int2+xbot1+xbot2)/4
-            cent_y = (y_int1+y_int2+ybot1+ybot2)/4
+            cent_x = (x_int1+x_int2+x_tip1+x_tip2)/4
+            cent_y = (y_int1+y_int2+y_tip1+y_tip2)/4
 
             #DRAW LINES
             """
@@ -556,7 +622,7 @@ class centerwrench():
             cv2.line(center_image,(int(xbot2),int(ybot2)),(int(x_int2),int(y_int2)),(0,0,255),2)
             cv2.circle(center_image,(int(cent_x),int(cent_y)),5,(0,0,255),-1,cv2.CV_AA)
             """
-            
+
             #SCALE BACK TO FULL SIZE IMAGE AND COORDINATES
             cent_x = cent_x/scale_factor+box1[dist_loc,0]
             cent_y = cent_y/scale_factor+box1[dist_loc,2]
@@ -568,17 +634,17 @@ class centerwrench():
             ybot1 = ybot1/scale_factor+box1[dist_loc,2]
             xbot2 = xbot2/scale_factor+box1[dist_loc,0]
             ybot2 = ybot2/scale_factor+box1[dist_loc,2]
+            x_tip1 = x_tip1/scale_factor+box1[dist_loc,0]
+            y_tip1 = y_tip1/scale_factor+box1[dist_loc,2]
+            x_tip2 = x_tip2/scale_factor+box1[dist_loc,0]
+            y_tip2 = y_tip2/scale_factor+box1[dist_loc,2]
 
             if (abs(xbot1-xbot2)) < dist_thresh/2:
                 return
             cv2.line(img_hou_km,(int(x_int1),int(y_int1)),(int(x_int2),int(y_int2)),(0,255,0),2)
-            cv2.line(img_hou_km,(int(xbot1),int(ybot1)),(int(x_int1),int(y_int1)),(0,255,0),2)
-            cv2.line(img_hou_km,(int(xbot2),int(ybot2)),(int(x_int2),int(y_int2)),(0,255,0),2)
+            cv2.line(img_hou_km,(int(x_tip1),int(y_tip1)),(int(x_int1),int(y_int1)),(0,255,0),2)
+            cv2.line(img_hou_km,(int(x_tip2),int(y_tip2)),(int(x_int2),int(y_int2)),(0,255,0),2)
             cv2.circle(img_hou_km,(int(cent_x),int(cent_y)),5,(0,255,0),-1,cv2.CV_AA)
-            if self.preview_flag:
-                cv2.imshow('img',img_orig)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
             cv2.imwrite('/home/jonathan/center_wrench.png',center_image)
             #img_hou_km = img_orig.copy()
             return [cent_x,cent_y], img_hou_km, ct
@@ -701,9 +767,12 @@ class centerwrench():
         if True:
             self.sz_full = np.shape(img)
             if self.save_flag:
-                cv2.imwrite('%scenter_%s.png' % (self.indir, str(int(1000*self.xA))),img)
+                cv2.imwrite('%scresent_%s_%s.png' % (self.indir, str(self.image_count), str(int(1000*self.xA))),img)
+            self.image_count = self.image_count+1
+            rospy.set_param('image_count',self.image_count)
             # Crop image to remove gripper and edge of box
             img_crop = detect_box_edge(img.copy())
+            """
             img_crop_invert = 255-img_crop.copy()
             if self.preview_flag:
                 cv2.imshow('img',img_crop_invert)
@@ -738,7 +807,8 @@ class centerwrench():
             img_gray_hou = np.copy(img_gray) 
             # Detect circles
             #centers, img_all_circles, k = detect_circle(img_gray_hou, img_crop.copy())
-            wrench_ind, img_all_circles, k = detect_circle(A, img_crop.copy())
+            """
+            wrench_ind, img_all_circles, k = detect_circle(img.copy(), img_crop.copy())
             if self.preview_flag:
                 cv2.imshow('img',img_all_circles)
                 cv2.waitKey(0)
@@ -749,7 +819,7 @@ class centerwrench():
                 cv2.imshow('img',img_all_circles)
                 cv2.waitKey(0)
             if self.save_result:
-                cv2.imwrite('%scenter_result.png' % (self.indir),img_all_circles)
+                cv2.imwrite('%scresent_%s_%s_result.png' % (self.indir, str(self.image_count), str(int(1000*self.xA))),img_all_circles)
             rospy.sleep(0.1)
             ee_position = rospy.get_param('ee_position')
             xA_tf = np.array(self.xA + 0.461 - ee_position[0], dtype=np.float32)
@@ -777,6 +847,7 @@ class centerwrench():
             rospy.loginfo("Wrench pos. in camera coord. (x,y,z): (%f,%f,%f)", 
                 self.wrench_id_m[0],self.wrench_id_m[1],self.wrench_id_m[2])
             # Save images if desired
+            """
             if self.save_flag:
                 cv2.imwrite('~/wrenchID_1_crop.png',img_crop)
                 cv2.imwrite('~/wrenchID_2_adj.png',img_adj)
@@ -785,6 +856,7 @@ class centerwrench():
                 cv2.imwrite('~/wrenchID_5_seg.png',img_seg)
                 cv2.imwrite('~/wrenchID_6_allcircles.png',img_all_circles)
             print "4"
+            """
             rospy.signal_shutdown('Ending node.')
         else:
             # Increment error counter if bad things happen

@@ -482,7 +482,7 @@ class orient():
                     camera_z_mn)+camera_z_mn
                 rospy.loginfo("WRENCH_Y+OFFSET = %f", wrenc_y+offset)
                 # Check if we are centered between valve and wrenches
-                if abs(wrenc_y+offset) <= 0.15:
+                if abs(wrenc_y+offset) <= 0.15 and abs(bearing.data[0] < 0.1):
                     rospy.loginfo("UGV is centered on the wrenches.")
 
                     # Calculate the object location in local coordinate system

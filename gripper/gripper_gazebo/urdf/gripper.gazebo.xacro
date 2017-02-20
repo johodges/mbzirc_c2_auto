@@ -13,10 +13,10 @@
 
   <!-- Gazebo plugin for ROS Control -->
   <!--gazebo>
-    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+    <plugin name="gazebo_ros_control_gripper" filename="libgazebo_ros_control.so">
       <robotNamespace>/gripper</robotNamespace>
     </plugin>
-  </gazebo-->
+  </gazebo -->
 
   <xacro:gripper_gazebo />
 
@@ -24,7 +24,7 @@
 
     <xacro:gripper_camera_gazebo prefix="ur5_arm_gripper_camera"/>
     
-    <xacro:gripper_motor_gazebo prefix="ur5_arm_gripper" />
+    <xacro:gripper_motor_gazebo prefix="ur5_arm_gripper_" />
 
     <gazebo reference="ur5_arm_gripper_link_2">
       <material>Gazebo/Black</material>
@@ -111,16 +111,27 @@
       <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>100</updateRate>
-        <leftJoint>${prefix}_link_2_left_tip_joint</leftJoint>
-        <rightJoint>${prefix}_link_2_right_tip_joint</rightJoint>
+        <leftJoint>${prefix}link_2_left_tip_joint</leftJoint>
+        <rightJoint>${prefix}link_2_right_tip_joint</rightJoint>
         <wheelSeparation>${chassisWidth+wheelWidth}</wheelSeparation>
         <wheelDiameter>${2*wheelRadius}</wheelDiameter>
         <torque>20</torque>
-        <commandTopic>${prefix}/cmd_vel</commandTopic>
+        <commandTopic>gripper/cmd_vel</commandTopic>
         <odometryTopic>odom</odometryTopic>
         <odometryFrame>odom</odometryFrame>
         <robotBaseFrame>base_footprint</robotBaseFrame>
       </plugin>
+    </gazebo>
+    <gazebo>
+      <gripper name="gripper">
+        <grasp_check>
+          <attach_steps>2</attach_steps>
+          <detach_steps>5000</detach_steps>
+          <min_contact_count>1</min_contact_count>
+        </grasp_check>
+        <gripper_link>${prefix}link_2</gripper_link>
+        <palm_link>${prefix}link_2</palm_link>
+      </gripper>
     </gazebo>
   </xacro:macro>
 

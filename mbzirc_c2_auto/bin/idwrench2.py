@@ -44,11 +44,21 @@ class idwrench():
         self.canny_param = [50, 25] # Canny edge detection thresholds
         self.p2crop = 3 # Portion of image to crop for circle detection
 
+        """
         self.d_mu = 22.0 # Diameter of correct wrench in pixels
         self.d_sig = 3.8 # Uncertainty in diameter
         self.l_mu = 450 # Length of correct wrench in pixels 
         self.l_sig = 25.0 # Uncertainty in length
         self.a_mu = 17500 # Area of correct wrench in pixels
+        self.a_sig = 2000 # Uncertainty in area
+        self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
+        """
+
+        self.d_mu = 36.0 # Diameter of correct wrench in pixels
+        self.d_sig = 3.8 # Uncertainty in diameter
+        self.l_mu = 700 # Length of correct wrench in pixels 
+        self.l_sig = 25.0 # Uncertainty in length
+        self.a_mu = 37500 # Area of correct wrench in pixels
         self.a_sig = 2000 # Uncertainty in area
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 
@@ -84,7 +94,8 @@ class idwrench():
         # the box if it is visible.
         def detect_box_edge(img):
             sz = np.shape(img)
-            img = img[0:sz[0]*69/96,0:sz[1]]
+            #img = img[0:sz[0]*69/96,0:sz[1]]
+            img = img[0:sz[0],0:sz[1]]
             sz = np.shape(img)
             img_edge = cv2.Canny(img,self.canny_param[0],self.canny_param[1])
             nnz = np.zeros([sz[1],1])

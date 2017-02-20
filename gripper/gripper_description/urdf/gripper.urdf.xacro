@@ -198,7 +198,7 @@
     </link>
 
     <joint name="${prefix}base_link_camera_joint" type="fixed">
-      <origin xyz="0 0.025 0" rpy="0 0 1.57"/>
+      <origin xyz="0 0.025 0" rpy="3.14 0 1.57"/>
       <parent link="${prefix}base_link"/>
       <child link="${prefix}camera_link"/>
     </joint>
