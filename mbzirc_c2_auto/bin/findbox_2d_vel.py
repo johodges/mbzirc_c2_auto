@@ -160,8 +160,6 @@ def callback(data):
 		else:
 			print "Bad box"
 
-		rate.sleep()
-
     # Check if bearing exists. Store [0,0] if no object was found
     if 'bearing' not in locals():
         bearing = np.array([0,0], dtype=np.float32)
