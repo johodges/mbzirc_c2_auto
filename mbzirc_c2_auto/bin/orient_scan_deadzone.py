@@ -172,7 +172,7 @@ class laser_listener():
                         deadZone2 = rospy.get_param("/deadZone2")
                         roboR = rospy.get_param("/currentRobotR")
                         detectX = roboX + (xA * math.cos(theta2 + roboR))
-                        detectY = roboY - (xA * math.sin(theta2 + roboR))
+                        detectY = roboY + (xA * math.sin(theta2 + roboR))
 
                         if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
                             b2 = yA-m2*xA

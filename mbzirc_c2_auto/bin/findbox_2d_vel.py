@@ -148,7 +148,7 @@ def callback(data):
 		print roboR
 
 		detectX = roboX + (dis * math.cos(ang + roboR))
-		detectY = roboY - (dis * math.sin(ang + roboR))
+		detectY = roboY + (dis * math.sin(ang + roboR))
 
 		print "DetectX"
 		print detectX
@@ -197,7 +197,7 @@ def callback(data):
                         roboR = rospy.get_param("/currentRobotR")
 
                         detectX = roboX + (dis * math.cos(ang + roboR))
-                        detectY = roboY - (dis * math.sin(ang + roboR))
+                        detectY = roboY + (dis * math.sin(ang + roboR))
 
                         if ang > -1.4 and ang < 1.4 and detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
                             if plot_data:
