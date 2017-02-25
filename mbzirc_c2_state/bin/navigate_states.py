@@ -79,13 +79,25 @@ class FindBoard(smach.State):
             lidar_to_use = rospy.get_param('lidar')
         except:
             lidar_to_use = 'sick'
+        try:
+            use_map = rospy.get_param('using_map')
+        except:
+            use_map = 'false'
         if lidar_to_use == 'sick':
-            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
-                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            if use_map == 'true':
+                a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_amcl.py",
+                    stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else
+                a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
+                    stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
             #a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py", shell=True)
         if lidar_to_use == 'velodyne':
-            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
-                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            if use_map == 'true':
+                a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
+                    stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else
+                a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
+                    stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         rospy.sleep(0.1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 

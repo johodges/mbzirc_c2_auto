@@ -20,6 +20,13 @@
   <arg name="sawyer_enabled" default="false"/>
   <arg name="ur5_enabled" default="true"/>
   <arg name="kinectv2_enabled" default="true"/>
+
+  <arg name="using_map" value="true"/>
+
+  <group if="$(arg using_map)" >
+    <param name="using_map" value="true"/>
+    <node name="read_odom" pkg="map_reader" type="read_odom.py" />
+  </group>
   
   <group if="$(arg velodyne_enabled)" >
     <param name="lidar" value="velodyne"/>
