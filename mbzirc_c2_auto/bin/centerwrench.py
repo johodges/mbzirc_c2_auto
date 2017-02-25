@@ -184,8 +184,8 @@ class centerwrench():
                 if tmp:
                     nnz[i,0] = tmp
             nnz2 = nnz[::-1]
-            col2 = np.argmax(nnz[:,0]>700)
-            col1 = 1920-offset-np.argmax(nnz2[:,0]>700)
+            col2 = np.argmax(nnz[:,0]>600)
+            col1 = 1920-offset-np.argmax(nnz2[:,0]>600)
 
             if col1-col2 > 100:
                 #img = img[0:sz[0],col2:col1]
@@ -301,13 +301,14 @@ class centerwrench():
             #print radius, length
             #z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
             z = np.transpose(np.vstack((center_x[length:],center_y[length:])))
+            print z
             # Run K-means to det. centers and to which group each point belongs
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
             ret = []
             ret_old = 99999999999
             ret_flag = 0
-            for i in range(1,self.n_wr+10):
+            for i in range(6,self.n_wr+10):
                 ret2, labels, centers = cv2.kmeans(z, i, term_crit, 1000, flag)
                 print "ret2: ", ret2
                 #print "ret2/ret_old: ", ret2/ret_old

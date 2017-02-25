@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <!--This part launches the Sawyer arm-->
+  <node pkg="intera_interface" type="enable_robot.py" name="sawyer_load" args="-e"/>
+  <node pkg="intera_interface" type="joint_trajectory_action_server.py" name="sdk_bridge"/>
+  <include file="$(find sawyer_moveit_config)/launch/sawyer_moveit.launch">
+    <arg name="rviz" value="false"/>
+  </include>
+  <node pkg="mbzirc_c2_auto" type="move_arm_topic_sawyer.py" name="move_arm_topic_server"/>
+
+  <!--This part launches the state machine-->
+  <param name="node_logging" value="INFO"/>
+  <param name="sm_version" value="old"/>
+  <param name="physical_robot" value="true"/>
+  <param name="fake_lidar" value="true"/>
+  <param name="sawyer" value="true"/>
+  <node
+    name="state_machine"
+    pkg="mbzirc_c2_state"
+    type="mbzirc_ch2_sm.py"
+    args="wrenchTest" 
+    output='screen'
+  />
+  <node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/>
+
+  <include file="$(find mbzirc_c2_auto)/launch/view_robot_sawyer.launch" />
+
+  <!--This part launches the usb camera-->
+  <include file="$(find mbzirc_c2_auto)/launch/usb_cam-test.launch" />
+
+  <!--This part launches the Kalman filter for the arm-->
+  <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py" />
+
+
+
+ </launch>

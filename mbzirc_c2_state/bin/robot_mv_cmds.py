@@ -54,11 +54,12 @@ def moveArmTwist(x, y, z):
     tw.linear.x = x
     tw.linear.y = y
     tw.linear.z = z
+    """
     if physical_robot:
         try:
             sawyer = rospy.get_param('sawyer')
         except:
-            sawyer = 'False'
+            sawyer = 'false'
         if sawyer:
             tw.angular.x = 1.57
             tw.angular.y = 1.57
@@ -66,7 +67,8 @@ def moveArmTwist(x, y, z):
         if not sawyer:
             tw.angular.x = 0
             tw.angular.y = 0
-            tw.angular.z = -1.57
+            tw.angular.z = 0#-1.57
+    """
     """
     print "Physical?"
     print physical_robot
@@ -110,10 +112,13 @@ def moveUGVvel(vel, dist_to_move, move_type='linear'):
     else:
         vel_twist.angular.z = vel
 
-    vel_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist, queue_size=10)
+    vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
     ct_move = 0
     while ct_move*sleep_time < time_to_move:
         vel_pub.publish(vel_twist)
         ct_move = ct_move+1
         rospy.sleep(sleep_time)
+    vel_twist = Twist()
+    vel_pub.publish(vel_twist)
+    rospy.sleep(sleep_time)

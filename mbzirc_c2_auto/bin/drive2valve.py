@@ -42,7 +42,7 @@ import rospy
 import actionlib
 from actionlib_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion, Twist
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback, MoveBaseActionFeedback
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
@@ -138,12 +138,12 @@ class drive2valve():
         self.camera_pix_v = 1080
 
         # Establish publishers and subscribers
-        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+        self.twi_pub = rospy.Publisher("/cmd_vel", Twist,
             queue_size=5)
         self.tftree = tf.TransformListener() # Set up tf listener
         rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback,
             queue_size=1)
-        rospy.Subscriber("/move_base/feedback", MoveBaseFeedback,
+        rospy.Subscriber("/move_base/feedback", MoveBaseActionFeedback,
             self.callback_feedback, queue_size=1)
         rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c,
             queue_size=1)
@@ -296,7 +296,7 @@ class drive2valve():
             Ideally this would be replaced by pulling the position of the UGV
             from a different feedback topic or the TF tree.
             """
-            rospy.loginfo("Moving backward 2m to make move to valve easier.")
+            rospy.loginfo("Moving backward 1m to make move to valve easier.")
             back_it_up(-0.25,2)
             self.goal.target_pose.header.frame_id = 'base_link'
             self.goal.target_pose.pose = Pose(Point(-0.5,0,0),
@@ -334,11 +334,11 @@ class drive2valve():
                     camera_y_mn)+camera_y_mn
                 valve_z = (1-self.v_c[1]/self.camera_pix_v)*(camera_z_mx-
                     camera_z_mn)+camera_z_mn
-                if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
+                if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/gripper_camera"):
                     t = self.tftree.getLatestCommonTime("/base_laser",
-                        "/camera")
+                        "/gripper_camera")
                     posi, quat = self.tftree.lookupTransform("/base_laser", 
-                        "/camera", t)
+                        "/gripper_camera", t)
                     rospy.logdebug("TF Position from base_link to camera:")
                     rospy.logdebug(posi)
                     rospy.logdebug("TF Quaternion from base_link to camera:")
@@ -379,7 +379,7 @@ class drive2valve():
                 update_rot()
 
                 # Check if we are centered on the valve
-                if abs(vw_off) <= 500:
+                if abs(vw_off) <= 5000:
                     rospy.loginfo("UGV is centered on the valve.")
 
                     # Calculate the object location in local coordinate system

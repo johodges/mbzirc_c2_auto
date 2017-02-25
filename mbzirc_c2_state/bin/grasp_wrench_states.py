@@ -54,7 +54,7 @@ class MoveToReady(smach.State):
         '''MoveToReady execution routine'''
         #
         curr_pos = rospy.get_param('ee_position')
-        curr_pos[0] = curr_pos[0] + 0.2
+        curr_pos[0] = curr_pos[0] + 0.1
         curr_pos[2] = curr_pos[2] + 0.2
         rospy.set_param('ee_position', [float(curr_pos[0]),
                                         float(curr_pos[1]),
@@ -102,9 +102,9 @@ class MoveToWrenchReady(smach.State):
         ee_position = rospy.get_param('ee_position')
         
         # Set the ready position 40 cm away from the wrenches
-        wrench_ready_pos[0] = (wrench_ready_pos[0] - ee_position[0] - 0.5)+ee_position[0]
-        wrench_ready_pos[1] = wrench_ready_pos[1] #+ 0.1
-        #wrench_ready_pos[2] = 0.7 #wrench_ready_pos[2] - 0.05
+        wrench_ready_pos[0] = 0.4#(wrench_ready_pos[0] - ee_position[0] - 0.6)+ee_position[0]
+        wrench_ready_pos[1] = -0.2#wrench_ready_pos[1] #+ 0.1
+        wrench_ready_pos[2] = 0.95#1.0 #wrench_ready_pos[2] - 0.05
 
         rospy.set_param('ee_position', [float(wrench_ready_pos[0]),
                                         float(wrench_ready_pos[1]),
@@ -113,6 +113,7 @@ class MoveToWrenchReady(smach.State):
         move_state = moveArmTwist(wrench_ready_pos[0], wrench_ready_pos[1], wrench_ready_pos[2])
         # Preset the out move counter to 0, override if necessary
         userdata.move_counter_out = 0
+        rospy.sleep(2)
 
 
         if move_state == 'success':
@@ -152,12 +153,12 @@ class IDWrench(smach.State):
         try:
             physical_robot = rospy.get_parm('physical_robot')
         except:
-            physical_robot = 'False'
+            physical_robot = 'false'
         if not physical_robot:
             prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench2.py", shell=True)
             prc.wait()
         if physical_robot:
-            prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench_phys.py", shell=True)
+            prc = subprocess.Popen("rosrun mbzirc_c2_auto idwrench2.py", shell=True)
             prc.wait()
         ret_state = rospy.get_param('smach_state')
         return ret_state
@@ -220,9 +221,10 @@ class MoveToWrench(smach.State):
         try:
             physical_robot = rospy.get_param('physical_robot')
         except:
-            physical_robot = 'False'
+            physical_robot = 'false'
+        rospy.sleep(0.1)
         if not physical_robot:
-            moveUGVvel(0.1,0.2,'linear')
+            moveUGVvel(0.05,0.05,'linear')
         move_state = rospy.get_param('move_arm_status')
         #wrench_id[0] = safety_dist #wrench_id[0]-dist_to_move
         rospy.set_param('wrench_ID_m',wrench_id)
@@ -299,12 +301,12 @@ class MoveToWrench(smach.State):
                 try:
                     physical_robot = rospy.get_parm('physical_robot')
                 except:
-                    physical_robot = 'False'
+                    physical_robot = 'false'
                 if not physical_robot:
                     prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                     prc.wait()
                 if physical_robot:
-                    prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench_phys.py", shell=True)
+                    prc = subprocess.Popen("rosrun mbzirc_c2_auto centerwrench.py", shell=True)
                     prc.wait()
 
 
@@ -324,7 +326,8 @@ class MoveToWrench(smach.State):
                 dx = wrench_id[0]*0.05
                 xA = rospy.get_param('xA')
                 # Set the ready position 40 cm away from the wrenches
-                ee_position[0] = (xA + 0.4-0.25)+0.005*ct3 # 0.134 distance from camera to left_tip
+                #ee_position[0] = (xA + 0.4-0.14)+0.005*ct3 # 0.134 distance from camera to left_tip
+                ee_position[0] = ee_position[0]+0.0025*ct3
                 rospy.logdebug("ee_position before Kalman filter: [%f, %f, %f]",
                                ee_position[0],
                                ee_position[1],
@@ -363,14 +366,14 @@ class MoveToWrench(smach.State):
                 #prc = subprocess.Popen("rosrun mbzirc_grasping move_arm_param.py", shell=True)
                 #prc.wait()
                 ct3 = ct3+1
-                if physical_robot:
+                if not physical_robot:
                     rospy.loginfo("***********************************************")
                     rospy.loginfo("ee_position:")
                     rospy.loginfo(ee_position[0])
                     rospy.loginfo("threshold:")
-                    rospy.loginfo(xA+0.35-0.155)
+                    rospy.loginfo(xA+0.461-0.170)
                     rospy.loginfo("***********************************************")
-                    if ee_position[0] < xA+0.35-0.155:
+                    if ee_position[0] < xA+0.461-0.170:
                         self.gripper_status = 0
                     else:
                         self.gripper_status = 1
@@ -378,6 +381,24 @@ class MoveToWrench(smach.State):
             rospy.loginfo("Gripper is closing. Waiting for complete signal.")
             ct4 = 0
             if not physical_robot:
+                twist = Twist()
+                speed = .5; turn = 1
+                x = 0; y = 0; z = 0;
+                th = -1 # To close gripper (1) use th = 1
+                twist.linear.x = x*speed;
+                twist.linear.y = y*speed;
+                twist.linear.z = z*speed;
+                twist.angular.x = 0;
+                twist.angular.y = 0;
+                twist.angular.z = th*turn
+                ct = 0
+                rest_time = 0.1
+                tot_time = 3
+
+                while ct*rest_time < tot_time:
+                    gripper_pub.publish(twist)
+                    rospy.sleep(0.1)
+                    ct = ct+1
                 self.gripper_status = 2
             while self.gripper_status != 2:
                 rospy.sleep(0.1)
@@ -449,10 +470,13 @@ class GraspWrench(smach.State):
         try:
             physical_robot = rospy.get_param('physical_robot')
         except:
-            physical_robot = 'False'
+            physical_robot = 'false'
         if not physical_robot:
             prc = subprocess.Popen("rosrun mbzirc_c2_auto grasp.py", shell=True)
             prc.wait()
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto mask_wrench.py", shell=True)
+        prc.wait()
+        rospy.sleep(0.1)
         ee_position = rospy.get_param('ee_position')
         ee_position[0] = ee_position[0]-0.25
         rospy.set_param('ee_position', [float(ee_position[0]),

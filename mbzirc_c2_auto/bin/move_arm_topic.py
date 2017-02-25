@@ -50,7 +50,7 @@ class move_arm_topic():
 
         # Initialize the move_group API
         moveit_commander.roscpp_initialize(sys.argv)
-        robot = moveit_commander.RobotCommander()
+        self.robot = moveit_commander.RobotCommander()
         scene = moveit_commander.PlanningSceneInterface()
 
         # Initialize the move group for the ur5_arm
@@ -82,9 +82,11 @@ class move_arm_topic():
 
         self.jt = RobotState()
         self.jt.joint_state.header.frame_id = '/base_link'
-        self.jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'left_tip_hinge', 'rear_left_wheel', 'rear_right_wheel', 'right_tip_hinge' 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
+        #self.jt.joint_state.name = ['front_left_wheel', 'front_right_wheel', 'left_tip_hinge', 'rear_left_wheel', 'rear_right_wheel', 'right_tip_hinge' 'ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
+        self.jt.joint_state.name = ['ur5_arm_shoulder_pan_joint', 'ur5_arm_shoulder_lift_joint', 'ur5_arm_elbow_joint', 'ur5_arm_wrist_1_joint', 'ur5_arm_wrist_2_joint', 'ur5_arm_wrist_3_joint']
         cjs = [0,0,0,0,0,0]
-        self.jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
+        rospy.set_param('current_joint_state',cjs)
+        self.jt.joint_state.position = [cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5]]
         self.joint_pub.publish(self.jt.joint_state)
         rospy.loginfo("Initializing motion planning server.")
         rospy.loginfo("Listening for <Twist> published on </move_arm/goal>")
@@ -102,8 +104,12 @@ class move_arm_topic():
             self.target_pose.header.stamp = rospy.Time.now()
 
             # Set the start state to the current state
-            self.arm.set_start_state(self.jt)
+            cjs = rospy.get_param('current_joint_state')
+            rospy.sleep(0.1)
+            self.jt.joint_state.position = [cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5]]
+            #self.arm.set_start_state(self.jt)
 
+            current_state = self.robot.get_current_state()
             # Set the goal pose of the end effector to the stored pose
             self.arm.set_pose_target(self.target_pose, self.end_effector_link)
 
@@ -114,7 +120,7 @@ class move_arm_topic():
             
             if traj is not None:
                 cjs = traj.joint_trajectory.points[traj_pts-1].positions
-                self.jt.joint_state.position = [0,0,0,0,cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5],0,0]
+                self.jt.joint_state.position = [cjs[0],cjs[1],cjs[2],cjs[3],cjs[4],cjs[5]]
                 # Update current joint position for use in planning next time
                 #self.joint_pub.publish(self.jt.joint_state)
                 # Execute the planned trajectory

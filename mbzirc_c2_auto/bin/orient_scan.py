@@ -65,11 +65,11 @@ class laser_listener():
         except:
             fake_lidar = 'False'
         # Set up ROS subscriber callback routines
-        if not fake_lidar:
+        if fake_lidar == 'False':
             rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback,
                 queue_size=1)
         self.pub = rospy.Publisher("/bearing",numpy_msg(Floats), queue_size=1)
-        if fake_lidar:
+        if fake_lidar == 'True':
             while not rospy.is_shutdown():
                 bearing = np.array([0,0.69,0,0,0,0,0,0],dtype=np.float32)
                 self.pub.publish(bearing)
@@ -91,7 +91,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
+        y = np.arange(scan_min,scan_max,scan_inc)-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)

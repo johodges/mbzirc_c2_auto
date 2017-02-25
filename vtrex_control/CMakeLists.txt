@@ -7,6 +7,7 @@ catkin_package()
 
 roslaunch_add_file_check(launch/vtrex_control.launch)
 roslaunch_add_file_check(launch/teleop.launch)
+roslaunch_add_file_check(launch/vtrex_hw.launch)
 
 install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

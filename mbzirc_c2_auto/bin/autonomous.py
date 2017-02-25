@@ -44,6 +44,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
 from decimal import *
+import tf
 
 class mbzirc_c2_auto():
     """MBZIRC Challenge 2 autonomous searching routine.
@@ -116,9 +117,10 @@ class mbzirc_c2_auto():
                 nome = [x.strip() for x in line.split(',')]
                 self.waypoint_name[line_counter] = nome[0]
                 x=Decimal(nome[1]); y=Decimal(nome[2]); z=Decimal(nome[3])
-                X=Decimal(nome[4]); Y=Decimal(nome[5]); Z=Decimal(nome[6])
+                X=float(nome[4]); Y=float(nome[5]); Z=float(nome[6])
+                q = tf.transformations.quaternion_from_euler(X, Y, Z)
                 self.locations[self.waypoint_name[line_counter]] = Pose(
-                    Point(x,y,z), Quaternion(X,Y,Z,1))
+                    Point(x,y,z), Quaternion(q[0],q[1],q[2],q[3]))
                 line_counter = line_counter+1
 
         # Initialize parameters
@@ -126,18 +128,15 @@ class mbzirc_c2_auto():
         self.stalled_threshold = 5000           # Loops before stall
         self.current_waypoint = 0               # Current waypoint
         self.max_waypoint = line_counter - 1    # Total number of waypoints
-        self.stall_counter = 0                  # Stall counter
+        self.stall_counter = 0                  # Stall countre
         self.detect_counter = 0                 # Detection counter
         self.noise_counter = 0                  # Noise counter
         self.state = 3                          # move_base current state
 
         # Set up ROS publishers and subscribers
         # Publisher to manually control the robot
-        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+        self.twi_pub = rospy.Publisher("/cmd_vel", Twist,
             queue_size=5)
-        # Subscribe to object detection topic
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback,
-            queue_size=1)
         # Subscribe to the move_base action server
         self.move_base = actionlib.SimpleActionClient("move_base",
             MoveBaseAction)
@@ -148,8 +147,10 @@ class mbzirc_c2_auto():
         self.goal = MoveBaseGoal()
 
         rospy.loginfo("Connected to move base server")
-        rospy.loginfo("Starting autonomous navigation")
-
+        rospy.loginfo("Starting navigation test")
+        # Subscribe to object detection topic
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback,
+            queue_size=1)
         rospy.sleep(self.rest_time)
         # If move_base is registering 'SUCCEEDED' move to next waypoint
         self.current_waypoint = self.current_waypoint+1
@@ -158,9 +159,11 @@ class mbzirc_c2_auto():
         self.goal.target_pose.header.frame_id = 'odom'
         rospy.loginfo("Going to: " + str(location))
         self.move_base.send_goal(self.goal)
+        print "Going to: "
+        print self.goal
         self.stall_counter = 0
         self.detect_counter = 0
-        rospy.sleep(self.rest_time)
+        rospy.sleep(self.rest_time*10)
 
     def shutdown(self):
         """This subroutine runs when the autonomous node shutdown. It is
@@ -234,21 +237,15 @@ class mbzirc_c2_auto():
             if self.state == 3:
                 # If move_base is registering 'SUCCEEDED' move to next waypoint
                 self.current_waypoint = self.current_waypoint+1
-
-                if self.current_waypoint > self.max_waypoint:
-                    # We have visited all waypoints. Exit autonomy so we can shift to manual
-                    rospy.set_param('smach_state','beenToAllWayPoints')
-                    rospy.signal_shutdown('*** Searched all way points, shift to manual. ***')
-                else:
-                    # Get the next waypoint and start moving
-                    location = self.waypoint_name[self.current_waypoint]
-                    self.goal.target_pose.pose = self.locations[location]
-                    self.goal.target_pose.header.frame_id = 'odom'
-                    rospy.loginfo("Going to: " + str(location))
-                    self.move_base.send_goal(self.goal)
-                    self.stall_counter = 0
-                    self.detect_counter = 0
-
+                location = self.waypoint_name[self.current_waypoint]
+                self.goal.target_pose.pose = self.locations[location]
+                self.goal.target_pose.header.frame_id = 'odom'
+                rospy.loginfo("Going to: " + str(location))
+                self.move_base.send_goal(self.goal)
+                print "Going to: "
+                print self.goal
+                self.stall_counter = 0
+                self.detect_counter = 0
                 rospy.sleep(2)
             else:
                 # If not registering 'SUCCEEDED', increment stall_counter
@@ -295,10 +292,18 @@ class mbzirc_c2_auto():
                 x = bear*np.cos(bearing.data[0])-1
                 y = bear*np.sin(bearing.data[0])-1
                 self.goal.target_pose.header.frame_id = 'base_link'
-                self.goal.target_pose.pose = Pose(Point(x,y,0),
-                    Quaternion(0,0,0,1))
-                rospy.loginfo("Going to: (%f,%f)",
-                    bearing.data[0],bearing.data[1])
+                q = tf.transformations.quaternion_from_euler(
+                    0,0,bearing.data[0])
+                if abs(bearing.data[0]) > 0.2:
+                    self.goal.target_pose.pose = Pose(Point(x*0.0,y*0,0),
+                        Quaternion(q[0],q[1],q[2],q[3]))
+                    rospy.loginfo("Going to (x,y,yaw): (%f,%f,%f)",
+                        x*0.1,y*0.1,bearing.data[0])
+                else:
+                    self.goal.target_pose.pose = Pose(Point(x,y,0),
+                        Quaternion(q[0],q[1],q[2],q[3]))
+                    rospy.loginfo("Going to (x,y,yaw): (%f,%f,%f)",
+                        x,y,bearing.data[0])
                 self.goal.target_pose.header.stamp = rospy.Time.now()
                 self.move_base.send_goal(self.goal)
                 try:

@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:arg name="velodyne_lidar" default="true"/>
-  <xacro:arg name="laser_enabled" default="false" />
+  <xacro:arg name="sawyer_enabled" default="false" />     
   <xacro:arg name="ur5_enabled" default="true" />
-  <xacro:arg name="ur5_camera_enabled" default="false" />
-
-  <xacro:property name="M_PI" value="3.1415926535897931" />
+  <xacro:arg name="velodyne_enabled" default="true" />
+  <xacro:arg name="sick_enabled" default="false" />
+  <xacro:arg name="kinectv2_enabled" default="true" />
+  <xacro:property name="PI" value="3.1415926535897931" />
 
   <xacro:property name="wheelbase" value="0.7" />
   <xacro:property name="track" value="0.64" />
@@ -19,8 +19,8 @@
   <xacro:property name="wheel_width" value="0.1016" />
 
   <xacro:property name="chassis_length" value="0.95" />
-  <xacro:property name="chassis_width" value="0.48" />
-  <xacro:property name="chassis_height" value="0.28" />
+  <xacro:property name="chassis_width" value="0.747" />
+  <xacro:property name="chassis_height" value="0.41" />
 
   <xacro:property name="dummy_inertia" value="1e-09"/>
 
@@ -28,13 +28,18 @@
   <xacro:property name="cameraMass" value="0.05"/>
 
   <xacro:include filename="$(find vtrex_description)/urdf/vtrex.gazebo" />
-  <xacro:include filename="$(find vtrex_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro"/>
-  <xacro:include filename="$(find husky_description)/urdf/accessories/velodyne_vlp16_mount.urdf.xacro"/>
+  <xacro:include filename="$(find vtrex_description)/urdf/materials.xacro" />
+  <xacro:include filename="$(find vtrex_description)/urdf/microstrain.xacro" />
+  <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro" />
   <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
-  <xacro:include filename="$(find mybot_description)/urdf/gripper.xacro" />
-  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro" />
+  <xacro:include filename="$(find husky_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro"/>
+  <xacro:include filename="$(find husky_description)/urdf/accessories/sensor_arch.urdf.xacro"/>
+  <!--xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" / -->
+  <xacro:include filename="$(find gripper_description)/urdf/gripper.urdf.xacro" />
+  <xacro:include filename="$(find vtrex_description)/urdf/microstrain.xacro" />
 
-  <xacro:macro name="wheel" params="prefix *joint_pose">
+
+<xacro:macro name="wheel" params="prefix *joint_pose">
 
     <link name="${prefix}_wheel_link">
       <visual>
@@ -42,20 +47,20 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheel.STL"/>
         </geometry>
-        <material name="black" />
+        <material name="vtrex_black" />
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
         <geometry>
          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
       </collision>
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="3.4"/>
+        <mass value="4.25"/>
         <inertia
           ixx="0.03" ixy="0" ixz="0"
-          iyy="0.05" iyz="0"
+          iyy="0.263" iyz="0"
           izz="0.03"/>
       </inertial>
     </link>
@@ -114,7 +119,7 @@
       <geometry>
        <mesh filename="package://vtrex_description/meshes/Chassis.STL"/>
       </geometry>
-<material name="black" />
+<material name="vtrex_black" />
      </visual>
     <collision>
       <origin xyz="0 0 ${footprint_vertical_offset}" rpy="0 0 0"/>
@@ -126,12 +131,12 @@
       <!-- Center of mass -->
       <origin xyz="0.00  0.00 ${footprint_vertical_offset}" rpy="0 0 0"/>
        <!--<origin xyz="0.012  0.002 0.067" rpy="0 0 0"/>-->
-      <mass value="40"/>
+      <mass value="67"/>
       <!-- Moments of inertia: ( chassis without wheels ) -->
       <inertia
-        ixx="2" ixy="-0.01" ixz="-0.00"
+        ixx="2" ixy="-0.00" ixz="-0.00"
         iyy="3.68" iyz="-0.0000"
-        izz="4.85"/>
+        izz="5.42"/>
       </inertial>
   </link>
     <gazebo reference="chassis_link">
@@ -146,7 +151,7 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
-        <material name="red" />
+        <material name="vtrex_red" />
       </visual>
       <collision>
         <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
@@ -170,7 +175,7 @@
         <geometry>
        <mesh filename="package://vtrex_description/meshes/wheelscover.STL"/>
         </geometry>
-        <material name="red" />
+        <material name="vtrex_red" />
       </visual>
       <collision>
         <origin xyz="0 0 ${wheel_cover_z_spacing}" rpy="0 0 0"/>
@@ -201,7 +206,7 @@
       <child link="left_wheel_cover_link" />
     </joint>
     <joint name="right_wheel_cover" type="fixed">
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
+      <origin xyz="0 0 0" rpy="0 0 ${PI}" />
       <parent link="chassis_link"/>
       <child link="right_wheel_cover_link" />
     </joint>
@@ -209,59 +214,89 @@
 
 <!--############################################wheelscover#################################################-->
 
-    <link name="imu_link">
-      <inertial>
-        <mass value="0.001"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
-      </inertial>
-    </link>
-    <joint name="imu_joint" type="fixed">
-      <parent link="chassis_link" />
-      <child link="imu_link" />
-    </joint>
+<!--############################################IMU####################################################-->
 
-    <xacro:if value="$(arg laser_enabled)">
+<!--xacro:microstrain_sensor sensorName="mstrain" parentLink="chassis_link" origin_xyz="-0.145 0 0.375" origin_rpy="0 0 0"/ -->
+  <link name="imu">
+    <inertial>
+      <mass value="0.001"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
+    </inertial>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="chassis_link" />
+    <origin xyz="-0.145 0.000 0.375" rpy="0 0 0" />
+    <child link="imu" />
+  </joint>
+
+<!--############################################sicklms1xx#################################################
+-->
+    <xacro:if value="$(arg sick_enabled)">
       <sick_lms1xx_mount prefix="base" topic="scan"/>
       <joint name="laser_mount_joint" type="fixed">
-        <origin xyz="$(optenv vtrex_LMS1XX_XYZ 0.5206 0.0 0.1135)"
-                rpy="$(optenv vtrex_LMS1XX_RPY 0.0 0.0 0.0)" />
-        <parent link="chassis_link" />
+        <origin xyz="0.6 0 0.23"
+                rpy="0 0 0" />
+        <parent link="base_link" />
         <child link="base_laser_mount" />
       </joint>
     </xacro:if>
 
+<!--############################################VELODYNE##################################################-->
+    <xacro:if value="$(arg velodyne_enabled)">
+      <HDL-32E parent="base_link" name="velodyne_link" topic="velodyne_points" >
+        <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
+      </HDL-32E>
+    </xacro:if>
+<!--############################################UR5##################################################-->
+
     <xacro:if value="$(arg ur5_enabled)">
 
       <xacro:property name="reflect" value="-1" />
-
-      <!-- Spawn arm -->
       <xacro:ur5_robot prefix="ur5_arm_" joint_limited="true"/>
-
-      <!-- Join arm -->
       <joint name="ur5_arm_base" type="fixed">
         <parent link="chassis_link" />
         <child link="ur5_arm_base_link" />
-        <origin xyz="0.3058 0 0.375" rpy="0.0 0.0 -1.57079632679" />
+        <origin xyz="0.335 0 0.375" rpy="0.0 0.0 -1.57079632679" />
       </joint>
-
-      <!--Spawn gripper-->
-      <xacro:gripper />
-      <!-- Join Gripper -->
+      <!-- Spawn gripper-->
+      <xacro:gripper_spawn prefix="ur5_arm_gripper_"/>
         <joint name="base_to_arm" type="fixed">
           <parent link="ur5_arm_wrist_3_link"/>
-          <child link="gripper_link"/>
+          <child link="ur5_arm_gripper_base_link"/>
           <origin xyz="0 0.09 0" rpy="0 0 0"/>
         </joint>
 
     </xacro:if>
 
-    <!-- Spawn velodyne vlp-16 -->
-    <xacro:if value="$(arg velodyne_lidar)">
 
-      <VLP-16 parent="chassis_link" name="laser" topic="velodyne_points" >
-        <origin xyz="0.5206 0.0 0.1135" rpy="0 0 0" />
-      </VLP-16>
+<!--############################################SAWYER##################################################-->
+    <xacro:if value="$(arg sawyer_enabled)">
+
+      <xacro:property name="reflect" value="-1" />
+
+      <!-- Spawn arm -->
+      
+      <joint name="sawyer_arm_base" type="fixed">
+        <parent link="chassis_link" />
+        <child link="base" />
+        <origin xyz="0.3058 0 0.375" rpy="0.0 0.0 0" />
+      </joint>
+
+      <!-- Spawn gripper-->
+      <xacro:gripper_spawn prefix="ur5_arm_gripper_"/>
+        <joint name="base_to_arm" type="fixed">
+          <parent link="ur5_arm_wrist_3_link"/>
+          <child link="ur5_arm_gripper_base_link"/>
+          <origin xyz="0 0.09 0" rpy="0 0 0"/>
+        </joint>
+
+    </xacro:if>
+<!--############################################KINECT##################################################-->
+    <xacro:if value="$(arg kinectv2_enabled)">
+      <xacro:sensor_arch prefix="" parent="chassis_link">
+        <origin xyz="-0.45 0 0.88" rpy="0 0 -3.14159265359"/>
+      </xacro:sensor_arch>
     </xacro:if>
 
 </robot>
