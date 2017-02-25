@@ -60,6 +60,7 @@ class laser_listener():
         """
         # Name this node, it must be unique
         rospy.init_node('orient_scan', anonymous=True)
+        self.range = [-0.5,0.5]
         try:
             fake_lidar = rospy.get_param('fake_lidar')
         except:
@@ -83,7 +84,7 @@ class laser_listener():
         rate = rospy.Rate(10)
 
         # Initialize parameters
-        thresh = 0.1
+        thresh = 0.5
 
         # Set max/min angle and increment
         scan_min = data.angle_min
@@ -91,7 +92,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max,scan_inc)#-1.57
+        y = np.arange(scan_min,scan_max,scan_inc)-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)
@@ -174,9 +175,9 @@ class laser_listener():
                         detectX = roboX + (xA * math.cos(theta2 + roboR))
                         detectY = roboY + (xA * math.sin(theta2 + roboR))
 
-                        if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
+                        if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]) and ang > self.range[0] and ang < self.range[1]:
                             b2 = yA-m2*xA
-                            d = 2
+                            d = 1.5
                             t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
                             t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
 

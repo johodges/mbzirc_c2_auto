@@ -3,6 +3,8 @@
   <param name="node_logging" value="DEBUG"/>
   <param name="sm_version" value="old"/>
   <param name="physical_robot" value="true"/>
+
+<!--node name="gps_tf" pkg="tf" type="static_transform_publisher" args="x y z 0 0 -1.833 gps base_link"/-->
   <!-- VTREX LAUNCH-->
   <node pkg="rosserial_python" type="serial_node.py" name="serial_node_left_motors">
     <param name="port" value="/dev/ttyACM0"/>
@@ -42,7 +44,7 @@
   <!-- ACCESSORIES LAUNCH -->
 
   <include file="$(find mbzirc_c2_auto)/launch/velodyne.launch" >
-    <arg name="min_z" value="0.0"/>
+    <arg name="min_z" value="0.25"/>
     <arg name="max_z" value="5.0"/>
   </include>
   <include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
@@ -57,19 +59,24 @@
   <!-- node name="fake_lidar" pkg="mbzirc_c2_auto" type="fake_lidar.py"/-->
 
   <node name="read_odom" pkg="map_reader" type="read_odom.py"/>
-  <node name="findbox_2d_vel" pkg="mbzirc_c2_auto" type="findbox_2d_vel.py"/>
+  <!--node name="findbox_2d_vel" pkg="mbzirc_c2_auto" type="findbox_2d_vel.py"/-->
+
+  <!--node name="orient_scan" pkg="mbzirc_c2_auto" type="orient_scan_deadzone.py"/>
+  <node name="wrench_detect" pkg="mbzirc_c2_auto" type="wrench_detect.py"/>
+  <rosparam command="load" file="$(find map_reader)/mapCoords.yaml"/-->
+
 
 
   <!-- STATE MACHINE LAUNCH -->
 
-  <!--node
+  <node
     name="state_machine"
     pkg="mbzirc_c2_state"
     type="mbzirc_ch2_sm.py"
-    args="normal"
+    args="wrenchTest"
     output='screen'
   />
-  <node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/-->
+  <!--node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/-->
 
   <!-- VISUALIZATION LAUNCH -->
 
