@@ -2,9 +2,8 @@
 <robot name="vtrex" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="sawyer_enabled" default="false" />     
   <xacro:arg name="ur5_enabled" default="true" />
-  <xacro:arg name="ur5_camera_enabled" default="false" />
   <xacro:arg name="velodyne_enabled" default="true" />
-  <xacro:arg name="sick_enabled" default="true" />
+  <xacro:arg name="sick_enabled" default="false" />
   <xacro:arg name="kinectv2_enabled" default="true" />
   <xacro:property name="PI" value="3.1415926535897931" />
 
@@ -37,6 +36,7 @@
   <xacro:include filename="$(find husky_description)/urdf/accessories/sensor_arch.urdf.xacro"/>
   <!--xacro:include filename="$(find sawyer_description)/urdf/sawyer.urdf" / -->
   <xacro:include filename="$(find gripper_description)/urdf/gripper.urdf.xacro" />
+  <xacro:include filename="$(find vtrex_description)/urdf/microstrain.xacro" />
 
 
 <xacro:macro name="wheel" params="prefix *joint_pose">
@@ -216,7 +216,7 @@
 
 <!--############################################IMU####################################################-->
 
-<!--xacro:microstrain_sensor sensorName="mstrain" parentLink="imu_link" origin_xyz="0 0 0" origin_rpy="0 0 0"/ -->
+<!--xacro:microstrain_sensor sensorName="mstrain" parentLink="chassis_link" origin_xyz="-0.145 0 0.375" origin_rpy="0 0 0"/ -->
   <link name="imu">
     <inertial>
       <mass value="0.001"/>
@@ -226,7 +226,7 @@
   </link>
   <joint name="imu_joint" type="fixed">
     <parent link="chassis_link" />
-    <origin xyz="-0.145 0.000 0.15" rpy="0 0 0" />
+    <origin xyz="-0.145 0.000 0.375" rpy="0 0 0" />
     <child link="imu" />
   </joint>
 

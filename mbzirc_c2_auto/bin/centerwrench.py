@@ -184,8 +184,8 @@ class centerwrench():
                 if tmp:
                     nnz[i,0] = tmp
             nnz2 = nnz[::-1]
-            col2 = np.argmax(nnz[:,0]>700)
-            col1 = 1920-offset-np.argmax(nnz2[:,0]>700)
+            col2 = np.argmax(nnz[:,0]>600)
+            col1 = 1920-offset-np.argmax(nnz2[:,0]>600)
 
             if col1-col2 > 100:
                 #img = img[0:sz[0],col2:col1]
@@ -308,7 +308,7 @@ class centerwrench():
             ret = []
             ret_old = 99999999999
             ret_flag = 0
-            for i in range(1,self.n_wr+10):
+            for i in range(6,self.n_wr+10):
                 ret2, labels, centers = cv2.kmeans(z, i, term_crit, 1000, flag)
                 print "ret2: ", ret2
                 #print "ret2/ret_old: ", ret2/ret_old

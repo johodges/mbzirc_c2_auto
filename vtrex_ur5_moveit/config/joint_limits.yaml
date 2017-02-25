@@ -4,8 +4,8 @@
 joint_limits:
   ur5_arm_elbow_joint:
     has_position_limits: true
-    min_position: 0.79
-    max_position: 2.36
+    min_position: -3.14
+    max_position: 0.00
     has_velocity_limits: true
     max_velocity: 3.15
     has_acceleration_limits: false
@@ -13,14 +13,14 @@ joint_limits:
   ur5_arm_shoulder_lift_joint:
     has_position_limits: true
     min_position: -3.00
-    max_position: -0.79
+    max_position: 0.00
     has_velocity_limits: true
     max_velocity: 3.15
     has_acceleration_limits: false
     max_acceleration: 0
   ur5_arm_shoulder_pan_joint:
     has_position_limits: true
-    min_position: 0
+    min_position: -3.14
     max_position: 2.36
     has_velocity_limits: true
     max_velocity: 3.15
@@ -28,16 +28,16 @@ joint_limits:
     max_acceleration: 0
   ur5_arm_wrist_1_joint:
     has_position_limits: true
-    min_position: -4.71
-    max_position: 0
+    min_position: -4.67
+    max_position: 2.78
     has_velocity_limits: true
     max_velocity: 3.2
     has_acceleration_limits: false
     max_acceleration: 0
   ur5_arm_wrist_2_joint:
     has_position_limits: true
-    min_position: -3.14
-    max_position: 0
+    min_position: -1.57
+    max_position: 3.14
     has_velocity_limits: true
     max_velocity: 3.2
     has_acceleration_limits: false

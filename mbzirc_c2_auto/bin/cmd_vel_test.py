@@ -11,6 +11,6 @@ from robot_mv_cmds import *
 
 if __name__ == '__main__':
     rospy.init_node('cmd_vel_test', anonymous=True)
-    moveUGVvel(0.5, 2.5, move_type='angular')
+    moveUGVvel(0, 0, move_type='linear')
     rospy.sleep(0.1)
 

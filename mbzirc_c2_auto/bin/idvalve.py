@@ -57,9 +57,9 @@ class move2op():
         self.camera_pix_v = 1080
         self.ct5 = 0
         self.lim_type = 0
-        #self.xA = 0.380
+        self.xA = 0.380
         self.save_result = True
-        self.preview_flag = False           # Should we preview images
+        self.preview_flag = True           # Should we preview images
         self.preview_result = False
         self.indir = str(rospack.get_path('mbzirc_c2_auto')+'/params/')
         self.lim_adjust = -100

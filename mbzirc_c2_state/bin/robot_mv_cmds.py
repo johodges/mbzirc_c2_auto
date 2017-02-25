@@ -54,11 +54,12 @@ def moveArmTwist(x, y, z):
     tw.linear.x = x
     tw.linear.y = y
     tw.linear.z = z
+    """
     if physical_robot:
         try:
             sawyer = rospy.get_param('sawyer')
         except:
-            sawyer = 'False'
+            sawyer = 'false'
         if sawyer:
             tw.angular.x = 1.57
             tw.angular.y = 1.57
@@ -66,7 +67,8 @@ def moveArmTwist(x, y, z):
         if not sawyer:
             tw.angular.x = 0
             tw.angular.y = 0
-            tw.angular.z = -1.57
+            tw.angular.z = 0#-1.57
+    """
     """
     print "Physical?"
     print physical_robot

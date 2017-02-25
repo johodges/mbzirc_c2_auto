@@ -134,7 +134,7 @@ class mbzirc_c2_auto():
 
         # Set up ROS publishers and subscribers
         # Publisher to manually control the robot 
-        self.twi_pub = rospy.Publisher("/joy_teleop/cmd_vel", Twist,
+        self.twi_pub = rospy.Publisher("/cmd_vel", Twist,
             queue_size=5)
         # Subscribe to the move_base action server
         self.move_base = actionlib.SimpleActionClient("move_base", 
@@ -291,10 +291,18 @@ class mbzirc_c2_auto():
                 x = bear*np.cos(bearing.data[0])-1
                 y = bear*np.sin(bearing.data[0])-1
                 self.goal.target_pose.header.frame_id = 'base_link'
-                self.goal.target_pose.pose = Pose(Point(x,y,0),
-                    Quaternion(0,0,0,1))
-                rospy.loginfo("Going to: (%f,%f)",
-                    bearing.data[0],bearing.data[1])
+                q = tf.transformations.quaternion_from_euler(
+                    0,0,bearing.data[0])
+                if abs(bearing.data[0]) > 0.2:
+                    self.goal.target_pose.pose = Pose(Point(x*0.0,y*0,0),
+                        Quaternion(q[0],q[1],q[2],q[3]))
+                    rospy.loginfo("Going to (x,y,yaw): (%f,%f,%f)",
+                        x*0.1,y*0.1,bearing.data[0])
+                else:
+                    self.goal.target_pose.pose = Pose(Point(x,y,0),
+                        Quaternion(q[0],q[1],q[2],q[3]))
+                    rospy.loginfo("Going to (x,y,yaw): (%f,%f,%f)",
+                        x,y,bearing.data[0])
                 self.goal.target_pose.header.stamp = rospy.Time.now()
                 self.move_base.send_goal(self.goal)
                 try:

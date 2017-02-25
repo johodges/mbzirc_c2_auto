@@ -5,13 +5,14 @@ import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf
+import rospkg
 
 def main():
 	rospy.init_node('odom_reader', anonymous=True)
-
+	rospack = rospkg.RosPack() # Find rospackge locations
 	listener = tf.TransformListener()
 
-	with open("/home/tom/catkin_ws/src/mbzirc_c2_auto/map_reader/mapCoords.yaml", 'r') as f:
+	with open(rospack.get_path('map_reader')+'/mapCoords.yaml', 'r') as f:
     		doc = yaml.load(f)
 	f.close()
 	
@@ -36,7 +37,6 @@ def main():
  		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
  			continue
 
-		print type(rotate)
 		euler = tf.transformations.euler_from_quaternion(rotate)
  		
  		roboX = trans[0]

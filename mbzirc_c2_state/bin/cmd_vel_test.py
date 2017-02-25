@@ -13,11 +13,11 @@ if __name__ == '__main__':
     rospy.init_node('cmd_vel_test', anonymous=True)
     #moveUGVvel(0.50,2.5, 'angular')
     #rospy.sleep(0.1)
-    dist_to_move = 0.4;
-    x_vel = 0.2;
+    dist_to_move = 0.0;
+    x_vel = 0.0;
     z_vel = 0.0;
     sleep_time = 0.1
-    time_to_move = abs(dist_to_move/x_vel)
+    time_to_move = 5 #abs(dist_to_move/x_vel)
 
     vel_twist = Twist()
     vel_twist.linear.x = x_vel

@@ -5,6 +5,7 @@ import yaml
 import geometry_msgs.msg
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf
+import rospkg
 
 def callback(data):
 	currentX = data.pose.pose.position.x
@@ -19,7 +20,9 @@ def callback(data):
 
 def main():
 	rospy.init_node('map_reader', anonymous=True)
-	with open("/home/tom/catkin_ws/src/mbzirc_c2_auto/map_reader/mapCoords.yaml", 'r') as f:
+	rospack = rospkg.RosPack() # Find rospackge locations
+
+	with open(rospack.get_path('map_reader')+'/mapCoords.yaml', 'r') as f:
     		doc = yaml.load(f)
 	f.close()
 	

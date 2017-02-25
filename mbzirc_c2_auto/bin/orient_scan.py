@@ -91,7 +91,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)#-1.57
+        y = np.arange(scan_min,scan_max,scan_inc)-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)

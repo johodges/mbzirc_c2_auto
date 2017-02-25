@@ -6,12 +6,14 @@
   <arg name="min_range" default="1.0"/>
   <arg name="frame_id" default="base_link"/>
   <arg name="topic" default="/velodyne/scan"/>
-  <node pkg="but_velodyne_proc" type="laser_scan" name="but_velodyne_proc_laserscan_node" output="screen">
+  <arg name="angular_res" default="0.5" />
+  <arg name="node_name" default="but_velodyne_proc_laserscan_node"/>
+  <node pkg="but_velodyne_proc" type="laser_scan" name="$(arg node_name)" output="screen">
     <remap from="points_in" to="/velodyne_points" />
     <remap from="scan_out" to="$(arg topic)" />
     <param name="min_z" value="$(arg min_z)" />
     <param name="max_z" value="$(arg max_z)" />
-    <param name="angular_res" value="0.5" />
+    <param name="angular_res" value="$(arg angular_res)" />
     <param name="min_range" value="$(arg min_range)" />
     <param name="frame_id" value="$(arg frame_id)" />
   </node>

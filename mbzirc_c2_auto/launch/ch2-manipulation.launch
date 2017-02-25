@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="node_logging" value="DEBUG"/>
+  <param name="sm_version" value="old"/>
+  <param name="physical_robot" value="true"/>
+  <arg name="joint_limit" default="true"/>
+  <!-- VTREX LAUNCH-->
+  <include file="$(find vtrex_description)/launch/description.launch"/>
+
+  <!-- ARM LAUNCH -->
+
+  <!--rosparam file="$(find vtrex_ur5_moveit)/config/controllers.yaml"/-->
+  <include file="$(find mbzirc_c2_auto)/launch/ur5.launch" />
+  <include file="$(find vtrex_ur5_moveit)/launch/vtrex_ur5_planning_execution.launch">
+    <arg name="physical_robot" value="true"/>
+    <arg name="joint_limit" value="$(arg joint_limit)"/>
+  </include>
+  <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic_phys.py"/>
+  <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py" />
+
+  <!-- ACCESSORIES LAUNCH -->
+
+  <include file="$(find mbzirc_c2_auto)/launch/velodyne.launch" >
+    <arg name="min_z" value="0.0"/>
+    <arg name="max_z" value="0.5"/>
+  </include>
+  <include file="$(find mbzirc_c2_auto)/launch/usb_cam-test.launch" />
+  <node name="gripper_controller" pkg="rosserial_python" type="serial_node.py">
+    <param name="port" value="/dev/ttyUSB1"/>
+  </node>
+  <!--node name="fake_lidar" pkg="mbzirc_c2_auto" type="fake_lidar.py"/-->
+
+  <!-- STATE MACHINE LAUNCH -->
+
+  <node
+    name="state_machine"
+    pkg="mbzirc_c2_state"
+    type="mbzirc_ch2_sm.py"
+    args="wrenchTest"
+    output='screen'
+  />
+  <node name="state_viewer" pkg="smach_viewer" type="smach_viewer.py" output='screen'/>
+
+  <!-- VISUALIZATION LAUNCH -->
+
+  <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
+<!--node name="image_view" pkg="image_view" type="image_view">
+  <remap from="image" to="/usb_cam/image_raw"/>
+</node -->
+</launch>

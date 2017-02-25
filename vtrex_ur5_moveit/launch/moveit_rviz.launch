@@ -11,6 +11,7 @@
   <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" respawn="false"
 	args="$(arg command_args)" output="screen">
     <rosparam command="load" file="$(find vtrex_ur5_moveit)/config/kinematics.yaml"/>
+    <param name="arm_prefix" value="ur5_arm_"/> 
   </node>
 
 </launch>

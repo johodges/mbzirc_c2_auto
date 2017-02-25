@@ -55,7 +55,7 @@ class StowArm(smach.State):
             physical_robot = rospy.get_param('physical_robot')
         except:
             physical_robot = 'false'
-        if True: #physical_robot:
+        if not physical_robot:
             stow_pos = rospy.get_param('stow_position')
             rospy.set_param('ee_position', [float(stow_pos[0]),
                                             float(stow_pos[1]),
@@ -242,7 +242,7 @@ class IDValve(smach.State):
             prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
             prc.wait()
         if physical_robot:
-            prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve_phys.py", shell=True)
+            prc = subprocess.Popen("rosrun mbzirc_c2_auto idvalve.py", shell=True)
             prc.wait()
         # smach_state will be set to valveNotFound, valveCenter, valveOffCenter
         sm_state = rospy.get_param('smach_state')

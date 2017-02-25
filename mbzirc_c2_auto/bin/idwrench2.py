@@ -474,7 +474,7 @@ class idwrench():
             ee_position = rospy.get_param('ee_position')
             wrench_position = rospy.get_param('wrench')
             xA = wrench_position[0]-ee_position[0]
-            row = int(round(params[wrench_ind,7]+params[wrench_ind,3]))
+            row = int(round(params[wrench_ind,7]))
             col = int(round(params[wrench_ind,6]))
             self.wrench_id_px = np.array([row,col],dtype=np.float32)
             camera_y_mx = xA*np.arctan(self.camera_fov_h/2)

@@ -14,9 +14,9 @@ if __name__ == '__main__':
     #ee_position = rospy.get_param('ee_position')
     ct = 0
     twist = Twist()
-    twist.linear.x = 0.42372
-    twist.linear.y = 0.122508
-    twist.linear.z = 0.6
+    twist.linear.x = 0.4
+    twist.linear.y = -0.2
+    twist.linear.z = 0.95
     twist.angular.x = 0
     twist.angular.y = 0
     twist.angular.z = 0

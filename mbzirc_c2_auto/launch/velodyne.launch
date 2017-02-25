@@ -12,12 +12,24 @@
     <arg name="frame_id" value="$(arg frame_id)"/>
   </include>
   <!-- Run point cloud collapser -->
+  <!--include file="$(find but_velodyne_proc)/launch/laserscan_node.launch">
+    <arg name="min_z" value="$(arg min_z)"/>
+    <arg name="max_z" value="$(arg max_z)"/>
+    <arg name="min_range" value="$(arg min_range)"/>
+    <arg name="frame_id" value="$(arg frame_id)"/>
+    <arg name="topic" value="gmapping/scan"/>
+    <arg name="node_name" value="gmapping_scan"/>
+    <arg name="angular_res" value="0.5" />
+  </include -->
+  <!-- Run point cloud collapser -->
   <include file="$(find but_velodyne_proc)/launch/laserscan_node.launch">
     <arg name="min_z" value="$(arg min_z)"/>
     <arg name="max_z" value="$(arg max_z)"/>
     <arg name="min_range" value="$(arg min_range)"/>
     <arg name="frame_id" value="$(arg frame_id)"/>
     <arg name="topic" value="$(arg topic)"/>
+    <arg name="node_name" value="autonomy_scan"/>
+    <arg name="angular_res" value="0.5" />
   </include>
 </launch>
 
