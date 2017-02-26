@@ -153,7 +153,7 @@ class orient():
         self.wp = -1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
         self.big_board_offset = 0       # Offset for a large board
-
+        
         # Hardware Parameters
         self.camera_fov_h = 1.5708
         self.camera_fov_v = 1.5708
@@ -286,12 +286,12 @@ class orient():
             """This subroutine manually moves the husky forward or backward
             a fixed amount at a fixed velocity by bypassing the move_base
             package and sending a signal directly to the wheels.
-
+                
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
-            """
+            """ 
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.linear.x = ve
@@ -348,6 +348,35 @@ class orient():
                 [np.sin(self.theta),np.cos(self.theta)]])
             return None
 
+        def skid_steer_move(target_pose,target_orient):
+            update_rot()
+            rospy.loginfo("Current position:")
+            rospy.loginfo([self.x0, self.y0])
+            rospy.loginfo("Target position:")
+            rospy.loginfo(target_pose)
+            mid_ang = np.arctan((target_pose[1]-self.y0)/(target_pose[0]-self.x0))
+            euler = tf.transformations.euler_from_quaternion(target_orient)
+            ang_to_rot = mid_ang-self.yaw
+            rospy.loginfo("Starting Skid Steer #1.")
+            rot_cmd(1*ang_to_rot/abs(ang_to_rot),ang_to_rot)
+            q = tf.transformations.quaternion_from_euler(
+                0,0,mid_ang)
+            self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
+                Quaternion(q[0],q[1],q[2],q[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            rospy.loginfo("Starting drive to target pose.")
+            self.move_base.send_goal(self.goal)
+            wait_for_finish(self.stalled_threshold)
+            update_rot()
+            self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
+                Quaternion(target_orient[0],target_orient[1],target_orient[2],target_orient[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            rospy.loginfo("Starting Skid Steer #2.")
+            self.move_base.send_goal(self.goal)
+            wait_for_finish(self.stalled_threshold)
+            return None
+
+
         if self.wp == -1:
             """We need some feedback from the move_base server to obtain our
             current location. Since the move_base server does not publish
@@ -370,6 +399,7 @@ class orient():
             update_rot()
             """Extract points of interest from the /bearing topic:
             point A: median point of laser scan
+            point C: unused in this routine
             mn/mx: minimum/maximum extents of the object
             """
             ang = bearing.data[0]
@@ -414,7 +444,7 @@ class orient():
                     if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
                         t = self.tftree.getLatestCommonTime("/base_link",
                             "/gripper_camera")
-                        posi, quat = self.tftree.lookupTransform("/base_link",
+                        posi, quat = self.tftree.lookupTransform("/base_link", 
                             "/gripper_camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
@@ -424,7 +454,7 @@ class orient():
                     if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
                         t = self.tftree.getLatestCommonTime("/base_link",
                             "/gripper_camera")
-                        posi, quat = self.tftree.lookupTransform("/base_link",
+                        posi, quat = self.tftree.lookupTransform("/base_link", 
                             "/gripper_camera", t)
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
@@ -502,7 +532,7 @@ class orient():
                     rospy.loginfo("Object in local coord (x,y): (%f,%f)",
                         x_loc, y_loc)
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.8 # Distance off board we want to be
+                    po = 0.8 # Distance off board we want to be 
                     back_it_up(0.25,(x_loc-po))
                     self.fake_smach = 4
                 else:
@@ -513,10 +543,11 @@ class orient():
                     tar_glo = np.dot(self.R,[bearing.data[1]-2,wrenc_y+offset])
                     x_wre = tar_glo[0]+self.x0
                     y_wre = tar_glo[1]+self.y0
-                    self.goal.target_pose.pose = Pose(Point(x_wre,y_wre,0),
-                        Quaternion(q[0],q[1],q[2],q[3]))
-                    self.goal.target_pose.header.frame_id = 'odom'
-                    self.move_base.send_goal(self.goal)
+                    skid_steer_move([x_wre,y_wre],q)
+                    #self.goal.target_pose.pose = Pose(Point(x_wre,y_wre,0),
+                    #    Quaternion(q[0],q[1],q[2],q[3]))
+                    #self.goal.target_pose.header.frame_id = 'odom'
+                    #self.move_base.send_goal(self.goal)
 
                     rospy.loginfo("Backing up and moving more centered.")
                     wait_for_finish(self.stalled_threshold)
@@ -585,10 +616,10 @@ class orient():
                     rospy.loginfo("Done with skid steer.")
                     rospy.sleep(self.rest_time)
                     rospy.logdebug("Move to target location.")
-
-                    self.goal.target_pose.pose = loc
-                    self.goal.target_pose.header.frame_id = 'odom'
-                    self.move_base.send_goal(self.goal)
+                    skid_steer_move([self.x_tar_glo,self.y_tar_glo],q)
+                    #self.goal.target_pose.pose = loc
+                    #self.goal.target_pose.header.frame_id = 'odom'
+                    #self.move_base.send_goal(self.goal)
                     rospy.sleep(0.1)
                     self.fake_smach = 1
                     wait_for_finish(self.stalled_threshold)
@@ -613,7 +644,7 @@ class orient():
                 """
                 # Check if we see wrenches
                 if np.shape(self.wrench)[0] > 5:
-
+                    
                     self.wrench_counter = self.wrench_counter+1
                     rospy.sleep(self.rest_time)
                     # Make sure we saw wrenches 5 times through the loop
@@ -654,8 +685,9 @@ class orient():
                     self.fake_smach = 0
                     # Back up a bit to help the husky get to the target pos
                     back_it_up(-0.25,0.5)
-                    self.move_base.send_goal(self.goal)
-                    wait_for_finish(self.stalled_threshold)
+                    skid_steer_move([self.x_tar_glo,self.y_tar_glo],q)
+                    #self.move_base.send_goal(self.goal)
+                    #wait_for_finish(self.stalled_threshold)
                 else:
                     rospy.loginfo("UGV is in position, check for wrenches.")
                     rospy.sleep(self.rest_time*10)

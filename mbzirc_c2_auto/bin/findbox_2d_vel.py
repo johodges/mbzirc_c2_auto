@@ -62,7 +62,7 @@ def callback(data):
 
     # Initialize parameters
     rate = rospy.Rate(10)
-    scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
+    scan_dist_thresh = 0.5  # Distance threshold to split obj into 2 obj.
     plot_data = True
 
     # Set max/min angle and increment
@@ -71,7 +71,7 @@ def callback(data):
     scan_inc = data.angle_increment
 
     # Build angle array
-    x = np.arange(scan_min,scan_max,scan_inc)
+    x = np.arange(scan_min,scan_max,scan_inc)-1.57
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)
@@ -106,7 +106,6 @@ def callback(data):
     y_coord2 = np.array(np.split(y_coord, np.argwhere(
         dist > scan_dist_thresh).flatten()[1:]))
 
-    rate = rospy.Rate(10.0)
     # Loop through each segmented object
     for i in range(len(x2)):
 

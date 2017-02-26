@@ -35,7 +35,7 @@ class find_wrench:
     cascade = cv2.CascadeClassifier(rospack.get_path('mbzirc_c2_auto')+'/params/wrench.xml')
     cv_image = cv2.resize(cv_image, (0,0), fx=2, fy=2);
     img_invert = 255 - cv_image
-    rects = cascade.detectMultiScale(img_invert, 1.3, 4, cv2.cv.CV_HAAR_SCALE_IMAGE, (35, 200))
+    rects = cascade.detectMultiScale(img_invert, 5, 3, cv2.cv.CV_HAAR_SCALE_IMAGE, (75, 200))
     cv_image2 = cv_image.copy()
     #print 'I am trying!'
     if len(rects) == 0:
