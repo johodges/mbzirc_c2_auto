@@ -1,23 +1,36 @@
 <?xml version="1.0"?>
-<launch>	
-  
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">	    
+<launch>
+  <include file="$(find mbzirc_c2_auto)/launch/v-arena2.launch">
+    <!--arg name="world_name" value="$(find mbzirc_c2_auto)/gazebo_models/world/mbzirc_arena_task_2_test3.world"/ -->
+    <arg name="velodyne_enabled" value="true"/>
+    <arg name="sawyer_enabled" value="false"/>
+  </include>
+  <!-- include file="$(find gazebo_ros)/launch/empty_world.launch">	    
     <arg name="world_name" value="$(find vtrex_gazebo)/worlds/mbzirc_arena_task_2.world"/>	    
     <arg name="gui" value="true"/>	  
     <arg name="use_sim_time" default="true" />
-  </include>	
+  </include -->	
 
 <!-- urdf xml robot description loaded on the Parameter Server, converting the xacro into a proper urdf file-->
 <param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro'" />
 
 <!-- push robot_description to factory and spawn robot in gazebo -->
-<node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
- args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex"/>
-
+<!--node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+ args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex"/ -->
+<!--include file="$(find vtrex_gazebo)/launch/vtrex-spawn.launch"/ -->
 <!-- ros_control vtrex launch file -->
-<include file="$(find vtrex_control)/launch/vtrex_control.launch" />
-  <include file="$(find vtrex_control)/launch/teleop.launch">
-    <arg name="joystick" value="false"/>
+<!--include file="$(find vtrex_control)/launch/vtrex_control.launch" / -->
+<!--include file="$(find vtrex_control)/launch/teleop.launch">
+  <arg name="joystick" value="false"/>
+</include -->
+  <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
+    <arg name="no_static_map" value="true"/>
+    <arg name="oscillation_timeout" value="0.0"/>
   </include>
+  <node name="fake_lidar" pkg="mbzirc_c2_auto" type="fake_lidar.py"/>
+
+    <!--rosparam command="load" file="$(find sawyer_description)/config/arm_controller_sawyer.yaml" />
+    <node name="sawyer_controller_spawner" pkg="controller_manager" type="spawner" args="sawyer_controller -shutdown-timeout 3"/ -->
+
 
 </launch>

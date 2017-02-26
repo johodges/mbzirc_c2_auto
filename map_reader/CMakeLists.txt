@@ -186,4 +186,4 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-catkin_install_python(PROGRAMS scripts/read_map.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/read_amcl.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

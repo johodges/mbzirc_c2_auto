@@ -14,12 +14,12 @@ if __name__ == '__main__':
     #ee_position = rospy.get_param('ee_position')
     ct = 0
     twist = Twist()
-    twist.linear.x = 0.8
-    twist.linear.y = -0.1
-    twist.linear.z = 0.4
-    twist.angular.x = 1.57
-    twist.angular.y = 1.57
-    twist.angular.z = 1.57
+    twist.linear.x = 0.4
+    twist.linear.y = -0.2
+    twist.linear.z = 0.95
+    twist.angular.x = 0
+    twist.angular.y = 0
+    twist.angular.z = 0
 
     print twist
     while ct < 10:

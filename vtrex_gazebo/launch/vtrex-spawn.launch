@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="velodyne_enabled" default="true"/>
+  <arg name="sick_enabled" default="false"/>
+  <arg name="sawyer_enabled" default="false"/>
+  <arg name="ur5_enabled" default="true"/>
+  <arg name="kinectv2_enabled" default="false"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro'
+    velodyne_enabled:=$(arg velodyne_enabled)
+    sawyer_enabled:=$(arg sawyer_enabled)
+    sick_enabled:=$(arg sick_enabled)
+    ur5_enabled:=$(arg ur5_enabled)
+    kinectv2_enabled:=$(arg kinectv2_enabled)
+    " />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- Load Trex control information -->
+  <include file="$(find vtrex_control)/launch/vtrex_control.launch"/>
+
+  <!-- SAWYER IN SIMULATION -->
+  <group if="$(arg sawyer_enabled)">
+    <!-- Load controller -->
+    <rosparam command="load" file="$(find sawyer_description)/config/arm_controller_sawyer.yaml"/>
+    <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="sawyer_controller --shutdown-timeout 3"/>
+    <!-- Fake Calibration -->
+    <node pkg="rostopic" type="rostopic" name="fake_joint_calibration" args="pub calibrated std_msgs/Bool true" />
+  </group>
+
+  <!-- UR5 IN SIMULATION -->
+  <group if="$(arg ur5_enabled)">
+    <!-- Load controller -->
+    <rosparam command="load" file="$(find vtrex_control)/config/control_ur5.yaml" />
+    <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="arm_controller --shutdown-timeout 3"/>
+    <!-- Fake Calibration -->
+    <node pkg="rostopic" type="rostopic" name="fake_joint_calibration" args="pub calibrated std_msgs/Bool true" />
+    <!-- Stow the arm -->
+    <!-- node pkg="husky_control" type="stow_ur5" name="stow_ur5"/ -->
+  </group>
+
+  <group if="$(arg kinectv2_enabled)">
+
+    <!-- Include poincloud_to_laserscan if simulated Kinect is attached -->
+    <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan" output="screen">
+
+        <remap from="cloud_in" to="camera/depth/points"/>
+        <remap from="scan" to="camera/scan"/>
+        <rosparam>
+            target_frame: base_link # Leave empty to output scan in the pointcloud frame
+            tolerance: 1.0
+            min_height: 0.05
+            max_height: 1.0
+
+            angle_min: -0.610865 # -28.75*M_PI/180.0
+            angle_max: 0.610865 # 28.75*M_PI/180.0
+            angle_increment: 0.005 # M_PI/360.0
+            scan_time: 0.03333
+            range_min: 0.5
+            range_max: 4.5
+            use_inf: true
+
+            # Concurrency level, affects number of pointclouds queued for processing and number of threads used
+            # 0 : Detect number of cores
+            # 1 : Single threaded
+            # 2->inf : Parallelism level
+            concurrency_level: 1
+        </rosparam>
+    </node>
+
+  </group>
+
+  <node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model"
+    args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex -J right_j0 3.14"/>
+
+</launch>

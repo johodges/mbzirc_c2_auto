@@ -135,17 +135,17 @@ include_directories(
 # add_dependencies(manual_drive ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(joyUR5_teleop src/joyUR5.cpp)
+##add_executable(joyUR5_teleop src/joyUR5.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(manual_drive_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(joyUR5_teleop
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
+##target_link_libraries(joyUR5_teleop
+##  ${Boost_LIBRARIES}
+##  ${catkin_LIBRARIES}
+##)
 
 #############
 ## Install ##
@@ -156,10 +156,10 @@ target_link_libraries(joyUR5_teleop
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(
-  TARGETS joyUR5_teleop
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+##install(
+##  TARGETS joyUR5_teleop
+##  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+##)
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS manual_drive manual_drive_node

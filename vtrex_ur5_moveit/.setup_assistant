@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: vtrex_description
+    relative_path: urdf/vtrex.xacro
+  SRDF:
+    relative_path: config/vtrex.srdf
+  CONFIG:
+    author_name: Jonathan Hodges
+    author_email: johodges@vt.edu
+    generated_timestamp: 1486834523

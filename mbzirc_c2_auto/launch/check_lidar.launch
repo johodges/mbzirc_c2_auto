@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="node_logging" value="DEBUG"/>
+  <param name="sm_version" value="old"/>
+  <param name="physical_robot" value="true"/>
+
+  <include file="$(find lms1xx)/launch/LMS1xx.launch" />
+  <node name="findbox" pkg="mbzirc_c2_auto" type="findbox.py" />
+  <node name="orient_scan" pkg="mbzirc_c2_auto" type="orient_scan.py" />
+  <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />
+</launch>

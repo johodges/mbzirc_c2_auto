@@ -1,0 +1,22 @@
+arm_controller:
+  type: position_controllers/JointTrajectoryController
+  topic: "test"
+  joints:
+     - ur5_arm_shoulder_pan_joint
+     - ur5_arm_shoulder_lift_joint
+     - ur5_arm_elbow_joint
+     - ur5_arm_wrist_1_joint
+     - ur5_arm_wrist_2_joint
+     - ur5_arm_wrist_3_joint
+  constraints:
+      goal_time: 5.0
+      stopped_velocity_tolerance: 5.0
+      ur5_arm_shoulder_pan_joint: {trajectory: 5.0, goal: 5.0}
+      ur5_arm_shoulder_lift_joint: {trajectory: 5.0, goal: 5.0}
+      ur5_arm_elbow_joint: {trajectory: 5.0, goal: 5.0}
+      ur5_arm_wrist_1_joint: {trajectory: 5.0, goal: 5.0}
+      ur5_arm_wrist_2_joint: {trajectory: 5.0, goal: 5.0}
+      ur5_arm_wrist_3_joint: {trajectory: 5.0, goal: 5.0}
+  stop_trajectory_duration: 0.5
+  state_publish_rate:  25
+  action_monitor_rate: 10

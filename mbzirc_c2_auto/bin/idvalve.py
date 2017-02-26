@@ -22,7 +22,7 @@
 """
 
 import rospy
-# import rospkg
+import rospkg
 # import actionlib
 # from actionlib_msgs.msg import *
 # from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
@@ -48,6 +48,7 @@ class move2op():
         # Enable shutdown in rospy (This is important so we cancel any move_base goals
         # when the node is killed)
         rospy.on_shutdown(self.shutdown) # Set rospy to execute a shutdown function when exiting
+        rospack = rospkg.RosPack()  # Find rospackge locations
 
         # Store camera parameters
         self.camera_fov_h = 1.5708
@@ -59,12 +60,14 @@ class move2op():
         self.xA = 0.380
         self.save_result = True
         self.preview_flag = True           # Should we preview images
-        self.preview_result = True
-        self.indir = '/home/jonathan/'
-        self.lim_adjust = 140
+        self.preview_result = False
+        self.indir = str(rospack.get_path('mbzirc_c2_auto')+'/params/')
+        self.lim_adjust = -100
+        wrench_mask_file = rospy.get_param('wrench_mask_file')
 
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
+        self.wrench_mask = cv2.imread(wrench_mask_file)
         self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
         self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
         self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
@@ -179,7 +182,7 @@ class move2op():
             z = z.reshape((sz[0]*sz[1],1))
             print np.shape(z)
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-            ret,labels,centers = cv2.kmeans(z,3,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+            ret,labels,centers = cv2.kmeans(z,2,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
             mean_sort = np.argsort(centers.flatten())
             z = z.reshape((sz[0],sz[1]))
             labels = labels.reshape((sz[0],sz[1]))
@@ -202,16 +205,18 @@ class move2op():
         print "Image count: ", img_count
         #'/home/administrator/idvalve_' + str(img_count) + '.png'
         
-        cv2.imwrite('%sidvalve_rgb_%s_%s.png' % (self.indir, str(int(1000*self.xA)), str(img_count)),cv_image)
+        #cv2.imwrite('%sidvalve_rgb_%s_%s.png' % (self.indir, str(int(1000*self.xA)), str(img_count)),cv_image)
 
         cimg = cv2.medianBlur(cv_image,5)
         lims = stretchlim(cimg)
         print lims
         img_invert = 255-cimg.copy()
+        img_invert[self.wrench_mask == 255] = 0
         if self.preview_flag:
             cv2.imshow('img_invert',img_invert)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+        """
         img_adj = imadjust(img_invert.copy(),lims)
         if self.preview_flag:
             cv2.imshow('img_adj',img_adj)
@@ -222,7 +227,8 @@ class move2op():
             cv2.imshow('img_remove',img_remove)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        img_remove_gray = cv2.cvtColor(img_remove, cv2.COLOR_BGR2GRAY)
+        """
+        img_remove_gray = cv2.cvtColor(img_invert, cv2.COLOR_BGR2GRAY)
         """
         img_hsv = cv2.cvtColor(cimg, cv2.COLOR_BGR2HSV)
         #print np.max(img_hsv[:,:,0]), np.max(img_hsv[:,:,1]), np.max(img_hsv[:,:,2])
@@ -234,12 +240,12 @@ class move2op():
                     img_hsv[i,j,:] = 0
                 #img_remove_gray[i,j] = np.max(img_remove[i,j,:])
         img_remove_gray = img_hsv[:,:,2]
-        """
         if self.preview_flag:
             cv2.imshow('img_remove_gray',img_remove_gray)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        
+        """
+        """
         [A,B] = quantize_image(img_remove_gray.copy())
         if self.preview_flag:
             cv2.imshow('quantize_A',A)
@@ -249,7 +255,7 @@ class move2op():
             cv2.imshow('quantize_B',B)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-
+        """
 
         #z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
         # Run K-means to det. centers and to which group each point belongs
@@ -270,27 +276,26 @@ class move2op():
 
                 
 
-
-        #cv2.imshow('Image before circles',img_remove_gray)
-        #cv2.waitKey(0)
-        #cv2.imwrite('/home/administrator/idvalve_gra_%s_%s.png' % (str(int(1000*self.xA)), str(img_count)),cv_image_gray)
         rospy.set_param('img_count',img_count)
-        #cv2.imshow('Gray',cimg)
-        #cv2.waitKey(0)
-        #self.xA = 0.455
         rad_px_old =int(130*340/(1000*self.xA))
         rad_px = int(-0.9143*self.xA*1000+471.31+20)
         print "Estimated pixel radius: ", rad_px
         print "Estimated old pixel radius: ", rad_px_old
         term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
         flag = cv2.KMEANS_RANDOM_CENTERS
-        A_circles = cv2.HoughCircles(A, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=40,
-            minRadius=rad_px-50, maxRadius=rad_px+300)
+        #val_circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=30, param2=15, minRadius=rad_px-100, maxRadius=rad_px+100)
+        val_circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=80, param2=40, minRadius=100, maxRadius=400)
+        val_rad = val_circles[0,:,2]
+
+        """
+
+        A_circles = cv2.HoughCircles(A, cv.CV_HOUGH_GRADIENT, 1, 1, param1=30, param2=15,
+            minRadius=rad_px-200, maxRadius=rad_px+200)
         A_z = np.transpose(np.vstack((A_circles[0,:,0],A_circles[0,:,1])))
         ret2, labels, A_centers = cv2.kmeans(A_z, 1, term_crit, 100, flag)
 
-        B_circles = cv2.HoughCircles(B, cv.CV_HOUGH_GRADIENT, 1, 1, param1=100, param2=40,
-            minRadius=rad_px-50, maxRadius=rad_px+300)
+        B_circles = cv2.HoughCircles(B, cv.CV_HOUGH_GRADIENT, 1, 1, param1=30, param2=15,
+            minRadius=rad_px-400, maxRadius=rad_px+400)
         B_z = np.transpose(np.vstack((B_circles[0,:,0],B_circles[0,:,1])))
         ret2, labels, B_centers = cv2.kmeans(B_z, 1, term_crit, 100, flag)
         A_centers = np.floor(A_centers)
@@ -309,76 +314,48 @@ class move2op():
         if quant_vote[0] > quant_vote[1]:
             val_loc = A_centers
             val_rad = A_circles[0,:,2]
+            val_circles = A_circles
             wrench_loc = B_centers
             wrench_rad = B_circles[0,:,2]
             print "Quantize A wins."
         else:
             val_loc = B_centers
+            val_circles = B_circles
             val_rad = B_circles[0,:,2]
             wrench_loc = A_centers
-            wrench_rad = B_circles[0:,2]
+            wrench_rad = A_circles[0:,2]
             print "Quantize B wins."
-
         centers = val_loc
+        """
         radius_med = np.median(val_rad)
+        B_circles = val_circles
         ind = 0
-        if A_centers is not None:
-            """
-        circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=60, param2=30
-, minRadius=rad_px-50, maxRadius=rad_px+50)
-        #cv2.imshow('Image before circles',cimg)
-        term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
-        flag = cv2.KMEANS_RANDOM_CENTERS
-        k = 0
-        ret2 = 999999
-        while ret2 > 500000:
-            k = k+1
-            z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
-            ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-            print "Ret2: ", ret2
-
-        if circles is not None:
-            img_hou_all = cimg.copy()
-            center_x = circles[0,:,0]
-            center_y = circles[0,:,1]
-            radius = circles[0,:,2]
-            for n in range(len(circles[0,:,1])):
-                cv2.circle(img_hou_all,(center_x[n],center_y[n]), radius[n],
-                    (255,255,255), 2, cv2.CV_AA)
-            if self.preview_flag:
-                cv2.imshow('img',img_hou_all)
-                cv2.waitKey(0)
-
-            z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
-            term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
-            flag = cv2.KMEANS_RANDOM_CENTERS
-            #k = 1
-            ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-            cents = np.power(centers[:]-[1920/2,1080/2],2)
-            dist = np.sum(cents,axis=1)
-            print "Dist: ", dist
-            ind = np.argmin(dist)
-            dist[ind] = 99999999
-            print "Dist: ", dist
-            ind = np.argmin(dist)
-
-            cv2.waitKey(0)
-            radius_med = np.median(radius)
-            print "Center location: ", centers[ind]
-            print "Median radius: ", radius_med
-            val_loc = [(centers[ind][0]),(centers[ind][1])]
-            """
+        print val_circles
+        print np.shape(val_circles)
+        print val_circles[0][:,0]
+        if True:   
+            cent_x = np.median(val_circles[0][:,0])
+            cent_y = np.median(val_circles[0][:,1])
+            rad = np.median(val_circles[0][:,2])
             #k_y = 0.22*308/(self.xA*1000)
             #k_z = 0.27*308/(self.xA*1000)
             k_y = 0.5*308/(self.xA*1000)
             k_z = 0.5*308/(self.xA*1000)
-            stem_y = int(centers[ind][0]+k_y*(centers[ind][0]-1920/2))
-            stem_z = int(centers[ind][1]+k_z*(centers[ind][1]-1080/2))
+            #stem_y = int(centers[ind][0]+k_y*(centers[ind][0]-1920/2))
+            #stem_z = int(centers[ind][1]+k_z*(centers[ind][1]-1080/2))
+            stem_y = int(cent_x+k_y*(cent_x-1920/2))
+            stem_z = int(cent_y+k_z*(cent_y-1080/2))
             img_circ_med = cv_image.copy()
-            for n in range(0,len(B_circles[0][:][0])):
-                cv2.circle(img_circ_med,(B_circles[0][n][0],B_circles[0][n][1]), B_circles[0][n][2],(0,255,0), 2, cv2.CV_AA)
-            cv2.circle(img_circ_med,(centers[ind][0],centers[ind][1]), radius_med,
-                    (0,255,0), 2, cv2.CV_AA)
+            print "CENTX, CENTY: ", cent_x, cent_y
+            print "STEMY, STEMZ: ", stem_y, stem_z
+            print "xA: ", self.xA
+            #for n in range(0,len(B_circles[0][:,0])):
+            #    cv2.circle(img_circ_med,(val_circles[0][n][0],val_circles[0][n][1]), val_circles[0][n][2],(0,0,255), 2, cv2.CV_AA)
+            cv2.circle(img_circ_med,(cent_x,cent_y),rad,(0,255,0), 2, cv2.CV_AA)
+            cv2.circle(img_circ_med,(cent_x,cent_y),5,(0,255,0), -1, cv2.CV_AA)
+            cv2.circle(img_circ_med,(960,540),5,(0,0,255), -1, cv2.CV_AA)
+            #cv2.circle(img_circ_med,(centers[ind][0],centers[ind][1]), radius_med,
+            #        (0,255,0), 2, cv2.CV_AA)
             cv2.circle(img_circ_med,(stem_y,stem_z), 5,
                     (255,0,0), 2, cv2.CV_AA)
             if self.preview_flag or self.preview_result:
@@ -391,82 +368,7 @@ class move2op():
             #cv2.imwrite('/home/administrator/idvalve_vis_%s.png' % str(img_count),img_circ_med)
             #cv2.imshow('Image median circle', img_circ_med)
             #cv2.waitKey(0)
-            """
-            *************************************************************
-            All of this code was done without color detection and may be useful in the future.
-            *************************************************************
-            center_x = circles[0,:,0]
-            center_y = circles[0,:,1]
-            radius = circles[0,:,2]
-            for n in range(len(circles[0,:,1])):
-                cv2.circle(cimg,(center_x[n],center_y[n]), radius[n],
-                    (0,0,244), 2, cv2.CV_AA)
-
-            z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
-            # Run K-means to determine centers and to which group each point belongs.
-            term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
-            flag = cv2.KMEANS_RANDOM_CENTERS
-            k = 3
-            ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-            hihi, bin_edges = np.histogram(labels, bins=3, range=[0,2])
-            print hihi
-
-            mn = np.min(hihi)
-            ind = np.argmin(hihi)
-            rospy.logdebug("All k-means centers: %s", " ".join(str(x) for x in centers))
-            if mn < 50:
-                rospy.logdebug("Optimum number of groups is 3")
-                sz = np.shape(centers)
-                centers2 = np.zeros([sz[0]-1,sz[1]])
-                ct = 0
-                for i in range(0,3):
-                    if i != ind:
-                        centers2[ct,:] = centers[i,:]
-                        ct = ct + 1
-                centers = centers2
-            else:
-                rospy.logdebug("Optimum number of groups is 2")
-                k = 2
-                ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-            centers = centers[centers[:,0].argsort()]
-            print "Updated k-means centers: ", centers
-            # Determine the center of the valve in the image
-            cents = centers.copy()
-            sz_full = np.shape(cimg)
-            cents[:,0] = centers[:,0] - sz_full[1]/2
-            cents[:,1] = centers[:,1] - sz_full[0]/2
-            cents = np.multiply(cents,cents)
-
-            cents2 = centers.copy()
-            cents2[0,0] = centers[0,0]-centers[1,0]
-            cents2[0,1] = centers[0,1]-centers[1,1]
-            cents2 = np.multiply(cents2,cents2)
-            dist2 = np.power(cents2[0,0]+cents2[0,1],0.5)/2
-            if dist2 > 50:
-                rospy.logdebug("Optimum number of groups is 2")
-                dist = np.zeros([k,1])
-                for i in range(0,2):
-                    dist[i] = np.power(cents[i,0]+cents[i,1],0.5)/2
-                dist_loc = np.argmin(dist)
-                rospy.logdebug("Minimum distance from center: %s", str(dist_loc))
-                if len(dist) > 1:
-                   dist[dist_loc] = 99999999
-                   dist_loc = np.argmin(dist)
-                else:
-                   dist_loc = dist_loc
-                rospy.logdebug("Minimum distance from center 2nd place: %s", str(dist_loc))
-                val_loc = [centers[dist_loc,0],centers[dist_loc,1]]
-            else:
-                rospy.logdebug("Optimum number of groups is 1")
-                k = 1
-                ret2, labels, centers = cv2.kmeans(z, k, term_crit, 100, flag)
-                val_loc = [centers[0,0],centers[0,1]]
-            rospy.logdebug("Valve location in px: %s %s", str(val_loc[0]), str(val_loc[1]))
-            #cv2.imshow('All Circles',cimg)
-            #cv2.waitKey(0)
-            cv2.imwrite('/home/administrator/valveID_0_circs.png',cimg)
-            rospy.logdebug("Valve in pixels: %s", " ".join(str(x) for x in val_loc))
-            """
+            val_loc = [stem_y,stem_z]
 
             # Find camera dimensions wrt the base coordinate system
             camera_y_mx = self.xA*np.arctan(self.camera_fov_h/2)
