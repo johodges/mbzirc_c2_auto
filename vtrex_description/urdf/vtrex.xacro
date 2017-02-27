@@ -248,6 +248,19 @@
         <origin xyz="0.6 0 0.23" rpy="0 0 -1.57"/>
       </HDL-32E>
     </xacro:if>
+
+    <link name="hokuyo">
+      <inertial>
+        <mass value="0.001"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="${dummy_inertia}" ixy="0.0" ixz="0.0" iyy="${dummy_inertia}" iyz="0.0" izz="${dummy_inertia}"/>
+      </inertial>
+    </link>
+    <joint name="hokuyo_mount" type="fixed">
+      <parent link="base_link"/>
+      <child link="hokuyo"/>
+      <origin xyz="0.6 0 0.2" rpy="3.14 0 0"/>
+    </joint>
 <!--############################################UR5##################################################-->
 
     <xacro:if value="$(arg ur5_enabled)">

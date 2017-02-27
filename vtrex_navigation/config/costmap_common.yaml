@@ -13,8 +13,8 @@ static:
     subscribe_to_updates: true
 
 obstacles:
-    observation_sources: scan
-    scan_filtered: {data_type: LaserScan, topic: scan, marking: true, clearing: true}
+    observation_sources: scan_close_range
+    scan_close_range: {data_type: LaserScan, topic: scan/close_range, marking: true, clearing: true}
 
 inflation:
     inflation_radius: 0.7
