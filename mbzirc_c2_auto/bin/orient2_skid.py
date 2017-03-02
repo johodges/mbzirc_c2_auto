@@ -347,7 +347,7 @@ class orient():
             self.R = np.array([[np.cos(self.theta),-np.sin(self.theta)],
                 [np.sin(self.theta),np.cos(self.theta)]])
             return None
-
+            """
         def skid_steer_move(target_pose,target_orient):
             update_rot()
             rospy.loginfo("Current position:")
@@ -357,23 +357,82 @@ class orient():
             mid_ang = np.arctan((target_pose[1]-self.y0)/(target_pose[0]-self.x0))
             euler = tf.transformations.euler_from_quaternion(target_orient)
             ang_to_rot = mid_ang-self.yaw
+            rospy.loginfo("current angle")
+            rospy.loginfo(self.yaw)
+            rospy.loginfo("mid_ang")
+            rospy.loginfo(mid_ang)
             rospy.loginfo("Starting Skid Steer #1.")
-            rot_cmd(1*ang_to_rot/abs(ang_to_rot),ang_to_rot)
+            rot_cmd(1.0*ang_to_rot/abs(ang_to_rot),ang_to_rot)
+            rospy.sleep(10)
             q = tf.transformations.quaternion_from_euler(
                 0,0,mid_ang)
+            q = target_pose
             self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
                 Quaternion(q[0],q[1],q[2],q[3]))
             self.goal.target_pose.header.frame_id = 'odom'
             rospy.loginfo("Starting drive to target pose.")
             self.move_base.send_goal(self.goal)
             wait_for_finish(self.stalled_threshold)
+            rospy.sleep(10)
             update_rot()
+            """
+            """
             self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
                 Quaternion(target_orient[0],target_orient[1],target_orient[2],target_orient[3]))
             self.goal.target_pose.header.frame_id = 'odom'
             rospy.loginfo("Starting Skid Steer #2.")
             self.move_base.send_goal(self.goal)
             wait_for_finish(self.stalled_threshold)
+            rospy.sleep(20)
+            """
+            """
+            return None
+            """
+
+
+
+        def skid_steer_move(target_pose,target_orient):
+            update_rot()
+            rospy.loginfo("Current position:")
+            rospy.loginfo([self.x0, self.y0])
+            rospy.loginfo("Target position:")
+            rospy.loginfo(target_pose)
+            mid_ang = np.arctan((target_pose[1]-self.y0)/(target_pose[0]-self.x0))
+            q = tf.transformations.quaternion_from_euler(
+                0,0,mid_ang)
+            self.goal.target_pose.pose = Pose(Point(self.x0,self.y0,0),
+                Quaternion(q[0],q[1],q[2],q[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            self.move_base.send_goal(self.goal)
+            rospy.loginfo("Skid steer 1")
+            wait_for_finish(self.stalled_threshold)
+            rospy.sleep(5)
+            self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
+                Quaternion(q[0],q[1],q[2],q[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            self.move_base.send_goal(self.goal)
+            rospy.loginfo("Starting drive to target pose.")
+            wait_for_finish(self.stalled_threshold)
+            rospy.sleep(5)
+            q = target_orient
+            self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
+                Quaternion(q[0],q[1],q[2],q[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+
+            self.move_base.send_goal(self.goal)
+            rospy.loginfo("Skid steer 2")
+            wait_for_finish(self.stalled_threshold)
+            rospy.sleep(5)
+            update_rot()
+            """
+            self.goal.target_pose.pose = Pose(Point(target_pose[0],target_pose[1],0),
+                Quaternion(target_orient[0],target_orient[1],target_orient[2],target_orient[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            rospy.loginfo("Starting Skid Steer #2.")
+            self.move_base.send_goal(self.goal)
+            wait_for_finish(self.stalled_threshold)
+            rospy.sleep(20)
+            """
             return None
 
 

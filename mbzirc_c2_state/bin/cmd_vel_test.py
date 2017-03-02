@@ -17,7 +17,7 @@ if __name__ == '__main__':
     x_vel = 0.0;
     z_vel = 0.0;
     sleep_time = 0.1
-    time_to_move = 5 #abs(dist_to_move/x_vel)
+    time_to_move = 10 #abs(dist_to_move/x_vel)
 
     vel_twist = Twist()
     vel_twist.linear.x = x_vel

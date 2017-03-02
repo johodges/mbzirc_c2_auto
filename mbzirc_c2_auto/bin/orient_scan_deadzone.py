@@ -60,14 +60,14 @@ class laser_listener():
         """
         # Name this node, it must be unique
         rospy.init_node('orient_scan', anonymous=True)
-        self.range = [-0.5,0.5]
+        self.range = [-1.5,1.5]
         try:
             fake_lidar = rospy.get_param('fake_lidar')
         except:
             fake_lidar = 'False'
         # Set up ROS subscriber callback routines
         if fake_lidar == 'False':
-            rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.callback,
+            rospy.Subscriber("/scan/close_range",sensor_msgs.msg.LaserScan,self.callback,
                 queue_size=1)
         self.pub = rospy.Publisher("/bearing",numpy_msg(Floats), queue_size=1)
         if fake_lidar == 'True':
@@ -84,7 +84,7 @@ class laser_listener():
         rate = rospy.Rate(10)
 
         # Initialize parameters
-        thresh = 0.5
+        thresh = 0.1
 
         # Set max/min angle and increment
         scan_min = data.angle_min
@@ -92,7 +92,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max,scan_inc)-1.57
+        y = np.arange(scan_min,scan_max,scan_inc)*-1#-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)
@@ -122,15 +122,14 @@ class laser_listener():
             xlen = len(x2[i])-0
 
             # Only consider scans with at least 4 entries (cuts down on noise)
-            if xlen > 4:
+            if xlen > 2:
 
                 # Calculate how long the scan is
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
-
                 # Check if the scan is just right
                 if dist2_sum > 0.25 and dist2_sum < 5:
                     mxmx = max(iii for iii in x_coord2[i] if iii < 30)
-                    if mxmx > 0.5:
+                    if mxmx > 0.25:
                         # Find median angle of scan
                         ang = np.median(y2[i])
                         idx = np.argwhere(y2[i] == ang)

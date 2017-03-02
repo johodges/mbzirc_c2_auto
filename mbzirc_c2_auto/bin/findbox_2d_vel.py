@@ -176,12 +176,12 @@ def callback(data):
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
                 if dist2_sum < 0.25:
                     if plot_data:
-                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',
+                        plt.plot(x_coord2[i][1:xlen],y_coord2[i][1:xlen],'k-',
                             linewidth=2.0)
                 else:
                     if dist2_sum > 3:
                         if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',
+                            plt.plot(x_coord2[i][1:xlen],y_coord2[i][1:xlen],'b-',
                                 linewidth=2.0)
                     else:
                         ang = np.median(x2[i])# - (math.pi / 2.0)
@@ -200,10 +200,10 @@ def callback(data):
 
                         if ang > -1.4 and ang < 1.4 and detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
                             if plot_data:
-                                plt.plot(x2[i][1:xlen],y2[i][1:xlen],'g-', linewidth=2.0)
+                                plt.plot(x_coord2[i][1:xlen],y_coord2[i][1:xlen],'g-', linewidth=2.0)
                         else:
                             if plot_data:
-                                plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-', linewidth=2.0)
+                                plt.plot(x_coord2[i][1:xlen],y_coord2[i][1:xlen],'r-', linewidth=2.0)
         plt.ylim([0,20])
         plt.xlim([-5,5])
         plt.gca().invert_xaxis()
@@ -227,7 +227,7 @@ def laser_listener():
     '''
     pass
     rospy.init_node('findbox', anonymous=True)
-    rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,callback, queue_size=1)
+    rospy.Subscriber("/scan/long_range",sensor_msgs.msg.LaserScan,callback, queue_size=1)
     rospy.spin()
 
 if __name__ == '__main__':

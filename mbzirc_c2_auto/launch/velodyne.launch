@@ -5,7 +5,7 @@
   <arg name="max_z" default="2.0"/>
   <arg name="min_range" default="0.60"/>
   <arg name="frame_id" default="velodyne_link"/>
-  <arg name="topic" default="scan"/>
+  <arg name="topic" default="scan/long_range"/>
   <!-- Run velodyne publisher -->
   <include file="$(find but_velodyne_proc)/launch/32e_points.launch">
     <arg name="calibration" value="$(arg calibration)"/>
