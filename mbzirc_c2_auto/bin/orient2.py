@@ -2,9 +2,7 @@
 
 """ orient2.py - Version 1.0 2016-10-12
 Author: Jonathan Hodges
-
 This software uses a LIDAR scan to move around a box looking for wrenches.
-
 Subscribers:
     /bearing: array containing [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
     /move_base/feedback: Topic containing current position and orientation of
@@ -14,13 +12,11 @@ Subscribers:
     /wrench_center: Topic containing center of all wrenches
     /wrench_centroids: Topic containing center of wrenches in pixels
     /tf: TF tree
-
 Publishers:
     /wrench_mm: wrench location in global coordinates
     /valve_mm: valve location in global coordinates
     /joy_teleop/cmd_vel: topic to manually move the robot
     /move_base/goal: goal sent to the move_base node in ROS
-
 Parameters:
     valve: valve location in global coordinates
     wrench: wrench location in global coordinates
@@ -30,17 +26,14 @@ Parameters:
     ugv_position: current ugv position in global coordinates
     smach_state: status for state machine
     wrenches_found: feedback to wrench_detect wrenches have been found
-
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
-
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details at:
 http://www.gnu.org/licenses/gpl.html
-
 """
 
 import rospy
@@ -59,9 +52,6 @@ import math
 
 class orient():
     """This class drives the husky around the board looking for wrenches.
-
-
-
     Attributes:
         big_board_offset: offset from center of the board moving left to ensure
             the whole board has been checked.
@@ -98,7 +88,6 @@ class orient():
         yaw: z orientation from feedback from move_base server
         theta: z orientation from feedback from move_base server
         R: rotation matrix to convert local system to global system
-
     Subscribers:
         /bearing: array containing
             [angle,x_med,xmn,xmx,ymn,ymx,target_x,target_y]
@@ -109,13 +98,11 @@ class orient():
         /wrench_center: Topic containing center of all wrenches
         /wrench_centroids: Topic containing center of wrenches in pixels
         /tf: TF tree
-
     Publishers:
         /wrench_mm: wrench location in global coordinates
         /valve_mm: valve location in global coordinates
         /joy_teleop/cmd_vel: topic to manually move the robot
         /move_base/goal: goal sent to the move_base node in ROS
-
     Parameters:
         valve: valve location in global coordinates
         wrench: wrench location in global coordinates
@@ -125,22 +112,18 @@ class orient():
         ugv_position: current ugv position in global coordinates
         smach_state: status for state machine
         wrenches_found: feedback to wrench_detect wrenches have been found
-
     """
 
     def __init__(self):
         """This initializes the various attributes in the class
-
         A few key tasks are achieved in the initializer function:
             1. We connect to the move_base server in ROS
             2. We start the ROS publishers and subscribers
             3. We initialize shared parameters
-
         These are the possible returns from move_base.get_state() function.
         Included for reference:
         goal_states: ['PENDING', 'ACTIVE', 'PREEMPTED','SUCCEEDED', 'ABORTED',
                       'REJECTED','PREEMPTING', 'RECALLING', 'RECALLED', 'LOST']
-
         """
         # Establish ROS node
         rospy.init_node('orient', anonymous=True)
@@ -153,7 +136,7 @@ class orient():
         self.wp = -1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
         self.big_board_offset = 0       # Offset for a large board
-
+        
         # Hardware Parameters
         self.camera_fov_h = 1.5708
         self.camera_fov_v = 1.5708
@@ -241,7 +224,6 @@ class orient():
     def callback(self, bearing):
         """This callback drives around the board looking for wrenches. Once
         found, it centers on the wrenches and moves close to the board.
-
         The general process is:
             1. Move to wrench detection position from /bearing topic
             2. Check if wrenches are visible on the surface
@@ -250,7 +232,6 @@ class orient():
                 If yes, move the husky clockwise around the panel.
             4. Repeat 1-3 until wrenches are identified.
             5. Kill this node
-
         """
 
         def wait_for_finish(stalled_threshold):
@@ -286,12 +267,12 @@ class orient():
             """This subroutine manually moves the husky forward or backward
             a fixed amount at a fixed velocity by bypassing the move_base
             package and sending a signal directly to the wheels.
-
+                
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
-            """
+            """ 
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
             twist.linear.x = ve
@@ -306,7 +287,6 @@ class orient():
             """This subroutine manually rotates the husky along the z-axis a
             fixed amount at a fixed velocity by bypassing the move_base package
             and sending a signal directly to the wheels.
-
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
@@ -353,7 +333,6 @@ class orient():
             current location. Since the move_base server does not publish
             feedback without an active goal, we set an initial goal to get our
             position.
-
             Ideally this would be replaced by pulling the position of the UGV
             from a different feedback topic or the TF tree.
             """
@@ -370,6 +349,7 @@ class orient():
             update_rot()
             """Extract points of interest from the /bearing topic:
             point A: median point of laser scan
+            point C: unused in this routine
             mn/mx: minimum/maximum extents of the object
             """
             ang = bearing.data[0]
@@ -411,37 +391,21 @@ class orient():
                 except:
                     lidar_to_use = 'sick'
                 if lidar_to_use == 'sick':
-<<<<<<< HEAD
-                    if self.tftree.frameExists("/base_laser") and self.tftree.frameExists("/camera"):
-                        t = self.tftree.getLatestCommonTime("/base_laser",
-                            "/camera")
-                        posi, quat = self.tftree.lookupTransform("/base_laser",
-                            "/camera", t)
-=======
                     if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
                         t = self.tftree.getLatestCommonTime("/base_link",
                             "/gripper_camera")
                         posi, quat = self.tftree.lookupTransform("/base_link", 
                             "/gripper_camera", t)
->>>>>>> upstream/master
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
                         rospy.logdebug("TF Quaternion from base_link to camera:")
                         rospy.logdebug(quat)
                 if lidar_to_use == 'velodyne':
-<<<<<<< HEAD
-                    if self.tftree.frameExists("/laser_base_link") and self.tftree.frameExists("/camera"):
-                        t = self.tftree.getLatestCommonTime("/laser_base_link",
-                            "/camera")
-                        posi, quat = self.tftree.lookupTransform("/laser_base_link",
-                            "/camera", t)
-=======
                     if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
                         t = self.tftree.getLatestCommonTime("/base_link",
                             "/gripper_camera")
                         posi, quat = self.tftree.lookupTransform("/base_link", 
                             "/gripper_camera", t)
->>>>>>> upstream/master
                         rospy.logdebug("TF Position from base_link to camera:")
                         rospy.logdebug(posi)
                         rospy.logdebug("TF Quaternion from base_link to camera:")
@@ -518,7 +482,7 @@ class orient():
                     rospy.loginfo("Object in local coord (x,y): (%f,%f)",
                         x_loc, y_loc)
                     obj_loc = np.array([[x_loc],[y_loc]])
-                    po = 0.8 # Distance off board we want to be
+                    po = 0.8 # Distance off board we want to be 
                     back_it_up(0.25,(x_loc-po))
                     self.fake_smach = 4
                 else:
@@ -629,7 +593,7 @@ class orient():
                 """
                 # Check if we see wrenches
                 if np.shape(self.wrench)[0] > 5:
-
+                    
                     self.wrench_counter = self.wrench_counter+1
                     rospy.sleep(self.rest_time)
                     # Make sure we saw wrenches 5 times through the loop
@@ -682,5 +646,4 @@ if __name__ == '__main__':
         orient()
         rospy.spin()
     except rospy.ROSInterruptException:
-        rospy.loginfo("Orient killed.")
-
+rospy.loginfo("Orient killed.")
