@@ -267,8 +267,8 @@ def main(sim_mode):
         # Define the NAVIGATE Concurrence state (sm_nav_con)
         sm_nav_con = smach.Concurrence(outcomes=['go2Orient','go2manualOps'],
                                        default_outcome='go2Orient',
-                                       child_termination_cb='nav_term_cb',
-                                       outcome_cb='nav_out_cb')
+                                       child_termination_cb=nav_term_cb,
+                                       outcome_cb=nav_out_cb)
 
         with sm_nav_con:
           smach.Concurrence.add('FINDBOARD',FindBoard())
