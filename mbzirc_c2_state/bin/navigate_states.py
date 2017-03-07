@@ -27,6 +27,7 @@ import smach
 import subprocess
 import os
 import signal
+from sensor_msgs.msg import Joy
 import sys
 
 
@@ -74,6 +75,8 @@ class FindBoard(smach.State):
 
     def execute(self, userdata):
 
+        ret_state = 'normal'
+
         rospy.loginfo('Searching for board')
         try:
             lidar_to_use = rospy.get_param('lidar')
@@ -89,14 +92,44 @@ class FindBoard(smach.State):
         rospy.sleep(10)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
-        b.wait()
-        rospy.loginfo('Searching for board')
-        os.killpg(os.getpgid(a.pid), signal.SIGTERM)
-        rospy.sleep(0.1)
 
-        ret_state = rospy.get_param('smach_state')
+        while b.poll() is None:
+            if self.preempt_requested():
+                rospy.loginfo("Navigation preempted for manual mode.")
+                b.kill()
+                rospy.sleep(0.1)
+                ret_state = 'preempted'
+
+        if ret_state == 'normal':
+            rospy.loginfo('Completed searching for board')
+            os.killpg(os.getpgid(a.pid), signal.SIGTERM)
+            rospy.sleep(0.1)
+            ret_state = rospy.get_param('smach_state')
+
         return ret_state
 
+
+class ManNavCheck(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['shiftMode','preempted'])
+        self.status = 'waiting'
+        self.sub = rospy.Subscriber('joy',Joy,self.ck_joystick)
+
+    def ck_joystick(self,msg):
+        if msg.buttons[3] == 1:
+            self.status = 'shiftMode'
+        else:
+            self.status = 'waiting'
+
+    def execute(self, userdata):
+        rospy.loginfo(self.status)
+        while self.status == 'waiting':
+            if self.preempt_requested():
+                rospy.loginfo('Autonomous navigation successful.  Preempting manual check.')
+                self.service_preempt()
+                return 'preempted'
+
+        return self.status
 
 # class Localize(smach.State):
 #     """Automatically localize the UGV in the arena

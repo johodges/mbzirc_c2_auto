@@ -125,6 +125,23 @@ class InitSimulation(smach.State):
         rospy.sleep(0.5)
         return userdata.sim_type_in
 
+def nav_term_cb(outcome_map):
+    """ Termination callback to set concurrent nav behavior
+    """
+    if outcome_map['FINDBOARD'] == 'atBoard':
+        return True
+    elif outcome_map['MANUAL_NAV_CHECK'] == 'shiftMode':
+        return True
+    else:
+        return False
+
+def nav_out_cb(outcome_map):
+    if outcome_map['NAV'] == 'atBoard':
+        return 'go2Orient'
+    elif outcome_map['MAN_CK'] == 'shiftMode':
+        return 'go2manualOps'
+    else:
+        return 'go2manualOps'
 
 def main(sim_mode):
     """Defines the state machines for Smach
@@ -247,11 +264,21 @@ def main(sim_mode):
 
 
         #******************************************************************
+        # Define the NAVIGATE Concurrence state (sm_nav_con)
+        sm_nav_con = smach.Concurrence(outcomes=['go2Orient','go2manualOps'],
+                                       default_outcome='go2Orient',
+                                       child_termination_cb='nav_term_cb',
+                                       outcome_cb='nav_out_cb')
+
+        with sm_nav_con:
+          smach.Concurrence.add('FINDBOARD',FindBoard())
+          smach.Concurrence.add('MANUAL_NAV_CHECK',ManNavCheck())
+
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
-            smach.StateMachine.add('FINDBOARD', FindBoard(),
-                                   transitions={'atBoard' : 'readyToOrient',
-                                                'beenToAllWayPoints' : 'MANUAL_NAVIGATE'})
+            smach.StateMachine.add('MAIN_NAV', sm_nav_con,
+                                   transitions={'go2Orient' : 'readyToOrient',
+                                                'go2manualOps' : 'MANUAL_NAVIGATE'})
 
             smach.StateMachine.add('MANUAL_NAVIGATE', ManualNavigate(),
                                    transitions={'atBoard' : 'readyToOrient',
