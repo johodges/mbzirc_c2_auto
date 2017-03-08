@@ -297,8 +297,6 @@ def main(sim_mode):
             smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
                                    transitions={'oriented' : 'readyToGrabWrench'})
 
-            smach.StateMachine.add('UPDATE_OBJ_LOCS', UpdateObjLocations(),
-                                   transitions={'oriented' : 'readyToGrabWrench'})
         # END ORIENT State Machine
         #******************************************************************
 
