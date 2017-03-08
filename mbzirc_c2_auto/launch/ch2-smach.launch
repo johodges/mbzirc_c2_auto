@@ -9,11 +9,10 @@
   <arg name="paused" default="true"/>
   <arg name="world_name" default="$(find mbzirc_c2_auto)/gazebo_models/world/mbzirc_arena_task_2_test3.world"/>
   <arg name="state_machine" default="true"/>
-  <arg name="state_machine_type" default="wrenchTest"/>
+  <arg name="state_machine_type" default="normal"/>
   <arg name="joint_limit" default="false"/>
   <arg name="trex_enabled" default="false"/>
   <arg name="husky_enabled" default="true"/>
-
 
   <arg name="velodyne_enabled" default="false"/>
   <arg name="sick_enabled" default="true"/>

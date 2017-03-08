@@ -76,6 +76,7 @@ class FindBoard(smach.State):
     def execute(self, userdata):
 
         rospy.loginfo('Searching for board')
+        """
         try:
             lidar_to_use = rospy.get_param('lidar')
         except:
@@ -87,7 +88,15 @@ class FindBoard(smach.State):
         if lidar_to_use == 'velodyne':
             a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
                 stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-        rospy.sleep(10)
+        """
+        physical_robot = rospy.get_param('physical_robot')
+        if physical_robot:
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        else:
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        rospy.sleep(1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
         b.wait()
@@ -115,6 +124,27 @@ class Localize(smach.State):
                              outcomes=['localized'])
 
     def execute(self, userdata):
+        physical_robot = rospy.get_param('physical_robot')
+        if physical_robot:
+            # Launch the TREX
+            left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+
+            # Launch the imu_localization node to fix yaw
+            imu_localization = subprocess.Popen("rosrun mbzirc_c2_auto imu_localization.py", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            imu_localization.wait()
+            os.killpg(os.getpgid(left_motor.pid), signal.SIGTERM)
+            os.killpg(os.getpgid(right_motor.pid), signal.SIGTERM)
+            os.killpg(os.getpgid(odom_publisher.pid), signal.SIGTERM)
+            rospy.sleep(0.1)
+
+            # Launch the TREX again to reset odom to zero
+            left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        else:
+            pass
         return 'localized'
 
 

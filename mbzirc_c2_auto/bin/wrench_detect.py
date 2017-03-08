@@ -35,7 +35,7 @@ class find_wrench:
     cascade = cv2.CascadeClassifier(rospack.get_path('mbzirc_c2_auto')+'/params/wrench.xml')
     cv_image = cv2.resize(cv_image, (0,0), fx=2, fy=2);
     img_invert = 255 - cv_image
-    rects = cascade.detectMultiScale(img_invert, 2, 10, cv2.cv.CV_HAAR_SCALE_IMAGE, (25, 200))
+    rects = cascade.detectMultiScale(img_invert, 3, 3, cv2.cv.CV_HAAR_SCALE_IMAGE, (25, 200))
     cv_image2 = cv_image.copy()
     #print 'I am trying!'
     if len(rects) == 0:
@@ -100,12 +100,12 @@ class find_wrench:
     wrenchpub = rospy.Publisher('/wrench_centroids', numpy_msg(Floats), queue_size=5)
     wrenchpub.publish(cents)
     w_loc = np.array([x_avg,y_avg], dtype=np.float32)
-    """
+
     cimg = cv2.medianBlur(cv_image,5)
     cimg = cv2.cvtColor(cimg, cv2.COLOR_BGR2GRAY)
 
-    print np.shape(cents)[0]
-    if np.shape(cents)[0] > 10*2:
+    #print np.shape(cents)[0]
+    if np.shape(cents)[0] > 4*2:
         circles = cv2.HoughCircles(cimg, cv.CV_HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=20, maxRadius=200)
         if circles is not None:
             mn = min(circles[0,:,0])
@@ -118,9 +118,8 @@ class find_wrench:
             cv2.circle(cv_image2,(i[0],i[1]),i[2],(0,0,255),2)
         #else:
         #    w_loc = np.array([0],np.float32)
-    """
     self.ct = self.ct+1
-    cv_image2 = cv2.resize(cv_image2, (0,0), fx=0.125, fy=0.125);
+    cv_image2 = cv2.resize(cv_image2, (0,0), fx=0.5, fy=0.5);
 
     try:
       self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image2, "bgr8"))
