@@ -623,7 +623,8 @@ class orient():
                                + str(err_ang) + 'degrees')
 
                 # Check if the error in dist and angle is below the threshold
-                if err_dist > 0.2 or err_ang > 0.07:
+                if err_dist > 0.4 or err_ang > 0.2:
+                #if err_dist > 0.2 or err_ang > 0.07:
                     tar_in_global([xC,yC+self.big_board_offset])
                     # print self.goal
                     q = tf.transformations.quaternion_from_euler(

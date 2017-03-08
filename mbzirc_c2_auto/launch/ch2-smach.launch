@@ -14,7 +14,6 @@
   <arg name="trex_enabled" default="false"/>
   <arg name="husky_enabled" default="true"/>
 
-
   <arg name="velodyne_enabled" default="false"/>
   <arg name="sick_enabled" default="true"/>
   <arg name="sawyer_enabled" default="false"/>
