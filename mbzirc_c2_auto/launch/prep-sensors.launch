@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="gps2robot_x" default="38.797"/>
+  <arg name="gps2robot_y" default="26.069"/>
+  <arg name="gps2robot_yaw" default="-0.9076"/>
+
+  <node name="gps_tf" pkg="tf"
+    type="static_transform_publisher"
+    args="$(arg gps2robot_x) $(arg gps2robot_y) 0 $(arg gps2robot_yaw) 0 0 gps odom 100"
+  />
+
+  <!-- IMU LAUNCH -->
+  <node pkg="microstrain_3dmgx2_imu" type="imu_node" name="imu_node">
+    <param name="time_offset" value="-0.040" />
+    <param name="port"  type="string" value="/dev/ttyUSB0" />
+    <param name="autostart" type="bool" value="true" />
+    <param name="frameid"  type="string" value="imu" />
+    <param name="autocalibrate" type="bool" value="true" />
+    <param name="angular_velocity_stdev" type="double" value="0.00017" />
+  </node>
+
+  <!-- GPS LAUNCH -->
+  <include file="$(find swiftnav_piksi)/launch/swiftnav_piksi.launch"/>
+
+  <!-- LIDAR LAUNCH -->
+  <include file="$(find mbzirc_c2_auto)/launch/velodyne.launch" >
+    <arg name="min_z" value="0.25"/>
+    <arg name="max_z" value="5.0"/>
+  </include>
+  <include file="$(find mbzirc_c2_auto)/launch/urg_node.launch"/>
+
+  <!-- CAMERA LAUNCH -->
+  <include file="$(find mbzirc_c2_auto)/launch/usb_cam-test.launch" />
+
+</launch>

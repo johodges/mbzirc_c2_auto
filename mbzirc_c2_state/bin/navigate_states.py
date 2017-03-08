@@ -125,24 +125,41 @@ class Localize(smach.State):
 
     def execute(self, userdata):
         physical_robot = rospy.get_param('physical_robot')
+        vtrex_enabled = rospy.get_param('vtrex_enabled')
         if physical_robot:
-            # Launch the TREX
-            left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-            right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-            odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-
+            # Launch the UGV
+            if vtrex_enabled:
+                left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else:
+                husky_pc = subprocess.Popen("rosrun husky_base husky_node _port:=/dev/ttyUSB0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                husky_con = subprocess.Popen("rosrun controller_manager spawner husky_joint_publisher husky_velocity_controller --shutdown-timeout 3", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
             # Launch the imu_localization node to fix yaw
             imu_localization = subprocess.Popen("rosrun mbzirc_c2_auto imu_localization.py", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
             imu_localization.wait()
-            os.killpg(os.getpgid(left_motor.pid), signal.SIGTERM)
-            os.killpg(os.getpgid(right_motor.pid), signal.SIGTERM)
-            os.killpg(os.getpgid(odom_publisher.pid), signal.SIGTERM)
+
+            # Kill odometry nodes
+            if vtrex_enabled:
+                os.killpg(os.getpgid(left_motor.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(right_motor.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(odom_publisher.pid), signal.SIGTERM)
+                rospy.sleep(0.1)
+            else:
+                os.killpg(os.getpgid(husky_pc.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(husky_con.pid), signal.SIGTERM)
+                rospy.sleep(0.1)
+
+            # Launch UGV again to reset odom to zero
+            if vtrex_enabled:
+                left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else:
+                husky_pc = subprocess.Popen("rosrun husky_base husky_node _port:=/dev/ttyUSB0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                husky_con = subprocess.Popen("rosrun controller_manager spawner husky_joint_publisher husky_velocity_controller --shutdown-timeout 3", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
             rospy.sleep(0.1)
 
-            # Launch the TREX again to reset odom to zero
-            left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-            right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-            odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         else:
             pass
         return 'localized'

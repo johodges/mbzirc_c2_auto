@@ -13,7 +13,7 @@ class imu_localization():
         rospy.on_shutdown(self.shutdown) # Enable shutdown in rospy
         self.rest_time = 0.1            # Minimum pause at each location
         self.twist = Twist()
-        self.target_yaw = 0.78
+        self.target_yaw = rospy.get_param('imu_absolute_yaw')
 
         # Establish publishers and subscribers
         self.twi_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=5)
