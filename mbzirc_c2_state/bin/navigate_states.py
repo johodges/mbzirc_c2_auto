@@ -70,7 +70,8 @@ class FindBoard(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atBoard'])
+                             outcomes=['atBoard',
+                                       'beenToAllWayPoints'])
 
     def execute(self, userdata):
 
