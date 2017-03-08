@@ -58,16 +58,19 @@ class move2op():
         self.ct5 = 0
         self.lim_type = 0
         self.xA = 0.380
-        self.save_result = True
-        self.preview_flag = True           # Should we preview images
+        self.save_result = False
+        self.preview_flag = False           # Should we preview images
         self.preview_result = False
         self.indir = str(rospack.get_path('mbzirc_c2_auto')+'/params/')
-        self.lim_adjust = -100
-        wrench_mask_file = rospy.get_param('wrench_mask_file')
-
+        self.lim_adjust = 80
+        try:
+            wrench_mask_file = rospy.get_param('wrench_mask_file')
+            self.wrench_mask = cv2.imread(wrench_mask_file)
+        except:
+            self.wrench_mask = np.zeros((self.camera_pix_v,self.camera_pix_h,3), np.uint8)
+            pass
         # Set up ROS subscriber callback routines
         self.bridge = CvBridge()
-        self.wrench_mask = cv2.imread(wrench_mask_file)
         self.beari_sub = rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback_bearing, queue_size=1)
         self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
         self.image_pub = rospy.Publisher("image_topic_3",Image, queue_size=1)
@@ -113,7 +116,7 @@ class move2op():
                 while val < one_perc:
                     val = val+hist[j]
                     j = j +1
-                lims[i,0] = j
+                lims[i,0] = j+self.lim_adjust
                 if self.lim_type == 0:
                     val = 0; j = 0;
                     while val < one_perc:
@@ -182,15 +185,17 @@ class move2op():
             z = z.reshape((sz[0]*sz[1],1))
             print np.shape(z)
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-            ret,labels,centers = cv2.kmeans(z,2,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+            ret,labels,centers = cv2.kmeans(z,3,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
             mean_sort = np.argsort(centers.flatten())
             z = z.reshape((sz[0],sz[1]))
             labels = labels.reshape((sz[0],sz[1]))
             A = img.copy()
             B = img.copy()
+            C = img.copy()
             A[labels != mean_sort[0]] = 0
             B[labels != mean_sort[1]] = 0
-            return A, B
+            C[labels != mean_sort[2]] = 0
+            return A, B, C
 
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -211,12 +216,13 @@ class move2op():
         lims = stretchlim(cimg)
         print lims
         img_invert = 255-cimg.copy()
-        img_invert[self.wrench_mask == 255] = 0
+        img_invert[self.wrench_mask == 255] = 255
         if self.preview_flag:
             cv2.imshow('img_invert',img_invert)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        """
+        img_gray = cv2.cvtColor(img_invert, cv2.COLOR_BGR2GRAY)
+        img_invert = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
         img_adj = imadjust(img_invert.copy(),lims)
         if self.preview_flag:
             cv2.imshow('img_adj',img_adj)
@@ -227,8 +233,7 @@ class move2op():
             cv2.imshow('img_remove',img_remove)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        """
-        img_remove_gray = cv2.cvtColor(img_invert, cv2.COLOR_BGR2GRAY)
+        img_remove_gray = cv2.cvtColor(img_remove, cv2.COLOR_BGR2GRAY)
         """
         img_hsv = cv2.cvtColor(cimg, cv2.COLOR_BGR2HSV)
         #print np.max(img_hsv[:,:,0]), np.max(img_hsv[:,:,1]), np.max(img_hsv[:,:,2])
@@ -246,7 +251,7 @@ class move2op():
             cv2.destroyAllWindows()
         """
         """
-        [A,B] = quantize_image(img_remove_gray.copy())
+        [A,B,C] = quantize_image(img_remove_gray.copy())
         if self.preview_flag:
             cv2.imshow('quantize_A',A)
             cv2.waitKey(0)
@@ -255,8 +260,11 @@ class move2op():
             cv2.imshow('quantize_B',B)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+        if self.preview_flag:
+            cv2.imshow('quantize_C',C)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
         """
-
         #z = np.transpose(np.vstack((circles[0,:,0],circles[0,:,1])))
         # Run K-means to det. centers and to which group each point belongs
 
@@ -284,7 +292,7 @@ class move2op():
         term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
         flag = cv2.KMEANS_RANDOM_CENTERS
         #val_circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=30, param2=15, minRadius=rad_px-100, maxRadius=rad_px+100)
-        val_circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=80, param2=40, minRadius=100, maxRadius=400)
+        val_circles = cv2.HoughCircles(img_remove_gray, cv.CV_HOUGH_GRADIENT, 1, 1, param1=70, param2=35, minRadius=100, maxRadius=400)
         val_rad = val_circles[0,:,2]
 
         """
@@ -349,8 +357,10 @@ class move2op():
             print "CENTX, CENTY: ", cent_x, cent_y
             print "STEMY, STEMZ: ", stem_y, stem_z
             print "xA: ", self.xA
-            #for n in range(0,len(B_circles[0][:,0])):
-            #    cv2.circle(img_circ_med,(val_circles[0][n][0],val_circles[0][n][1]), val_circles[0][n][2],(0,0,255), 2, cv2.CV_AA)
+            """
+            for n in range(0,len(B_circles[0][:,0])):
+                cv2.circle(img_circ_med,(val_circles[0][n][0],val_circles[0][n][1]), val_circles[0][n][2],(0,0,255), 2, cv2.CV_AA)
+            """
             cv2.circle(img_circ_med,(cent_x,cent_y),rad,(0,255,0), 2, cv2.CV_AA)
             cv2.circle(img_circ_med,(cent_x,cent_y),5,(0,255,0), -1, cv2.CV_AA)
             cv2.circle(img_circ_med,(960,540),5,(0,0,255), -1, cv2.CV_AA)

@@ -49,6 +49,7 @@ import actionlib
 from actionlib_msgs.msg import *
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
+from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
@@ -150,7 +151,7 @@ class orient():
         self.rest_time = 0.1            # Minimum pause at each location
         self.stalled_threshold = 5000    # Loops before stall
         self.fake_smach = 0             # Flag to transition to diff actions
-        self.wp = -1                    # Set to -1 to get goal at start
+        self.wp = 1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
         self.big_board_offset = 0       # Offset for a large board
         
@@ -182,8 +183,6 @@ class orient():
         self.tftree = tf.TransformListener() # Set up tf listener
         rospy.Subscriber("/bearing", numpy_msg(Floats), self.callback,
             queue_size=1)
-        rospy.Subscriber("/move_base/feedback", MoveBaseFeedback,
-            self.callback_feedback, queue_size=1)
         rospy.Subscriber("/valve", numpy_msg(Floats), self.callback_v_c,
             queue_size=1)
         rospy.Subscriber("/wrench_centroids", numpy_msg(Floats),
@@ -191,6 +190,7 @@ class orient():
         rospy.Subscriber("/wrench_center", numpy_msg(Floats),
             self.callback_w_c, queue_size=1)
         rospy.Subscriber('/imu/data', Imu, self.callback_imu)
+        rospy.Subscriber('/odometry/filtered',Odometry, self.callback_odom)
 
 
         rospy.sleep(self.rest_time)
@@ -206,11 +206,8 @@ class orient():
         self.twi_pub.publish(Twist())
         rospy.sleep(self.rest_time)
 
-    def callback_feedback(self, data):
-        """This callback is used to store the feedback topic into the class to
-        be referenced by the other callback routines.
-        """
-        self.feedback = data
+    def callback_odom(self, data):
+        self.odom = data.pose.pose
 
     def callback_wrench(self, data):
         """This callback is used to store the all the detected wrenches into
@@ -329,13 +326,13 @@ class orient():
             """This subroutine updates the feedback locations in the global
             reference frame from the /feedback topic.
             """
-            self.x0 = self.feedback.feedback.base_position.pose.position.x
-            self.y0 = self.feedback.feedback.base_position.pose.position.y
-            self.z0 = self.feedback.feedback.base_position.pose.position.z
-            self.X0 = self.feedback.feedback.base_position.pose.orientation.x
-            self.Y0 = self.feedback.feedback.base_position.pose.orientation.y
-            self.Z0 = self.feedback.feedback.base_position.pose.orientation.z
-            self.W0 = self.feedback.feedback.base_position.pose.orientation.w
+            self.x0 = self.odom.position.x
+            self.y0 = self.odom.position.y
+            self.z0 = self.odom.position.z
+            self.X0 = self.odom.orientation.x
+            self.Y0 = self.odom.orientation.y
+            self.Z0 = self.odom.orientation.z
+            self.W0 = self.odom.orientation.w
             # Convert quaternion angle to euler angles
             euler = tf.transformations.euler_from_quaternion([self.X0,self.Y0,
                 self.Z0,self.W0])

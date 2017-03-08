@@ -41,7 +41,7 @@ class idwrench():
         # Tweaking parameters - Need to adjust for different distances from camera
         self.area_min_thresh = 1000 # Minimum contour area to be a wrench
         self.max_circ_diam = 100 # Maximum circle diameter considered
-        self.canny_param = [50, 25] # Canny edge detection thresholds
+        self.canny_param = [60, 40] # Canny edge detection thresholds
         self.p2crop = 3 # Portion of image to crop for circle detection
 
         """
@@ -54,11 +54,11 @@ class idwrench():
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
         """
 
-        self.d_mu = 36.0 # Diameter of correct wrench in pixels
-        self.d_sig = 3.8 # Uncertainty in diameter
+        self.d_mu = 21.9 # Diameter of correct wrench in pixels
+        self.d_sig = 4.0 # Uncertainty in diameter
         self.l_mu = 700 # Length of correct wrench in pixels 
         self.l_sig = 25.0 # Uncertainty in length
-        self.a_mu = 37500 # Area of correct wrench in pixels
+        self.a_mu = 32250 # Area of correct wrench in pixels
         self.a_sig = 2000 # Uncertainty in area
         self.vote_wt = [0.33,0.33,0.33] # Weight of each criteria in voting (d,l,a)
 
@@ -101,6 +101,9 @@ class idwrench():
             nnz = np.zeros([sz[1],1])
             kernel = np.ones((1,5), np.uint8)
             img_edge2 = cv2.dilate(img_edge, kernel, iterations=10)
+            if self.preview_flag:
+                cv2.imshow('img',img_edge2)
+                cv2.waitKey(0)
             for i in range(0,sz[1]):
                 tmp = np.count_nonzero(img_edge2[:,i])
                 if tmp:
@@ -108,7 +111,7 @@ class idwrench():
             ind = nnz[:,0].argsort()
             col = ind[sz[1]-1]
             mx = nnz[col,0]
-            if mx >= 0.9*sz[0]:
+            if mx >= 0.7*sz[0]:
                 col = ind[sz[1]-1]
             else:
                 col = sz[1]
@@ -133,13 +136,13 @@ class idwrench():
                 while val < one_perc:
                     val = val+hist[j]
                     j = j +1
-                lims[i,0] = j+40
+                lims[i,0] = j-40
                 if flag == 0:
                     val = 0; j = 0;
                     while val < one_perc:
                         val = val+hist[254-j]
                         j = j + 1
-                    lims[i,1] = 254-j+40
+                    lims[i,1] = 254-j-40
                 if flag == 1:
                     lims[i,1] = 255
             return lims
@@ -238,19 +241,19 @@ class idwrench():
             # Run K-means to determine centers and to which group each point belongs.
             term_crit = (cv2.TERM_CRITERIA_EPS, 30, 0.1)
             flag = cv2.KMEANS_RANDOM_CENTERS
-            ret, labels, centers = cv2.kmeans(z, self.n_wr, term_crit, 100, flag)
+            ret, labels, centers = cv2.kmeans(z, 1, term_crit, 100, flag)
             print centers
             # Find average radius within each K-means group
-            rad_kmean = np.zeros([6,1])
+            rad_kmean = np.zeros([1,1])
             radius = circles[0,:,2]
-            for i in range(0,6):
+            for i in range(0,1):
                 locs = np.where(labels == i)
                 rad = radius[locs[0]]
                 print "i, rad: ", i, rad
                 rad_kmean[i] = np.mean(rad)
                 print "i, rad_kmean: ", i, rad_kmean[i]
             # Store center coordinates from K-means for sorting
-            circs = np.zeros([6,3])
+            circs = np.zeros([1,3])
             circs[:,0:2] = centers
             circs[:,2:] = rad_kmean
 
@@ -261,7 +264,7 @@ class idwrench():
         # This subroutine determines the length and area of each segmented object
         # in the binary image. It returns length, area, and contours sorted by
         # column pixels.
-        def detect_geometry(img_seg):
+        def detect_geometry(img_seg,img):
             # Find contours in binary image
             cnt, hie = cv2.findContours(img_seg,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
             # Remove contours that are too small (noise) or too far to the left (valve)
@@ -287,7 +290,7 @@ class idwrench():
                 cen2 = cen3[np.nonzero(cen3)]
                 print "STD: ", cen2_std
                 print "NUMBER OF CONTOURS: ", len(cen2)
-                if len(cen2) > 6:
+                if cen2_std > 250: #len(cen2) > 7:
                     bad_flag = 1
                     ind = np.argsort(cen2)
                     cnt3 = []
@@ -296,15 +299,32 @@ class idwrench():
                             cnt3.append(cnt2[c])
                     cnt = cnt3
                 else:
-                    cnt = cnt2
-                    bad_flag = 0
+                    if len(cnt) > 6:
+                        cnt3 = []
+                        min_row = []
+                        for c in range(0,len(cnt2)):
+                            (hi1,hi2,len2,wid2) = cv2.boundingRect(cnt[c])
+                            min_row.append(hi2)
+                        print min_row
+                        ind = np.argsort(np.asarray(min_row))
+                        for c in range(0,len(cnt2)):
+                            if c != ind[0]:
+                                cnt3.append(cnt2[c])
+                        bad_flag = 1
+                        cnt = cnt3
+                        cnt2 = cnt3
+                    else:
+                        cnt = cnt2
+                        bad_flag = 0
+                
             print "New number of contours: ", len(cnt)
 
             # Update parameters using only the good contours
-            cnt2 = []; hie2 = np.zeros([6,12,4]); ct = 0
-            cen2 = np.zeros([6,2]); len2 = np.zeros([6,2])
-            area2 = np.zeros([6,1])
-            for c in range(0,len(cnt)):
+            cnt_len = len(cnt)
+            cnt2 = []; hie2 = np.zeros([cnt_len,12,4]); ct = 0
+            cen2 = np.zeros([cnt_len,2]); len2 = np.zeros([cnt_len,2])
+            area2 = np.zeros([cnt_len,1])
+            for c in range(0,cnt_len):
                 area = cv2.contourArea(cnt[c])
                 M = cv2.moments(cnt[c])
                 cen2[c,1] = int(M["m01"] / M["m00"])
@@ -312,6 +332,10 @@ class idwrench():
                 area2[c] = area
                 cnt2.append(cnt[c])
                 (hi1,hi2,len2[c,0],len2[c,1]) = cv2.boundingRect(cnt[c])
+                cv2.drawContours(img, cnt[c], -1, (0,c,255-c), 3)
+            if self.preview_flag:
+                cv2.imshow('img_seg',img)
+                cv2.waitKey(0)
 
             # Store all relevant features in a single matrix
             params = np.zeros([6,8])
@@ -407,6 +431,7 @@ class idwrench():
             img_crop_invert = 255-img_crop.copy()
             cv2.imwrite('/home/jonathan/wrenchID_1_crop.png',img_crop_invert)
             if self.preview_flag:
+                print "img_crop"
                 cv2.imshow('img',img_crop_invert)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
@@ -415,6 +440,7 @@ class idwrench():
             # Adjust the brightness/contrast of the RGB image based on limits
             img_adj = imadjust(img_crop_invert.copy(),lims)
             if self.preview_flag:
+                print "img_adj"
                 cv2.imshow('img',img_adj)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
@@ -434,28 +460,40 @@ class idwrench():
             cv2.imwrite('/home/jonathan/wrenchID_4_gray.png',img_gray)
             cv2.imwrite('/home/jonathan/wrenchID_5_seg.png',img_seg)
             # Crop image for circle detection
+            params, contours = detect_geometry(img_seg,img_crop.copy())
+            for i in range(0,len(contours)):
+                (hi1,hi2,len2,wid2) = cv2.boundingRect(contours[i])
+                img_gray_hou = np.copy(img_gray[hi2:hi2+int(wid2/2),hi1:hi1+len2])
+                circles, img_all_circles = detect_circle(img_gray_hou)
+                params[i,5] = circles[0,2]
+                params[i,6] = circles[0,0]+hi1
+                params[i,7] = circles[0,1]+hi2
+                if self.preview_flag:
+                    cv2.imshow('img',img_all_circles)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+                
             img_gray_hou = np.copy(img_gray[0:sz[0]/self.p2crop, 0:sz[1]]) 
             # Detect circles
-            circles, img_all_circles = detect_circle(img_gray_hou)
-            if self.preview_flag:
-                cv2.imshow('img',img_gray_hou)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-            cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
+            #circles, img_all_circles = detect_circle(img_gray_hou)
+            #if self.preview_flag:
+            #    cv2.imshow('img',img_gray_hou)
+            #    cv2.waitKey(0)
+            #    cv2.destroyAllWindows()
+            #cv2.imwrite('/home/jonathan/wrenchID_6_allcircles.png',img_all_circles)
             # Detect geometry
-            params, contours = detect_geometry(img_seg)
-            print "Circles: ", circles
+            #print "Circles: ", circles
             # Store circle diameters in feature matrix
-            for i in range(0,self.n_wr):
-                x_dist = abs(circles[:,0]-params[i,0])
-                ind = x_dist.argsort()
-                ind2 = ind[0]
-                print "i: ", i
-                print "All distances: ", x_dist
-                print "Index of minimum distance: ", ind2
-                params[i,5] = circles[ind2,2]
-                params[i,6] = circles[ind2,0]
-                params[i,7] = circles[ind2,1]
+            #for i in range(0,self.n_wr):
+            #    x_dist = abs(circles[:,0]-params[i,0])
+            #    ind = x_dist.argsort()
+            #    ind2 = ind[0]
+            #    print "i: ", i
+            #    print "All distances: ", x_dist
+            #    print "Index of minimum distance: ", ind2
+            #    params[i,5] = circles[ind2,2]
+            #    params[i,6] = circles[ind2,0]
+            #    params[i,7] = circles[ind2,1]
             #params[:,6:] = circles[:,2:]
             print params
             # Vote using the three parameters to determine correct wrench
