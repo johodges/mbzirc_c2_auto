@@ -147,7 +147,6 @@ def main(sim_mode):
 
         # Create the sub SMACH state machine for navigation
         sm_nav = smach.StateMachine(outcomes=['readyToOrient',
-                                              'unableToLocalize',
                                               'unableToFindBoard'])
 
         # Create the sub SMACH state machine for orienting
