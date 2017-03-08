@@ -164,7 +164,6 @@ def main(sim_mode):
 
         # Create the sub SMACH state machine for navigation
         sm_nav = smach.StateMachine(outcomes=['readyToOrient',
-                                              'unableToLocalize',
                                               'unableToFindBoard'])
 
         # Create the sub SMACH state machine for orienting
@@ -267,8 +266,8 @@ def main(sim_mode):
         # Define the NAVIGATE Concurrence state (sm_nav_con)
         sm_nav_con = smach.Concurrence(outcomes=['go2Orient','go2manualOps'],
                                        default_outcome='go2Orient',
-                                       child_termination_cb='nav_term_cb',
-                                       outcome_cb='nav_out_cb')
+                                       child_termination_cb=nav_term_cb,
+                                       outcome_cb=nav_out_cb)
 
         with sm_nav_con:
           smach.Concurrence.add('FINDBOARD',FindBoard())
@@ -324,8 +323,6 @@ def main(sim_mode):
             smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
                                    transitions={'oriented' : 'readyToGrabWrench'})
 
-            smach.StateMachine.add('UPDATE_OBJ_LOCS', UpdateObjLocations(),
-                                   transitions={'oriented' : 'readyToGrabWrench'})
         # END ORIENT State Machine
         #******************************************************************
 
