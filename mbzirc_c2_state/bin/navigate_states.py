@@ -132,24 +132,23 @@ class ManNavCheck(smach.State):
 
         return self.status
 
-# class Localize(smach.State):
-#     """Automatically localize the UGV in the arena
+class Localize(smach.State):
+    """Automatically localize the UGV in the arena
 
-#     Use IMU and GPS to localize the UGV in the arena
+    Use IMU and GPS to localize the UGV in the arena
 
-#     Outcomes
-#     --------
-#         localized : UGV localized in the arena
-#         notLocalized : unable to automatically localize the UGV in the arena
-#     """
+    Outcomes
+    --------
+        localized : UGV localized in the arena
+        notLocalized : unable to automatically localize the UGV in the arena
+    """
 
-#     def __init__(self):
-#         smach.State.__init__(self,
-#                              outcomes=['localized',
-#                                        'notLocalized'])
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['localized'])
 
-#     def execute(self, userdata):
-#         return 'localized'
+    def execute(self, userdata):
+        return 'localized'
 
 
 # class VisualLocalization(smach.State):

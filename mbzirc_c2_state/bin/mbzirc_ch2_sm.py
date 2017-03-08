@@ -275,6 +275,9 @@ def main(sim_mode):
 
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
+            smach.StateMachine.add('LOCALIZE', Localize(),
+                                   transitions={'localized' : 'MAIN_NAV'})
+
             smach.StateMachine.add('MAIN_NAV', sm_nav_con,
                                    transitions={'go2Orient' : 'readyToOrient',
                                                 'go2manualOps' : 'MANUAL_NAVIGATE'})
