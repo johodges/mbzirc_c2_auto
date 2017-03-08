@@ -248,6 +248,9 @@ def main(sim_mode):
         #******************************************************************
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
+            smach.StateMachine.add('LOCALIZE', Localize(),
+                                   transitions={'localized' : 'FINDBOARD'})
+
             smach.StateMachine.add('FINDBOARD', FindBoard(),
                                    transitions={'atBoard' : 'readyToOrient',
                                                 'beenToAllWayPoints' : 'MANUAL_NAVIGATE'})
