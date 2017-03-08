@@ -4,33 +4,26 @@
 General framework based on Patrick Goebel's nav_test.py
 Initial version based on ccam-navigation by Chris Mobley
 Autonomous movement added by Jonathan Hodges
-
 This code moves a mobile base along a waypoint based search routine while
 looking for an object. Once an object is detected, the search routine is
 cancelled and the mobile base moves toward the object instead.
-
 Dependencies:
     mbzirc_c2_auto/params/pre-defined-path.txt - Waypoints for search routine
-
 Subscribers:
     /detection: array containing [angle,distance] to the median of
         the detected object in local coordinates. Contains [0,0] if no object
         is detected.
-
 Publishers:
     /cmd_vel: topic to manually move the robot
     /move_base/goal: goal sent to the move_base node in ROS
-
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
-
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details at:
 http://www.gnu.org/licenses/gpl.html
-
 """
 
 import rospy
@@ -48,11 +41,9 @@ import tf
 
 class mbzirc_c2_auto():
     """MBZIRC Challenge 2 autonomous searching routine.
-
     This class moves a mobile base along a waypoint based search routine while
     looking for an object. Once an object is detected, the search routine is
     cancelled and the mobile base moves toward the object instead.
-
     Attributes:
         locations: pose of waypoints
         waypoint_name: name of waypoints
@@ -67,15 +58,12 @@ class mbzirc_c2_auto():
         move_base: move_base action server
         goal: move_base goal
         ct_move: manually movement counter
-
     Dependencies:
         mbzirc_c2_auto/params/pre-defined-path.txt: search routine waypoints
-
     Subscribers:
         /detection: array containing [angle,distance] to the median of the
             detected object in local coordinates. Contains [0,0] if no object
             is detected.
-
     Publishers:
         /joy_teleop/cmd_vel: topic to manually move the robot
         /move_base/goal: goal sent to the move_base node in ROS
@@ -84,7 +72,6 @@ class mbzirc_c2_auto():
 
     def __init__(self):
         """This initializes the various attributes in the class
-
         A few key tasks are achieved in the initializer function:
             1. We load the pre-defined search routine
             2. We connect to the move_base server in ROS
@@ -92,12 +79,10 @@ class mbzirc_c2_auto():
                the object
             4. We initialize counters in the class to be shared by the various
                callback routines
-
         These are the possible returns from move_base.get_state() function.
         Included for reference:
         goal_states: ['PENDING', 'ACTIVE', 'PREEMPTED','SUCCEEDED', 'ABORTED',
                       'REJECTED','PREEMPTING', 'RECALLING', 'RECALLED', 'LOST']
-
         """
         # Establish ROS node
         rospy.init_node('autonomous', anonymous=True) # Name this node
@@ -206,7 +191,6 @@ class mbzirc_c2_auto():
             """This subroutine manually rotates the husky along the z-axis a
             fixed amount at a fixed velocity by bypassing the move_base package
             and sending a signal directly to the wheels.
-
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
@@ -325,4 +309,3 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("mbzirc_c2_auto finished.")
-

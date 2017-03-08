@@ -203,7 +203,6 @@ def main(sim_mode):
 
         smach.StateMachine.add('NAVIGATE', sm_nav,
                                transitions={'readyToOrient' : 'ORIENT',
-                                            'unableToLocalize' : 'failure',
                                             'unableToFindBoard' : 'failure'})
 
         smach.StateMachine.add('ORIENT', sm_orient,
@@ -250,36 +249,9 @@ def main(sim_mode):
         #******************************************************************
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
-            smach.StateMachine.add('NAV_SM_METHOD', NavSMMethod(),
-                                   transitions={'useOld' : 'FINDBOARD',
-                                                'useNew' : 'LOCALIZE'})
-
             smach.StateMachine.add('FINDBOARD', FindBoard(),
-                                   transitions={'atBoard' : 'readyToOrient'})
-
-            smach.StateMachine.add('LOCALIZE', Localize(),
-                                   transitions={'localized' : 'INITIALIZE_DETECT',
-                                                'notLocalized' : 'VISUAL_LOCALIZATION'})
-
-            smach.StateMachine.add('VISUAL_LOCALIZATION', VisualLocalization(),
-                                   transitions={'localized' : 'INITIALIZE_DETECT',
-                                                'notLocalized' : 'unableToLocalize'})
-
-
-            smach.StateMachine.add('INITIALIZE_DETECT', InitializeDetect(),
-                                   transitions={'foundBoard' : 'MOVE_TO_BOARD',
-                                                'boardNotFound' : 'MOVE_TO_WAY_POINT'})
-
-            smach.StateMachine.add('MOVE_TO_WAY_POINT', MoveToWayPoint(),
-                                   transitions={'foundBoard' : 'MOVE_TO_BOARD',
-                                                'boardNotFound' : 'MOVE_TO_WAY_POINT',
-                                                'beenToAllWayPoints' : 'MANUAL_NAVIGATE'})
-
-
-            smach.StateMachine.add('MOVE_TO_BOARD', MoveToBoard(),
                                    transitions={'atBoard' : 'readyToOrient',
-                                                'lostObject' : 'MOVE_TO_WAY_POINT'})
-
+                                                'beenToAllWayPoints' : 'MANUAL_NAVIGATE'})
 
             smach.StateMachine.add('MANUAL_NAVIGATE', ManualNavigate(),
                                    transitions={'atBoard' : 'readyToOrient',
@@ -299,7 +271,7 @@ def main(sim_mode):
                                    transitions={'oriented' : 'readyToGrabWrench'})
 
             smach.StateMachine.add('GO_TO_NEW_SIDE', GoToNewSide(),
-                                   transitions={'atNewSide' : 'COMPUTE_SIDE_WP',
+                                   transitions={'atNewSide' : 'MOVE_TO_SIDE_WP',
                                                 'allSidesScanned' : 'MANUAL_ORIENT'},
                                    remapping={'num_sides_in' : 'num_sides',
                                               'num_sides_out' : 'num_sides'})
@@ -308,22 +280,23 @@ def main(sim_mode):
                                    transitions={'backToAuto' : 'DETECT_WRENCHES',
                                                 'noWrenches' : 'failedToOrient'})
 
-            smach.StateMachine.add('COMPUTE_SIDE_WP', ComputeSideWP(),
-                                   transitions={'computedWayPoint' : 'MOVE_TO_SIDE_WP'})
+            # smach.StateMachine.add('COMPUTE_SIDE_WP', ComputeSideWP(),
+            #                        transitions={'computedWayPoint' : 'MOVE_TO_SIDE_WP'})
 
             smach.StateMachine.add('MOVE_TO_SIDE_WP', MoveToSideWP(),
                                    transitions={'atWayPoint' : 'DETECT_WRENCHES'})
 
             smach.StateMachine.add('DETECT_WRENCHES', DetectWrenches(),
                                    transitions={'foundWrenches' : 'MOVE_TO_WRENCHES',
-                                                'noWrenches' : 'MOVE_DOWN_SIDE'})
+                                                'noWrenches' : 'GO_TO_NEW_SIDE'})
 
-            smach.StateMachine.add('MOVE_DOWN_SIDE', MoveDownSide(),
-                                   transitions={'finishedSide' : 'GO_TO_NEW_SIDE',
-                                                'nextWayPoint' : 'MOVE_TO_SIDE_WP'})
+            # smach.StateMachine.add('MOVE_DOWN_SIDE', MoveDownSide(),
+            #                        transitions={'finishedSide' : 'GO_TO_NEW_SIDE',
+            #                                     'nextWayPoint' : 'MOVE_TO_SIDE_WP'})
 
             smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
                                    transitions={'oriented' : 'readyToGrabWrench'})
+
         # END ORIENT State Machine
         #******************************************************************
 
