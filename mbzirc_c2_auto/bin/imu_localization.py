@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import rospy
 import rospkg
 from geometry_msgs.msg import Twist
@@ -30,15 +31,18 @@ class imu_localization():
         euler = tf.transformations.euler_from_quaternion([gyro.x,gyro.y,gyro.z,gyro.w])
         self.imu_yaw = euler[2]
         end_flag = 0
-        print self.imu_yaw-self.target_yaw 
+        print "Target, Current, Diff: ", self.target_yaw/3.14*180, self.imu_yaw/3.14*180, (self.imu_yaw-self.target_yaw )/3.14*180
         #print gyro
 
         if self.imu_yaw-self.target_yaw > 0.05:
             self.twist.angular.z = -0.25
+            rospy.loginfo("Rotating CW.")
         if self.imu_yaw-self.target_yaw < -0.05:
             self.twist.angular.z = 0.25
+            rospy.loginfo("Rotating CCW.")
         if abs(self.imu_yaw-self.target_yaw) <= 0.05:
             self.twist.angular.z = 0.0
+            rospy.loginfo("Done Rotating.")
             end_flag = 1
         self.twi_pub.publish(self.twist)
         rospy.sleep(self.rest_time)

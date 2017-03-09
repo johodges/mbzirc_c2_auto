@@ -7,14 +7,15 @@
   <arg name="gps2robot_x" value="38.797"/>
   <arg name="gps2robot_y" value="26.069"/>
   <arg name="gps2robot_yaw" value="-0.9076"/>
-  <arg name="imu_absolute_yaw" value="1.300"/>
+  <arg name="imu_absolute_yaw" value="1.6"/>
   <arg name="state_machine" value="true"/>
   <arg name="state_machine_type" value="normal"/>
-  <arg name="vtrex_enabled" value="true"/>
+  <arg name="vtrex_enabled" value="false"/>
+  <arg name="ur5_enabled" value="false"/>
 
 <!-- SET PARAMS -->
   <param name="imu_absolute_yaw" value="$(arg imu_absolute_yaw)"/>
-  <param name="vtrex_enabled" value="$(arg vtrex_enabled"/>
+  <param name="vtrex_enabled" value="$(arg vtrex_enabled)"/>
 
 <!-- HARDWARE -->
 
@@ -25,27 +26,24 @@
     <arg name="gps2robot_yaw" value="$(arg gps2robot_yaw)"/>
   </include>
 
-  <!-- ARM LAUNCH -->
-  <rosparam file="$(find vtrex_ur5_moveit)/config/controllers.yaml"/>
-  <include file="$(find mbzirc_c2_auto)/launch/ur5.launch" />
-  <include file="$(find vtrex_ur5_moveit)/launch/vtrex_ur5_planning_execution.launch">
-    <arg name="physical_robot" value="true"/>
-  </include>
-  <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic_phys.py"/>
-  <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py"/>
+  <group if="$(arg ur5_enabled)">
+    <!-- ARM LAUNCH -->
+    <rosparam file="$(find vtrex_ur5_moveit)/config/controllers.yaml"/>
+    <include file="$(find mbzirc_c2_auto)/launch/ur5.launch" />
+    <include file="$(find vtrex_ur5_moveit)/launch/vtrex_ur5_planning_execution.launch">
+      <arg name="physical_robot" value="true"/>
+    </include>
+    <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic_phys.py"/>
+    <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py"/>
 
-  <!-- GRIPPER LAUNCH -->
-  <node name="gripper_controller" pkg="rosserial_python" type="serial_node.py">
-    <param name="port" value="/dev/ttyUSB1"/>
-  </node>
+    <node name="gripper_controller" pkg="rosserial_python" type="serial_node.py">
+      <param name="port" value="/dev/ttyUSB1"/>
+    </node>
+  </group>
 
   <!-- TREX LAUNCH -->
   <group if="$(arg vtrex_enabled)">
     <group unless="$(arg state_machine)">
-      <node name="gps_tf" pkg="tf"
-        type="static_transform_publisher"
-        args="$(arg gps2robot_x) $(arg gps2robot_y) 0 $(arg gps2robot_yaw) 0 0 gps odom 100"
-      />
       <node pkg="rosserial_python" type="serial_node.py" name="serial_node_left_motors">
         <param name="port" value="/dev/ttyACM0"/>
       </node>
@@ -61,10 +59,6 @@
   <group unless="$(arg vtrex_enabled)">
     <rosparam command="load" file="$(find husky_control)/config/control.yaml" />
     <group unless="$(arg state_machine)">
-      <node name="gps_tf" pkg="tf"
-        type="static_transform_publisher"
-        args="$(arg gps2robot_x) $(arg gps2robot_y) 0 $(arg gps2robot_yaw) 0 0 gps odom 100"
-      />
       <!-- Husky harware driver -->
       <node pkg="husky_base" type="husky_node" name="husky_node">
         <rosparam subst_value="true">
@@ -84,12 +78,9 @@
     </group>
     <include file="$(find husky_description)/launch/description.launch"/>
     <include file="$(find husky_control)/launch/teleop.launch" />
-    <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
+    <!--node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
         <rosparam command="load" file="$(find husky_base)/config/diagnostics.yaml"/>
-    </node>
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
-      <rosparam command="load" file="$(find husky_control)/config/localization.yaml" />
-    </node>
+    </node-->
     <node pkg="interactive_marker_twist_server" type="marker_server" name="twist_marker_server" output="screen"/>
     <node pkg="twist_mux" type="twist_mux" name="twist_mux">
       <rosparam command="load" file="$(find husky_control)/config/twist_mux.yaml" />
@@ -98,7 +89,7 @@
   </group>
 
   <!-- PUBLISH JOINT STATES -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /-->
 
 <!-- SOFTWARE -->
 
@@ -110,18 +101,22 @@
   </group>
 
   <!-- MOVEBASE LAUNCH-->
-  <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
+  <!--include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
     <arg name="no_static_map" value="true"/>
     <arg name="oscillation_timeout" value="0.0"/>
-  </include>
+  </include-->
 
   <!-- SENSOR FUSION LAUNCH -->
-  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" >
-    <rosparam command="load" file="$(find vtrex_control)/config/localization.yaml" />
+  <group unless="$(arg state_machine)">
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+    <rosparam command="load" file="$(find husky_control)/config/localization.yaml" />
   </node>
+  </group>
+
+
 
   <!-- MAPPING LAUNCH -->
-  <include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" />
+  <!--include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" /-->
   <node name="read_odom" pkg="map_reader" type="read_odom.py"/>
 
   <!-- VISUALIZATION LAUNCH -->

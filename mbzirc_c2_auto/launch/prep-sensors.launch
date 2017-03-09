@@ -12,7 +12,7 @@
   <!-- IMU LAUNCH -->
   <node pkg="microstrain_3dmgx2_imu" type="imu_node" name="imu_node">
     <param name="time_offset" value="-0.040" />
-    <param name="port"  type="string" value="/dev/ttyUSB0" />
+    <param name="port"  type="string" value="/dev/ttyACM0" />
     <param name="autostart" type="bool" value="true" />
     <param name="frameid"  type="string" value="imu" />
     <param name="autocalibrate" type="bool" value="true" />
@@ -20,13 +20,13 @@
   </node>
 
   <!-- GPS LAUNCH -->
-  <include file="$(find swiftnav_piksi)/launch/swiftnav_piksi.launch"/>
+  <!--include file="$(find swiftnav_piksi)/launch/swiftnav_piksi.launch"/-->
 
   <!-- LIDAR LAUNCH -->
-  <include file="$(find mbzirc_c2_auto)/launch/velodyne.launch" >
+  <!--include file="$(find mbzirc_c2_auto)/launch/velodyne.launch" >
     <arg name="min_z" value="0.25"/>
     <arg name="max_z" value="5.0"/>
-  </include>
+  </include-->
   <include file="$(find mbzirc_c2_auto)/launch/urg_node.launch"/>
 
   <!-- CAMERA LAUNCH -->
