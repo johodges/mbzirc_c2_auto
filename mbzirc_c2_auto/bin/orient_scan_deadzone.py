@@ -84,7 +84,7 @@ class laser_listener():
         rate = rospy.Rate(10)
 
         # Initialize parameters
-        thresh = 0.1
+        thresh = 0.05
 
         # Set max/min angle and increment
         scan_min = data.angle_min
@@ -92,7 +92,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max,scan_inc)*-1#-1.57
+        y = np.arange(scan_min,scan_max,scan_inc)#*-1#-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)
@@ -126,8 +126,10 @@ class laser_listener():
 
                 # Calculate how long the scan is
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
+
                 # Check if the scan is just right
-                if dist2_sum > 0.25 and dist2_sum < 5:
+                if dist2_sum > 0.25 and dist2_sum < 3:
+                    
                     mxmx = max(iii for iii in x_coord2[i] if iii < 30)
                     if mxmx > 0.25:
                         # Find median angle of scan
@@ -173,8 +175,20 @@ class laser_listener():
                         roboR = rospy.get_param("/currentRobotR")
                         detectX = roboX + (xA * math.cos(theta2 + roboR))
                         detectY = roboY + (xA * math.sin(theta2 + roboR))
-
+                        print "*******************************************"
+                        print "Old detection:"
+                        print detectX, detectY
+                        # Define rotation matrix
+                        R = np.array([[np.cos(roboR),-np.sin(roboR)],[np.sin(roboR),np.cos(roboR)]])
+                        tar_loc = np.array([xB[0][0],yB[0][0]])
+                        tar_glo = np.dot(R,tar_loc)
+                        tar_glo = [tar_glo[0]+roboX,tar_glo[1]+roboY]
+                        detectX = tar_glo[0]
+                        detectY = tar_glo[1]
+                        print tar_glo
+                        print ang
                         if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]) and ang > self.range[0] and ang < self.range[1]:
+                            print detectX, detectY
                             b2 = yA-m2*xA
                             d = 1.5
                             t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2

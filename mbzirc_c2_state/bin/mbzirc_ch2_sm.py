@@ -136,9 +136,9 @@ def nav_term_cb(outcome_map):
         return False
 
 def nav_out_cb(outcome_map):
-    if outcome_map['NAV'] == 'atBoard':
+    if outcome_map['FINDBOARD'] == 'atBoard':
         return 'go2Orient'
-    elif outcome_map['MAN_CK'] == 'shiftMode':
+    elif outcome_map['MANUAL_NAV_CHECK'] == 'shiftMode':
         return 'go2manualOps'
     else:
         return 'go2manualOps'
@@ -164,7 +164,6 @@ def main(sim_mode):
 
         # Create the sub SMACH state machine for navigation
         sm_nav = smach.StateMachine(outcomes=['readyToOrient',
-                                              'unableToLocalize',
                                               'unableToFindBoard'])
 
         # Create the sub SMACH state machine for orienting
@@ -276,6 +275,9 @@ def main(sim_mode):
 
         # Define the NAVIGATE State Machine (sm_nav)
         with sm_nav:
+            smach.StateMachine.add('LOCALIZE', Localize(),
+                                   transitions={'localized' : 'MAIN_NAV'})
+
             smach.StateMachine.add('MAIN_NAV', sm_nav_con,
                                    transitions={'go2Orient' : 'readyToOrient',
                                                 'go2manualOps' : 'MANUAL_NAVIGATE'})
@@ -324,8 +326,6 @@ def main(sim_mode):
             smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
                                    transitions={'oriented' : 'readyToGrabWrench'})
 
-            smach.StateMachine.add('UPDATE_OBJ_LOCS', UpdateObjLocations(),
-                                   transitions={'oriented' : 'readyToGrabWrench'})
         # END ORIENT State Machine
         #******************************************************************
 
