@@ -151,7 +151,7 @@ class orient():
         self.rest_time = 0.1            # Minimum pause at each location
         self.stalled_threshold = 5000    # Loops before stall
         self.fake_smach = 0             # Flag to transition to diff actions
-        self.wp = 1                    # Set to -1 to get goal at start
+        self.wp = -1                    # Set to -1 to get goal at start
         self.wrench_counter = 0         # Consecutive loops wrenches seen
         self.big_board_offset = 0       # Offset for a large board
         
@@ -299,7 +299,7 @@ class orient():
                 rospy.sleep(self.rest_time)
             return None
 
-        def rot_cmd(ve,dist_to_move):
+        #def rot_cmd(ve,dist_to_move):
             """This subroutine manually rotates the husky along the z-axis a
             fixed amount at a fixed velocity by bypassing the move_base package
             and sending a signal directly to the wheels.
@@ -309,17 +309,34 @@ class orient():
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
             """
-            current_yaw = self.imu_yaw
-            target_yaw = current_yaw+dist_to_move
-            time_to_move = abs(dist_to_move/ve)
-            twist = Twist()
-            twist.angular.z = ve
-            self.ct_move = 0
-            while abs(target_yaw-self.imu_yaw) > 0.1:
-                self.twi_pub.publish(twist)
-                self.ct_move = self.ct_move+1
-                rospy.sleep(self.rest_time)
-            return None
+            #current_yaw = self.imu_yaw
+            #target_yaw = current_yaw+dist_to_move
+            #time_to_move = abs(dist_to_move/ve)
+            #twist = Twist()
+            #twist.angular.z = ve
+            #self.ct_move = 0
+            #while abs(target_yaw-self.imu_yaw) > 0.1:
+            #    self.twi_pub.publish(twist)
+            #    self.ct_move = self.ct_move+1
+            #    print "rot error: ", abs(target_yaw-self.imu_yaw)
+            #    rospy.sleep(self.rest_time)
+            #return None
+
+        def rot_cmd(ve,dist_to_move):
+            update_rot()
+            rospy.loginfo("Current position:")
+            rospy.loginfo(self.yaw)
+            rospy.loginfo("Target position:")
+            rospy.loginfo(self.yaw+dist_to_move)
+            q = tf.transformations.quaternion_from_euler(
+                0,0,self.yaw+dist_to_move)
+            self.goal.target_pose.pose = Pose(Point(self.x0,self.y0,0),
+                Quaternion(q[0],q[1],q[2],q[3]))
+            self.goal.target_pose.header.frame_id = 'odom'
+            self.move_base.send_goal(self.goal)
+            rospy.loginfo("Skid steer")
+            wait_for_finish(self.stalled_threshold)
+            rospy.sleep(5)
 
         # update_rot - this subroutine updates the feedback locations
         def update_rot():
@@ -623,7 +640,7 @@ class orient():
                 camera_z_mn = -1*xA*np.tan(self.camera_fov_v/2)
 
                 # Check if the left end of the box is visible by the camera
-                if camera_y_mx > ymx:
+                if True: #camera_y_mx > ymx:
                     self.big_board_offset = 0
                     rospy.loginfo("No wrenches on this side. Circling around.")
 
@@ -635,7 +652,8 @@ class orient():
                     obj_loc = np.array([[x_loc],[y_loc]])
 
                     # Define the target location in the local coordinate system
-                    tar_loc = np.array([[xmn+0.5],[ymx+1]])
+                    tar_loc = np.array([[xmn+1],[ymx+2]])
+                    # originally 0.5 and 1
                     rospy.logdebug("Target in local coord (x,y): (%f,%f)",
                         tar_loc[0], tar_loc[1])
 
@@ -654,29 +672,29 @@ class orient():
                     # The path planner likes to try and run into the object. We
                     # force the robot to move in a specific direction initially
                     # to mitigate this.
-                    rospy.loginfo("Rotating to make path better.")
+                    #rospy.loginfo("Rotating to make path better.")
                     q = tf.transformations.quaternion_from_euler(
                         0,0,self.yaw-1.57)
-                    loc = Pose(Point(self.x_tar_glo,self.y_tar_glo,0),
-                        Quaternion(q[0],q[1],q[2],q[3]))
-                    rot_cmd(1.0,1.57)
-                    rospy.loginfo("Done pre-rotating.")
+                    #loc = Pose(Point(self.x_tar_glo,self.y_tar_glo,0),
+                    #    Quaternion(q[0],q[1],q[2],q[3]))
+                    #rot_cmd(0.5,1.57)
+                    #rospy.loginfo("Done pre-rotating.")
 
                     # Move 2 meters along the box to help with the path plan
-                    rospy.loginfo("Moving forward to obtain clearance.")
-                    back_it_up(0.50,1)
-                    rospy.loginfo("Done getting clearance.")
-                    rospy.sleep(self.rest_time)
-                    rospy.loginfo("Rotating toward box (skid steer).")
-                    rot_cmd(-1.0,-1.57)
-                    rospy.loginfo("Done with skid steer.")
-                    rospy.sleep(self.rest_time)
+                    #rospy.loginfo("Moving forward to obtain clearance.")
+                    #back_it_up(0.50,1)
+                    #rospy.loginfo("Done getting clearance.")
+                    #rospy.sleep(self.rest_time)
+                    #rospy.loginfo("Rotating toward box (skid steer).")
+                    #rot_cmd(-0.5,-1.57)
+                    #rospy.loginfo("Done with skid steer.")
+                    #rospy.sleep(self.rest_time)
                     rospy.logdebug("Move to target location.")
                     skid_steer_move([self.x_tar_glo,self.y_tar_glo],q)
                     #self.goal.target_pose.pose = loc
                     #self.goal.target_pose.header.frame_id = 'odom'
                     #self.move_base.send_goal(self.goal)
-                    rospy.sleep(0.1)
+                    rospy.sleep(5.0)
                     self.fake_smach = 1
                     wait_for_finish(self.stalled_threshold)
                     rospy.loginfo("UGV at target location on next side.")
@@ -730,7 +748,8 @@ class orient():
                                + str(err_ang) + 'degrees')
 
                 # Check if the error in dist and angle is below the threshold
-                if err_dist > 0.2 or err_ang > 0.07:
+                #if err_dist > 0.2 or err_ang > 0.07:
+                if err_dist > 0.4 or err_ang > 0.2:
                     tar_in_global([xC,yC+self.big_board_offset])
                     # print self.goal
                     q = tf.transformations.quaternion_from_euler(
