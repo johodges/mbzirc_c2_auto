@@ -136,9 +136,9 @@ def nav_term_cb(outcome_map):
         return False
 
 def nav_out_cb(outcome_map):
-    if outcome_map['NAV'] == 'atBoard':
+    if outcome_map['FINDBOARD'] == 'atBoard':
         return 'go2Orient'
-    elif outcome_map['MAN_CK'] == 'shiftMode':
+    elif outcome_map['MANUAL_NAV_CHECK'] == 'shiftMode':
         return 'go2manualOps'
     else:
         return 'go2manualOps'
