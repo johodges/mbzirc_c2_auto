@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(UGV_teleop)
+project(ugv_teleop)
 find_package(catkin REQUIRED COMPONENTS
   camera_info_manager
   cv_bridge

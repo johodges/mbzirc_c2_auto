@@ -6,14 +6,14 @@
 
   <group ns="joy_teleop">
 
-    <rosparam command="load" file="$(find UGV_teleop)/config/teleop.yaml" />
+    <rosparam command="load" file="$(find ugv_teleop)/config/teleop.yaml" />
 
-    <!-- <node pkg="joy" type="joy_node" name="joy_node">
+    <node pkg="joy" type="joy_node" name="joy_node_manual">
       <param name="dev" value="$(arg joy_dev)" />
     </node>
- -->
+
     <node pkg="teleop_twist_joy" type="teleop_node" name="teleop_twist_joy"/>
   </group>
-  <node pkg="UGV_teleop" type="teleop.py" name="PTZ_teleop" output="screen">
+  <node pkg="ugv_teleop" type="teleop.py" name="PTZ_teleop" output="screen">
   </node>
 </launch>
