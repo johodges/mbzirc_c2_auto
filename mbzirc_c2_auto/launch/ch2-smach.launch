@@ -122,4 +122,7 @@
 
   <node name="arm_kalman" pkg="mbzirc_c2_auto" type="arm_kalman_move.py" />
 
+  <param name="joy_node/dev" value="/dev/input/js0"/>
+  <node name="joy_ctrl" pkg="joy" type="joy_node" />
+
 </launch>
