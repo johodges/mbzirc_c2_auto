@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="joystick" default="true" />
+  <node pkg="joy" type="joy_node" name="joy_node">
+    <param name="dev" value="$(arg joy_dev)" />
+  </node>
+  <node pkg="ugv_teleop" type="teleop_arm.py" name="arm_teleop" output="screen">
+  </node>
+</launch>
