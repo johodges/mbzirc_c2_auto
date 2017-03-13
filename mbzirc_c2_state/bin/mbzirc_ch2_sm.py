@@ -143,6 +143,24 @@ def nav_out_cb(outcome_map):
     else:
         return 'go2manualOps'
 
+def orient_term_cb(outcome_map):
+    """ Termination callback to set concurrent nav behavior
+    """
+    if outcome_map['ORIENT_UGV'] == 'oriented':
+        return True
+    elif outcome_map['MANUAL_OR_CHECK'] == 'shiftMode':
+        return True
+    else:
+        return False
+
+def orient_out_cb(outcome_map):
+    if outcome_map['ORIENT_UGV'] == 'oriented':
+        return 'go2wrench'
+    elif outcome_map['MANUAL_OR_CHECK'] == 'shiftMode':
+        return 'go2manualOps'
+    else:
+        return 'go2manualOps'
+
 def main(sim_mode):
     """Defines the state machines for Smach
     """
@@ -291,42 +309,53 @@ def main(sim_mode):
 
         #******************************************************************
         # Define the ORIENT State Machine (sm_orient)
+        sm_orient_con = smach.Concurrence(outcomes=['go2wrench','go2manualOps'],
+                                          default_outcome='go2wrench',
+                                          child_termination_cb=orient_term_cb,
+                                          outcome_cb=orient_out_cb)
+
+        with sm_orient_con:
+          smach.Concurrence.add('ORIENT_UGV',Orient())
+          smach.Concurrence.add('MANUAL_OR_CHECK',ManOrientCheck())
+
         with sm_orient:
-            smach.StateMachine.add('ORIENT_SM_METHOD', OrientSMMethod(),
-                                   transitions={'useOld' : 'ORIENT_UGV',
-                                                'useNew' : 'GO_TO_NEW_SIDE'})
+            # smach.StateMachine.add('ORIENT_SM_METHOD', OrientSMMethod(),
+            #                        transitions={'useOld' : 'ORIENT_UGV',
+            #                                     'useNew' : 'GO_TO_NEW_SIDE'})
 
-            smach.StateMachine.add('ORIENT_UGV', Orient(),
-                                   transitions={'oriented' : 'readyToGrabWrench'})
-
-            smach.StateMachine.add('GO_TO_NEW_SIDE', GoToNewSide(),
-                                   transitions={'atNewSide' : 'MOVE_TO_SIDE_WP',
-                                                'allSidesScanned' : 'MANUAL_ORIENT'},
-                                   remapping={'num_sides_in' : 'num_sides',
-                                              'num_sides_out' : 'num_sides'})
+            smach.StateMachine.add('MAIN_ORIENT', sm_orient_con,
+                                   transitions={'go2wrench' : 'readyToGrabWrench',
+                                                'go2manualOps': 'MANUAL_ORIENT'})
 
             smach.StateMachine.add('MANUAL_ORIENT', ManualOrient(),
-                                   transitions={'backToAuto' : 'DETECT_WRENCHES',
+                                   transitions={'backToAuto' : 'readyToGrabWrench',
                                                 'noWrenches' : 'failedToOrient'})
 
-            # smach.StateMachine.add('COMPUTE_SIDE_WP', ComputeSideWP(),
-            #                        transitions={'computedWayPoint' : 'MOVE_TO_SIDE_WP'})
+        #     # The following orient states are no longer active
+        #     smach.StateMachine.add('GO_TO_NEW_SIDE', GoToNewSide(),
+        #                            transitions={'atNewSide' : 'MOVE_TO_SIDE_WP',
+        #                                         'allSidesScanned' : 'MANUAL_ORIENT'},
+        #                            remapping={'num_sides_in' : 'num_sides',
+        #                                       'num_sides_out' : 'num_sides'})
 
-            smach.StateMachine.add('MOVE_TO_SIDE_WP', MoveToSideWP(),
-                                   transitions={'atWayPoint' : 'DETECT_WRENCHES'})
+        #     # smach.StateMachine.add('COMPUTE_SIDE_WP', ComputeSideWP(),
+        #     #                        transitions={'computedWayPoint' : 'MOVE_TO_SIDE_WP'})
 
-            smach.StateMachine.add('DETECT_WRENCHES', DetectWrenches(),
-                                   transitions={'foundWrenches' : 'MOVE_TO_WRENCHES',
-                                                'noWrenches' : 'GO_TO_NEW_SIDE'})
+        #     smach.StateMachine.add('MOVE_TO_SIDE_WP', MoveToSideWP(),
+        #                            transitions={'atWayPoint' : 'DETECT_WRENCHES'})
 
-            # smach.StateMachine.add('MOVE_DOWN_SIDE', MoveDownSide(),
-            #                        transitions={'finishedSide' : 'GO_TO_NEW_SIDE',
-            #                                     'nextWayPoint' : 'MOVE_TO_SIDE_WP'})
+        #     smach.StateMachine.add('DETECT_WRENCHES', DetectWrenches(),
+        #                            transitions={'foundWrenches' : 'MOVE_TO_WRENCHES',
+        #                                         'noWrenches' : 'GO_TO_NEW_SIDE'})
 
-            smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
-                                   transitions={'oriented' : 'readyToGrabWrench'})
+        #     # smach.StateMachine.add('MOVE_DOWN_SIDE', MoveDownSide(),
+        #     #                        transitions={'finishedSide' : 'GO_TO_NEW_SIDE',
+        #     #                                     'nextWayPoint' : 'MOVE_TO_SIDE_WP'})
 
-        # END ORIENT State Machine
+        #     smach.StateMachine.add('MOVE_TO_WRENCHES', MoveToWrenches(),
+        #                            transitions={'oriented' : 'readyToGrabWrench'})
+
+        # # END ORIENT State Machine
         #******************************************************************
 
 
