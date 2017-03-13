@@ -309,7 +309,7 @@ class ManualNavigate(smach.State):
         prc = subprocess.Popen("roslaunch UGV_teleop manual_control.launch", shell=True)
         prc.wait()
 
-        if rospy.get_param('smach_state') == 'backToAuto':
+        if rospy.get_param('smach_state') == 'success':
             return 'atBoard'
         else:
             return 'noBoard'
