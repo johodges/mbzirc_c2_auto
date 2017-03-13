@@ -6,7 +6,7 @@
 
   <group ns="joy_teleop">
 
-    <rosparam command="load" file="$(find UGV_teleop)/config/teleop.yaml" />
+    <rosparam command="load" file="$(find ugv_teleop)/config/teleop.yaml" />
 
     <node pkg="joy" type="joy_node" name="joy_node">
       <param name="dev" value="$(arg joy_dev)" />

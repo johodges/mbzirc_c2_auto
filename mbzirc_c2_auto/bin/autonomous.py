@@ -35,6 +35,7 @@ from geometry_msgs.msg import Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+from std_msgs.msg import Int8
 import numpy as np
 from decimal import *
 import tf
@@ -54,7 +55,7 @@ class mbzirc_c2_auto():
         detect_counter: counter for LIDAR detection scans
         noise_counter: counter for LIDAR empty scans
         state: current state of move_base node
-        twi_pub: Publisher to manually control the robot 
+        twi_pub: Publisher to manually control the robot
         move_base: move_base action server
         goal: move_base goal
         ct_move: manually movement counter
@@ -67,7 +68,7 @@ class mbzirc_c2_auto():
     Publishers:
         /joy_teleop/cmd_vel: topic to manually move the robot
         /move_base/goal: goal sent to the move_base node in ROS
-            
+
     """
 
     def __init__(self):
@@ -92,7 +93,7 @@ class mbzirc_c2_auto():
         # Set up the waypoint locations. Poses are defined in the map frame.
         self.locations = dict()
         self.waypoint_name = dict()
-        
+
         f = open(rospack.get_path(
             'mbzirc_c2_auto')+'/params/pre-defined-path.txt','r')
         line_counter = 0
@@ -103,7 +104,7 @@ class mbzirc_c2_auto():
                 self.waypoint_name[line_counter] = nome[0]
                 x=Decimal(nome[1]); y=Decimal(nome[2]); z=Decimal(nome[3])
                 X=float(nome[4]); Y=float(nome[5]); Z=float(nome[6])
-                q = tf.transformations.quaternion_from_euler(X, Y, Z) 
+                q = tf.transformations.quaternion_from_euler(X, Y, Z)
                 self.locations[self.waypoint_name[line_counter]] = Pose(
                     Point(x,y,z), Quaternion(q[0],q[1],q[2],q[3]))
                 line_counter = line_counter+1
@@ -118,11 +119,10 @@ class mbzirc_c2_auto():
         self.state = 3                  # move_base current state
 
         # Set up ROS publishers and subscribers
-        # Publisher to manually control the robot 
-        self.twi_pub = rospy.Publisher("/cmd_vel", Twist,
-            queue_size=5)
+        # Publisher to manually control the robot
+        self.twi_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=5)
         # Subscribe to the move_base action server
-        self.move_base = actionlib.SimpleActionClient("move_base", 
+        self.move_base = actionlib.SimpleActionClient("move_base",
             MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
 
@@ -133,8 +133,9 @@ class mbzirc_c2_auto():
         rospy.loginfo("Connected to move base server")
         rospy.loginfo("Starting navigation test")
         # Subscribe to object detection topic
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, 
-            queue_size=1)
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
+        rospy.Subscriber("/prepare_to_die", Int8, self.cb_inigo, queue_size=1)
+
         rospy.sleep(self.rest_time)
         # If move_base is registering 'SUCCEEDED' move to next waypoint
         self.current_waypoint = self.current_waypoint+1
@@ -160,6 +161,12 @@ class mbzirc_c2_auto():
         self.twi_pub.publish(Twist())
         rospy.sleep(0.1)
 
+    def cb_inigo(self, data):
+        rospy.loginfo("My name is Inigo Montoya, you killed my father...")
+        rospy.loginfo("Prepare to die!")
+        rospy.signal_shutdown('Time to operate in manual!')
+
+
     def callback(self, bearing):
         """This callback occurs whenever the object detection script publishes
         to the /detection topic. If the array is [0,0], no object was detected
@@ -170,12 +177,12 @@ class mbzirc_c2_auto():
             """This subroutine manually moves the husky forward or backward
             a fixed amount at a fixed velocity by bypassing the move_base
             package and sending a signal directly to the wheels.
-                
+
             This subroutine is likely to be replaced by:
                 file:
                     robot_mv_cmds
                     subroutine: move_UGV_vel(lv,av,dist_to_move)
-            """ 
+            """
             sleep_time = 0.1
             time_to_move = abs(dist_to_move/ve)
             twist = Twist()
@@ -304,8 +311,8 @@ class mbzirc_c2_auto():
                 self.noise_counter = 0
 
 if __name__ == '__main__':
+    mbzirc_c2_auto()
     try:
-        mbzirc_c2_auto()
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("mbzirc_c2_auto finished.")

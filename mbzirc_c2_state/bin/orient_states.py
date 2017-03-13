@@ -143,34 +143,6 @@ class Orient(smach.State):
         return ret_state
 
 
-class ManualOrient(smach.State):
-    """Allows for manual operation of the UGV if unable to find the wenches
-
-    If all four sides of the panel have been searched and we have failed to locate the
-    wrenches, then we would like to shift to manual operation of the UGV.  This state
-    provides the ability to do that.
-
-    Outcomes
-    --------
-      backToAuto : moves the system back to autonomous mode.
-      noWrenches : could not find the wrenches on any side of the panel
-    """
-
-    def __init__(self):
-        smach.State.__init__(self,
-                             outcomes=['backToAuto',
-                                       'noWrenches'])
-
-    def execute(self, userdata):
-        prc = subprocess.Popen("roslaunch UGV_teleop manual_control.launch", shell=True)
-        prc.wait()
-
-        if rospy.get_param('smach_state') == 'success':
-            return 'backToAuto'
-        else:
-            return 'noWrenches'
-
-
 
 # class GoToNewSide(smach.State):
 #     """Moves to a new side of the panel

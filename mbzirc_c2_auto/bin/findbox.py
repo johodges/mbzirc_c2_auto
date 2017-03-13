@@ -165,19 +165,25 @@ def callback(data):
         img_array = np.asarray(bytearray(imgdata.read()), dtype=np.uint8)
         im = cv2.imdecode(img_array, 1)
         bridge = CvBridge()
-        image_output = rospy.Publisher("/output/keyevent_image",Image, 
+        image_output = rospy.Publisher("/output/keyevent_image",Image,
             queue_size=1)
         image_output.publish(bridge.cv2_to_imgmsg(im, "bgr8"))
         plt.close()
     pass
 
+def myhook():
+  rospy.loginfo("*** SHUTDOWN time!")
+
 def laser_listener():
     '''Entry point for the file.  Subscribe to lase scan topic and wait
     '''
-    pass
     rospy.init_node('findbox', anonymous=True)
+    rospy.on_shutdown(myhook)
     rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,callback, queue_size=1)
-    rospy.spin()
+    try:
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        rospy.loginfo("Findbox killed.")
 
 if __name__ == '__main__':
     rospy.loginfo('Looking for object...')
