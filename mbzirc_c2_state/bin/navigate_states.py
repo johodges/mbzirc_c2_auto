@@ -306,7 +306,7 @@ class ManualNavigate(smach.State):
                                        'noBoard'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_ugv_drive.py", shell=True)
+        prc = subprocess.Popen("roslaunch UGV_teleop manual_control.launch", shell=True)
         prc.wait()
 
         if rospy.get_param('smach_state') == 'backToAuto':
