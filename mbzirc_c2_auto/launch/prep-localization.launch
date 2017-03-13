@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- VTREX LAUNCH-->
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node_left_motors">
+    <param name="port" value="/dev/ttyACM0"/>
+  </node>
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node_right_motors">
+    <param name="port" value="/dev/ttyACM1"/>
+  </node>
+  <node pkg="tele_controller" type="odom_pub_node" name="odom_pub_node"/>
+
+</launch>

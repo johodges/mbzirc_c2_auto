@@ -71,7 +71,7 @@ def callback(data):
     scan_inc = data.angle_increment
 
     # Build angle array
-    x = np.arange(scan_min,scan_max,scan_inc)-1.57
+    x = np.arange(scan_min,scan_max,scan_inc)
 
     # Pre-compute trig functions of angles
     xsin = np.sin(x)
@@ -227,7 +227,7 @@ def laser_listener():
     '''
     pass
     rospy.init_node('findbox', anonymous=True)
-    rospy.Subscriber("/scan/long_range",sensor_msgs.msg.LaserScan,callback, queue_size=1)
+    rospy.Subscriber("/scan/close_range",sensor_msgs.msg.LaserScan,callback, queue_size=1)
     rospy.spin()
 
 if __name__ == '__main__':

@@ -1,0 +1,13 @@
+<launch>
+  <arg name="vtrex_enabled" default="false"/>
+  <group if="$(arg vtrex_enabled)">
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+    <rosparam command="load" file="$(find vtrex_control)/config/localization.yaml" />
+  </node>
+  </group>
+  <group unless="$(arg vtrex_enabled)">
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+    <rosparam command="load" file="$(find husky_control)/config/localization.yaml" />
+  </node>
+  </group>
+</launch>

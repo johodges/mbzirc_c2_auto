@@ -71,13 +71,15 @@ class FindBoard(smach.State):
 
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['atBoard'])
+                             outcomes=['atBoard',
+                                       'beenToAllWayPoints'])
 
     def execute(self, userdata):
 
         ret_state = 'normal'
 
         rospy.loginfo('Searching for board')
+        """
         try:
             lidar_to_use = rospy.get_param('lidar')
         except:
@@ -89,7 +91,15 @@ class FindBoard(smach.State):
         if lidar_to_use == 'velodyne':
             a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
                 stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-        rospy.sleep(10)
+        """
+        physical_robot = rospy.get_param('physical_robot')
+        if physical_robot:
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        else:
+            a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
+                stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        rospy.sleep(1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
 
@@ -131,24 +141,61 @@ class ManNavCheck(smach.State):
 
         return self.status
 
-# class Localize(smach.State):
-#     """Automatically localize the UGV in the arena
+class Localize(smach.State):
+    """Automatically localize the UGV in the arena
 
-#     Use IMU and GPS to localize the UGV in the arena
+    Use IMU and GPS to localize the UGV in the arena
 
-#     Outcomes
-#     --------
-#         localized : UGV localized in the arena
-#         notLocalized : unable to automatically localize the UGV in the arena
-#     """
+    Outcomes
+    --------
+        localized : UGV localized in the arena
+        notLocalized : unable to automatically localize the UGV in the arena
+    """
 
-#     def __init__(self):
-#         smach.State.__init__(self,
-#                              outcomes=['localized',
-#                                        'notLocalized'])
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['localized'])
 
-#     def execute(self, userdata):
-#         return 'localized'
+    def execute(self, userdata):
+        physical_robot = rospy.get_param('physical_robot')
+        vtrex_enabled = rospy.get_param('vtrex_enabled')
+        if physical_robot:
+            # Launch the UGV
+            if vtrex_enabled:
+                left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else:
+                husky_pc = subprocess.Popen("rosrun husky_base husky_node _port:=/dev/ttyUSB0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                husky_con = subprocess.Popen("rosrun controller_manager spawner husky_joint_publisher husky_velocity_controller --shutdown-timeout 3", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            # Launch the imu_localization node to fix yaw
+            imu_localization = subprocess.Popen("rosrun mbzirc_c2_auto imu_localization.py", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            imu_localization.wait()
+
+            # Kill odometry nodes
+            if vtrex_enabled:
+                os.killpg(os.getpgid(left_motor.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(right_motor.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(odom_publisher.pid), signal.SIGTERM)
+                rospy.sleep(0.1)
+            else:
+                os.killpg(os.getpgid(husky_pc.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(husky_con.pid), signal.SIGTERM)
+                rospy.sleep(0.1)
+
+            # Launch UGV again to reset odom to zero
+            if vtrex_enabled:
+                left_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                right_motor = subprocess.Popen("rosrun rosserial_python serial_node.py _port:=/dev/ttyACM1", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                odom_publisher = subprocess.Popen("rosrun tele_controller odom_pub_node", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            else:
+                husky_pc = subprocess.Popen("rosrun husky_base husky_node _port:=/dev/ttyUSB0", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+                husky_con = subprocess.Popen("rosrun controller_manager spawner husky_joint_publisher husky_velocity_controller --shutdown-timeout 3", stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+            rospy.sleep(0.1)
+
+        else:
+            pass
+        return 'localized'
 
 
 # class VisualLocalization(smach.State):

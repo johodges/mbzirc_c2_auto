@@ -60,7 +60,6 @@ class laser_listener():
         """
         # Name this node, it must be unique
         rospy.init_node('orient_scan', anonymous=True)
-        self.range = [-1.5,1.5]
         try:
             fake_lidar = rospy.get_param('fake_lidar')
         except:
@@ -92,7 +91,7 @@ class laser_listener():
         scan_inc = data.angle_increment
 
         # Build angle array
-        y = np.arange(scan_min,scan_max,scan_inc)*-1#-1.57
+        y = np.arange(scan_min,scan_max,scan_inc)#-1.57
 
         # Compute sine and cosine of each LIDAR angle
         ysin = np.sin(y)
@@ -122,14 +121,15 @@ class laser_listener():
             xlen = len(x2[i])-0
 
             # Only consider scans with at least 4 entries (cuts down on noise)
-            if xlen > 2:
+            if xlen > 4:
 
                 # Calculate how long the scan is
                 dist2_sum = np.sum(dist2[i][1:xlen-1])
+
                 # Check if the scan is just right
                 if dist2_sum > 0.25 and dist2_sum < 5:
                     mxmx = max(iii for iii in x_coord2[i] if iii < 30)
-                    if mxmx > 0.25:
+                    if mxmx > 0.5:
                         # Find median angle of scan
                         ang = np.median(y2[i])
                         idx = np.argwhere(y2[i] == ang)
@@ -173,10 +173,10 @@ class laser_listener():
                         roboR = rospy.get_param("/currentRobotR")
                         detectX = roboX + (xA * math.cos(theta2 + roboR))
                         detectY = roboY + (xA * math.sin(theta2 + roboR))
-
-                        if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]) and ang > self.range[0] and ang < self.range[1]:
+                        print "Detect X,Y: ", detectX, detectY
+                        if detectX > arenaPnt1[0] and detectX < arenaPnt2[0] and detectY < arenaPnt1[1] and detectY > arenaPnt2[1] and not (detectX > deadZone1[0] and detectX < deadZone2[0] and detectY < deadZone1[1] and detectY > deadZone2[1]):
                             b2 = yA-m2*xA
-                            d = 1.5
+                            d = 2
                             t1 = -2*xA-2*m2*yA+m2*m2+2*b2*m2
                             t2 = xA*xA+yA*yA-2*b2*yA+b2*b2-9
 

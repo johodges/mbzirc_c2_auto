@@ -9,18 +9,17 @@
   <arg name="paused" default="true"/>
   <arg name="world_name" default="$(find mbzirc_c2_auto)/gazebo_models/world/mbzirc_arena_task_2_test3.world"/>
   <arg name="state_machine" default="true"/>
-  <arg name="state_machine_type" default="wrenchTest"/>
+  <arg name="state_machine_type" default="normal"/>
   <arg name="joint_limit" default="false"/>
   <arg name="trex_enabled" default="false"/>
   <arg name="husky_enabled" default="true"/>
-
 
   <arg name="velodyne_enabled" default="false"/>
   <arg name="sick_enabled" default="true"/>
   <arg name="sawyer_enabled" default="false"/>
   <arg name="ur5_enabled" default="true"/>
   <arg name="kinectv2_enabled" default="true"/>
-  
+
   <group if="$(arg velodyne_enabled)" >
     <param name="lidar" value="velodyne"/>
     <node pkg="but_velodyne_proc" type="laser_scan" name="but_velodyne_proc_laserscan_node"
