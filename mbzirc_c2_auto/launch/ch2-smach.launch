@@ -4,6 +4,7 @@
   <param name="node_logging" value="INFO"/>
   <param name="sm_version" value="old"/>
   <param name="physical_robot" value="false"/>
+  <param name="vtrex_enabled" value="false"/>
   <arg name="physical_robot" default="false"/>
   <arg name="fake_robot" default="true"/>
   <arg name="paused" default="true"/>
