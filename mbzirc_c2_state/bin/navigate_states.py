@@ -27,6 +27,8 @@ import smach
 import subprocess
 import os
 import signal
+from sensor_msgs.msg import Joy
+from std_msgs.msg import Int8
 import sys
 
 
@@ -75,6 +77,8 @@ class FindBoard(smach.State):
 
     def execute(self, userdata):
 
+        ret_state = 'normal'
+
         rospy.loginfo('Searching for board')
         """
         try:
@@ -99,14 +103,50 @@ class FindBoard(smach.State):
         rospy.sleep(1)
         b = subprocess.Popen("rosrun mbzirc_c2_auto autonomous.py", shell=True)
 
-        b.wait()
-        rospy.loginfo('Searching for board')
+
+        ptd_pub = rospy.Publisher("/prepare_to_die", Int8, queue_size=5)
+        while b.poll() is None:
+            if self.preempt_requested():
+                rospy.loginfo("Navigation preempted for manual mode.")
+                # b.kill()
+                ptd_pub.publish(Int8(1))
+                rospy.sleep(0.5)
+                ret_state = 'preempted'
+
+        # rospy.loginfo(b.poll())
+        rospy.loginfo("Killing the findbox node")
         os.killpg(os.getpgid(a.pid), signal.SIGTERM)
         rospy.sleep(0.1)
+        if ret_state == 'normal':
+            rospy.loginfo('Completed searching for board')
+            ret_state = rospy.get_param('smach_state')
 
-        ret_state = rospy.get_param('smach_state')
         return ret_state
 
+
+class ManNavCheck(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['shiftMode','preempted'])
+        self.status = 'waiting'
+        self.sub = rospy.Subscriber('joy',Joy,self.ck_joystick)
+
+    def ck_joystick(self,msg):
+        if msg.buttons[7] == 1:
+            self.status = 'shiftMode'
+        else:
+            self.status = 'waiting'
+
+    def execute(self, userdata):
+        rospy.loginfo(self.status)
+
+
+        while self.status == 'waiting':
+            if self.preempt_requested():
+                rospy.loginfo('Autonomous navigation successful.  Preempting manual check.')
+                self.service_preempt()
+                return 'preempted'
+
+        return self.status
 
 class Localize(smach.State):
     """Automatically localize the UGV in the arena
@@ -273,12 +313,20 @@ class ManualNavigate(smach.State):
                                        'noBoard'])
 
     def execute(self, userdata):
-        prc = subprocess.Popen("rosrun mbzirc_c2_auto manual_ugv_drive.py", shell=True)
-        prc.wait()
+        prc1 = subprocess.Popen("roslaunch ugv_teleop manual_control.launch", shell=True)
+        # prc1 = subprocess.Popen("rosrun UGV_teleop teleop.py", shell=True)
+        # prc2 = subprocess.Popen("rosrun teleop_twist_joy teleop_node", shell=True)
+        prc1.wait()
 
-        if rospy.get_param('smach_state') == 'backToAuto':
+        rospy.loginfo("HA! I did not wait.")
+        # prc2.kill()
+        rospy.sleep(0.1)
+        try:
+            if rospy.get_param('smach_state') == 'success':
+                return 'atBoard'
+            else:
+                return 'noBoard'
+        except:
             return 'atBoard'
-        else:
-            return 'noBoard'
 
 

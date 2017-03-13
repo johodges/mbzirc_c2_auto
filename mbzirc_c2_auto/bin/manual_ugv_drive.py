@@ -23,6 +23,7 @@ import rospy
 import rosnode
 import subprocess
 from std_msgs.msg import String
+from sensor_msgs.msg import Joy
 
 
 class manual_orient():
@@ -57,7 +58,8 @@ class manual_orient():
         self.get_keys = subprocess.Popen("rosrun mbzirc_c2_auto key_publisher.py", shell=True)
 
         # Subscribe to the keys topic
-        self.key_sub = rospy.Subscriber('keys',String,self.callback)
+        self.key_sub = rospy.Subscriber('keys',String,self.key_cb)
+        self.joy_sub = rospy.Subscriber('joy',Joy,self.joy_cb)
 
     def shutdown_manops(exit_str):
         """Kill the key_publisher node
@@ -65,7 +67,7 @@ class manual_orient():
         rospy.logdebug('Attempting to kill keyboard_driver')
         rosnode.kill_nodes(['key_publisher'])
 
-    def callback(self, data):
+    def key_cb(self, data):
         """Callback used when a key is pressed and published
         """
         # Get the current keystroke and make it lowercase for later comparisons
@@ -89,6 +91,18 @@ class manual_orient():
             rospy.loginfo('UGV turning right.')
         elif self.curr_key == 's':
             rospy.loginfo('UGV stopping.')
+
+    def joy_cb(self, msg):
+        if msg.buttons[12] == 1:
+            rospy.loginfo("Move up")
+        elif msg.buttons[13] == 1:
+            rospy.loginfo("Move right")
+        elif msg.buttons[14] == 1:
+            rospy.loginfo("Move down")
+        elif msg.buttons[15] == 1:
+            rospy.loginfo("Move left")
+        elif msg.buttons[10] == 1:
+            rospy.signal_shutdown('Completed navigating')
 
 if __name__ == '__main__':
     try:

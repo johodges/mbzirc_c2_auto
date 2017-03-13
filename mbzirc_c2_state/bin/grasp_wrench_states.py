@@ -100,7 +100,7 @@ class MoveToWrenchReady(smach.State):
 
         wrench_ready_pos = rospy.get_param('wrench')
         ee_position = rospy.get_param('ee_position')
-        
+
         # Set the ready position 40 cm away from the wrenches
         wrench_ready_pos[0] = 0.4#(wrench_ready_pos[0] - ee_position[0] - 0.6)+ee_position[0]
         wrench_ready_pos[1] = -0.2#wrench_ready_pos[1] #+ 0.1
@@ -188,7 +188,7 @@ class MoveToWrench(smach.State):
 
     def callback(self, data):
         self.valve_pos_kf = data
-    
+
     def callback_gripper(self, data):
         self.gripper_status = data.data
 
@@ -415,7 +415,7 @@ class MoveToWrench(smach.State):
                     ct4 = 0
                     """
                     self.gripper_status = 2
-                    
+
             rospy.loginfo("Gripper is closed.")
 
             return 'atWrench'
@@ -497,5 +497,33 @@ class GraspWrench(smach.State):
             return status
         else:
             return 'wrenchTestDone'
+
+
+class ManualArmMove(smach.State):
+    """Allows for manual operation of the UGV if unable to find the wenches
+
+    If all four sides of the panel have been searched and we have failed to locate the
+    wrenches, then we would like to shift to manual operation of the UGV.  This state
+    provides the ability to do that.
+
+    Outcomes
+    --------
+      backToAuto : moves the system back to autonomous mode.
+      noWrenches : could not find the wrenches on any side of the panel
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['completed',
+                                       'failed'])
+
+    def execute(self, userdata):
+        prc = subprocess.Popen("roslaunch ugv_teleop arm_manual_control.launch", shell=True)
+        prc.wait()
+
+        if rospy.get_param('smach_state') == 'success':
+            return 'completed'
+        else:
+            return 'failed'
 
 
