@@ -24,17 +24,24 @@ class arm_controller:
         arm_z_control = data.axes[7]
         arm_x_control_increase = data.buttons[3]
         arm_x_control_decrease = data.buttons[0]
+
         if(success_flag==1 and failed_flag==0):
             rospy.set_param('smach_state', 'success')
             print 'success!'
+            rospy.sleep(0.1)
+            rospy.signal_shutdown("Successful Ops")
         elif(success_flag==0 and failed_flag==1):
             rospy.set_param('smach_state', 'failed')
             print 'failed!'
-
-        self.control_arm(resolution_increase, resolution_decrease, arm_y_control,arm_z_control, arm_x_control_increase, arm_x_control_decrease)
+            rospy.sleep(0.1)
+            rospy.signal_shutdown("Failed manual stuff")
+        else:
+            self.control_arm(resolution_increase, resolution_decrease,
+                             arm_y_control,arm_z_control, arm_x_control_increase,
+                             arm_x_control_decrease)
 
     def control_arm(self, resolution_increase, resolution_decrease, arm_y_control,arm_z_control, arm_x_control_increase, arm_x_control_decrease):
-        print 2*self.resolution
+        # print 2*self.resolution
 
         if(resolution_increase>0):
             self.resolution = 2 * self.resolution
@@ -74,11 +81,9 @@ def listener():
 
 if __name__ == '__main__':
     rospy.init_node('teleop', anonymous=True)
-    x_init = rospy.get_param('x', 3)
-    y_init = rospy.get_param('y', 2)
-    z_init = rospy.get_param('z', 1)
+    ee_posit = rospy.get_param('ee_position')
     #ac=arm_controller(3,2,1)
-    ac=arm_controller(x_init,y_init,z_init)
+    ac=arm_controller(ee_posit[0], ee_posit[1], ee_posit[2])
     rospy.spin()
 
 

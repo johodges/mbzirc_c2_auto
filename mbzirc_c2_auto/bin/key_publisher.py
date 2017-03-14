@@ -39,9 +39,14 @@ if __name__ == '__main__':
     old_attr = termios.tcgetattr(sys.stdin)
     tty.setcbreak(sys.stdin.fileno())
     rospy.loginfo("Publishing keystrokes to 'keys' topic.")
+
     while not rospy.is_shutdown():
         if select.select([sys.stdin], [], [], 0)[0] == [sys.stdin]:
             key_pub.publish(sys.stdin.read(1))
-        rate.sleep()
+        try:
+            rate.sleep()
+        except rospy.ROSInterruptException:
+            rospy.loginfo("SMACH initialized")
+
     rospy.loginfo('Ending key_publisher')
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_attr)
