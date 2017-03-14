@@ -717,7 +717,7 @@ class orient():
                 correctly.
                 """
                 # Check if we see wrenches
-                if np.shape(self.wrench)[0] > 5:
+                if np.shape(self.wrench)[0] > 10:
                     
                     self.wrench_counter = self.wrench_counter+1
                     rospy.sleep(self.rest_time)

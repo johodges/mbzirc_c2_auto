@@ -120,11 +120,11 @@ class Orient(smach.State):
         rospy.sleep(0.1)
         if physical_robot:
             d = subprocess.Popen(
-                "rosrun mbzirc_c2_auto orient_scan_deadzone.py", shell=True)
+                "rosrun mbzirc_c2_auto orient_scan_scan.py", shell=True)
             c = subprocess.Popen("rosrun mbzirc_c2_auto orient2_skid.py", shell=True)
         else:
             d = subprocess.Popen("rosrun mbzirc_c2_auto orient_scan.py", shell=True)
-            c = subprocess.Popen("rosrun mbzirc_c2_auto orient2.py", shell=True)
+            c = subprocess.Popen("rosrun mbzirc_c2_auto orient2_skid.py", shell=True)
         rospy.sleep(0.1)
 
         while c.poll() is None:

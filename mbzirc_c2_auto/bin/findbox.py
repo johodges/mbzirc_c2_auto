@@ -43,6 +43,7 @@ import scipy.misc as ms
 import scipy.spatial.distance as scd
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+from nav_msgs.msg import Odometry
 import StringIO
 from sensor_msgs.msg import Image
 import cv2
@@ -51,140 +52,171 @@ import urllib, base64
 import os
 import sys
 import math
+import tf
+import time
 
-def callback(data):
-    """
-    This callback runs each time a LIDAR scan is obtained from
-    the /scan topic in ROS. Returns a topic /detection. If no
-    object is found, /detection = [0,0]. If an object is found,
-    /detection = [angle,distance] to median of scan.
-    """
+class findbox():
+    def __init__(self):
+        rospy.init_node('findbox', anonymous=True)
+        self.physical_robot = rospy.get_param('physical_robot')
+        if self.physical_robot:
+            rospy.Subscriber("/scan/long_range",sensor_msgs.msg.LaserScan,self.cb_scan, queue_size=1)
+        else:
+            rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.cb_scan, queue_size=1)
+        rospy.Subscriber('/odometry/filtered',Odometry, self.cb_odom)
+        self.bearing_pub = rospy.Publisher("/detection",numpy_msg(Floats), queue_size=1)
+        self.bridge = CvBridge()
+        self.dist_min = 0.25
+        self.dist_max = 3
+        self.ylen_lim = 4
+        self.ang_min = -1.5
+        self.ang_max = 1.5
 
-    # Initialize parameters
-    rate = rospy.Rate(10)
-    scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
-    plot_data = False
+        self.arena_xpos = rospy.get_param('arena_xpos')
+        self.arena_xneg = rospy.get_param('arena_xneg')
+        self.arena_ypos = rospy.get_param('arena_ypos')
+        self.arena_yneg = rospy.get_param('arena_yneg')
 
-    # Set max/min angle and increment
-    scan_min = data.angle_min
-    scan_max = data.angle_max
-    scan_inc = data.angle_increment
-
-    # Build angle array
-    x = np.arange(scan_min,scan_max+scan_inc*0.1,scan_inc)
-
-    # Pre-compute trig functions of angles
-    xsin = np.sin(x)
-    xcos = np.cos(x)
-
-    # Apply a median filter to the range scans
-    y = sg.medfilt(data.ranges,1)
-
-    # Calculate the difference between consecutive range values
-    y_diff1 = np.power(np.diff(y),2)
-
-    # Convert range and bearing measurement to cartesian coordinates
-    x_coord = y*xsin
-    y_coord = y*xcos
-
-    # Compute difference between consecutive values in cartesian coordinates
-    x_diff = np.power(np.diff(x_coord),2)
-    y_diff = np.power(np.diff(y_coord),2)
-
-    # Compute physical distance between measurements
-    dist = np.power(x_diff+y_diff,0.5)
-
-    # Segment the LIDAR scan based on physical distance between measurements
-    x2 = np.array(np.split(x, np.argwhere(
-        dist > scan_dist_thresh).flatten()[1:]))
-    y2 = np.array(np.split(y, np.argwhere(
-        dist > scan_dist_thresh).flatten()[1:]))
-    dist2 = np.array(np.split(dist, np.argwhere(
-        dist > scan_dist_thresh).flatten()[1:]))
-    x_coord2 = np.array(np.split(x_coord, np.argwhere(
-        dist > scan_dist_thresh).flatten()[1:]))
-    y_coord2 = np.array(np.split(y_coord, np.argwhere(
-        dist > scan_dist_thresh).flatten()[1:]))
-
-    # Loop through each segmented object
-    for i in range(len(x2)):
-
-        # Check if there are at least 4 points in an object (reduces noise)
-        xlen = len(x2[i])-0
-        if xlen > 4:
-
-            # Calculate distance of this object
-            dist2_sum = np.sum(dist2[i][1:xlen-1])
-
-            # Check if this object is too small
-            if dist2_sum > 0.25 and dist2_sum < 3:
-                ang = np.median(x2[i])
-                dis = np.median(y2[i])
-                mn = min(y2[i][1:xlen])
-                mx = max(y2[i][1:xlen])
-                if ang > -3.14/2 and ang < 3.14/2:
-                    bearing = np.array([ang,dis], dtype=np.float32)
-
-    # Check if bearing exists. Store [0,0] if no object was found
-    if 'bearing' not in locals():
-        bearing = np.array([0,0], dtype=np.float32)
-
-    # Publish bearing to ROS on topic /detection
-    pub = rospy.Publisher("/detection",numpy_msg(Floats), queue_size=1)
-    pub.publish(bearing)
-
-    # If we want to plot the LIDAR scan, open the plot environment
-    if plot_data:
-        plt.figure(1)
-        for i in range(len(x2)):
-            xlen = len(x2[i])-0
-            if xlen > 4:
-                dist2_sum = np.sum(dist2[i][1:xlen-1])
-                if dist2_sum < 0.25:
-                    if plot_data:
-                        plt.plot(x2[i][1:xlen],y2[i][1:xlen],'k-',
-                            linewidth=2.0)
-                else:
-                    if dist2_sum > 3:
-                        if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'b-',
-                                linewidth=2.0)
-                    else:
-                        if plot_data:
-                            plt.plot(x2[i][1:xlen],y2[i][1:xlen],'r-',
-                                linewidth=2.0)
-        plt.ylim([0,20])
-        plt.xlim([-5,5])
-        plt.gca().invert_xaxis()
-        plt.xlabel('Left of robot [m] ')
-        plt.ylabel('Front of robot [m]')
-        plt.title('Laser Scan')
-        imgdata = StringIO.StringIO()
-        plt.savefig(imgdata, format='png')
-        imgdata.seek(0)
-        img_array = np.asarray(bytearray(imgdata.read()), dtype=np.uint8)
-        im = cv2.imdecode(img_array, 1)
-        bridge = CvBridge()
-        image_output = rospy.Publisher("/output/keyevent_image",Image,
+        self.rate = rospy.Rate(10)
+        self.scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
+        self.plot_data = True
+        self.image_output = rospy.Publisher("/output/keyevent_image",Image, 
             queue_size=1)
-        image_output.publish(bridge.cv2_to_imgmsg(im, "bgr8"))
-        plt.close()
-    pass
 
-def myhook():
-  rospy.loginfo("*** SHUTDOWN time!")
+    def cb_odom(self, data):
+        self.odom = data.pose.pose
+        self.x0 = self.odom.position.x
+        self.y0 = self.odom.position.y
+        X0 = self.odom.orientation.x
+        Y0 = self.odom.orientation.y
+        Z0 = self.odom.orientation.z
+        W0 = self.odom.orientation.w
+        [roll,pitch,yaw] = tf.transformations.euler_from_quaternion([X0,Y0,Z0,W0])
+        self.R = np.array([[np.cos(yaw),-np.sin(yaw)],[np.sin(yaw),np.cos(yaw)]])
 
-def laser_listener():
-    '''Entry point for the file.  Subscribe to lase scan topic and wait
-    '''
-    rospy.init_node('findbox', anonymous=True)
-    rospy.on_shutdown(myhook)
-    rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,callback, queue_size=1)
-    try:
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        rospy.loginfo("Findbox killed.")
+    def cb_scan(self, data):
+        """
+        This callback runs each time a LIDAR scan is obtained from
+        the /scan topic in ROS. Returns a topic /detection. If no
+        object is found, /detection = [0,0]. If an object is found,
+        /detection = [angle,distance] to median of scan.
+        """
+
+        # Set max/min angle and increment
+        scan_min = data.angle_min
+        scan_max = data.angle_max
+        scan_inc = data.angle_increment
+
+        # Build angle array
+        if self.physical_robot:
+            y = np.arange(scan_min,scan_max,scan_inc)-1.57
+        else:
+            y = np.arange(scan_min,scan_max+0.01*scan_inc,scan_inc)
+
+        # Pre-compute trig functions of angles
+        ysin = np.sin(y)
+        ycos = np.cos(y)
+
+        # Apply a median filter to the range scans
+        x = sg.medfilt(data.ranges,1)
+
+        # Calculate the difference between consecutive range values
+        x_diff1 = np.power(np.diff(x),2)
+
+        # Convert range and bearing measurement to cartesian coordinates
+        y_coord = x*ysin
+        x_coord = x*ycos
+
+        # Compute difference between consecutive values in cartesian coordinates
+        y_diff = np.power(np.diff(y_coord),2)
+        x_diff = np.power(np.diff(x_coord),2)
+
+        # Compute physical distance between measurements
+        dist = np.power(x_diff+y_diff,0.5)
+
+        # Segment the LIDAR scan based on physical distance between measurements
+        x2 = np.array(np.split(x, np.argwhere(dist > self.scan_dist_thresh).flatten()[1:]))
+        y2 = np.array(np.split(y, np.argwhere(dist > self.scan_dist_thresh).flatten()[1:]))
+        dist2 = np.array(np.split(dist, np.argwhere(dist > self.scan_dist_thresh).flatten()[1:]))
+        x_coord2 = np.array(np.split(x_coord, np.argwhere(dist > self.scan_dist_thresh).flatten()[1:]))
+        y_coord2 = np.array(np.split(y_coord, np.argwhere(dist > self.scan_dist_thresh).flatten()[1:]))
+
+        # Loop through each segmented object
+        [x_coord_glo,y_coord_glo] = np.dot(self.R,[x_coord2,y_coord2])
+        x_coord_glo = self.x0+x_coord_glo
+        y_coord_glo = self.y0+y_coord_glo
+        
+        for i in range(len(y2)):
+            # Check if there are at least 4 points in an object (reduces noise)
+            ylen = len(y2[i])-0
+            if ylen > self.ylen_lim:
+                # Calculate distance of this object
+                dist2_sum = np.sum(dist2[i][1:ylen-1])
+                y_pt = np.median(y_coord_glo[i])
+                x_pt = np.median(x_coord_glo[i])
+                # Check if this object is too small
+                if dist2_sum > self.dist_min and dist2_sum < self.dist_max:
+                    if y_pt < self.arena_ypos and y_pt > self.arena_yneg and x_pt < self.arena_xpos and x_pt > self.arena_xneg:
+                        ang = np.median(y2[i])
+                        dis = np.median(x2[i])
+                        mn = min(x2[i][1:ylen])
+                        mx = max(x2[i][1:ylen])
+                        if ang > self.ang_min and ang < self.ang_max:
+                            bearing = np.array([ang,dis], dtype=np.float32)
+                            #bearing = np.array([y_pt,x_pt], dtype=np.float32)
+
+        # Check if bearing exists. Store [0,0] if no object was found
+        if 'bearing' not in locals():
+            bearing = np.array([0,0], dtype=np.float32)
+
+        # Publish bearing to ROS on topic /detection
+        self.bearing_pub.publish(bearing)
+
+        # If we want to plot the LIDAR scan, open the plot environment
+        if self.plot_data:
+            plt.figure(1)
+            for i in range(len(y2)):
+                ylen = len(y2[i])-0
+                if ylen > self.ylen_lim:
+                    dist2_sum = np.sum(dist2[i][1:ylen-1])
+                    y_pt = np.median(y_coord_glo[i])
+                    x_pt = np.median(x_coord_glo[i])
+                    if y_pt > self.arena_ypos or y_pt < self.arena_yneg or x_pt > self.arena_xpos or x_pt < self.arena_xneg:
+                        print "x_mn, x_mx, x_pt: ", self.arena_xneg, self.arena_xpos, x_pt
+                        print "y_mn, y_mx, y_pt: ", self.arena_yneg, self.arena_ypos, y_pt
+                        #plt.plot(y_pt,x_pt,'co',markersize=10.0)
+                        plt.plot(y_coord_glo[i][1:ylen],x_coord_glo[i][1:ylen],'c-',linewidth=2.0)
+                    else:
+                        if dist2_sum < self.dist_min:
+                            plt.plot(y_coord_glo[i][1:ylen],x_coord_glo[i][1:ylen],'k-',linewidth=2.0)
+                        else:
+                            if dist2_sum > self.dist_max:
+                                plt.plot(y_coord_glo[i][1:ylen],x_coord_glo[i][1:ylen],'b-', linewidth=2.0)
+                            else:
+                                plt.plot(y_coord_glo[i][1:ylen],x_coord_glo[i][1:ylen],'r-', linewidth=2.0)
+            # Show arena bounds
+            plt.plot([self.arena_ypos,self.arena_ypos],[self.arena_xneg,self.arena_xpos],'k-',linewidth=4.0)
+            plt.plot([self.arena_yneg,self.arena_yneg],[self.arena_xneg,self.arena_xpos],'k-',linewidth=4.0)
+            plt.plot([self.arena_yneg,self.arena_ypos],[self.arena_xneg,self.arena_xneg],'k-',linewidth=4.0)
+            plt.plot([self.arena_yneg,self.arena_ypos],[self.arena_xpos,self.arena_xpos],'k-',linewidth=4.0)
+            # Show UGV
+            plt.plot(self.y0,self.x0,'mo',markersize=10.0)
+            plt.xlim([-40,40])
+            plt.ylim([-10,30])
+            plt.gca().invert_xaxis()
+            plt.xlabel('Left of robot [m] ')
+            plt.ylabel('Front of robot [m]')
+            plt.title('Laser Scan')
+            imgdata = StringIO.StringIO()
+            plt.savefig(imgdata, format='png')
+            imgdata.seek(0)
+            img_array = np.asarray(bytearray(imgdata.read()), dtype=np.uint8)
+            im = cv2.imdecode(img_array, 1)
+            self.image_output.publish(self.bridge.cv2_to_imgmsg(im, "bgr8"))
+            plt.close()
+        pass
 
 if __name__ == '__main__':
     rospy.loginfo('Looking for object...')
-    laser_listener()
+    findbox()
+    rospy.spin()
