@@ -25,6 +25,7 @@ class find_wrench:
     self.bridge = CvBridge()
     self.indir = '/home/jonathan/'
     self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback, queue_size=1,buff_size=2**24)
+    #self.image_sub = rospy.Subscriber("/kinect2/qhd/image_color",Image,self.callback, queue_size=1,buff_size=2**24)
 
   def callback(self,data):
     try:
@@ -87,18 +88,26 @@ class find_wrench:
         locs = np.floor(locs2[0:ct,:])
         rects2 = np.transpose(np.array([locs[:,0]-width[:,0]/2,locs[:,1]-width[:,1]/2,locs[:,0]+width[:,0]/2,locs[:,1]+width[:,1]/2]))
         rects = np.int_(rects2)
+        rects2 = []
         for x1, y1, x2, y2 in rects:
             area = (x2-x1)/2*(y2-y1)/2
-            #print area
+            #print
             if area > 1000:
                 cv2.rectangle(cv_image2, (x1, y1), (x2, y2), (127, 255, 0), 8)
                 x_avg = x_avg + (x1+x2)/2
                 y_avg = y_avg + (y1+y2)/2
                 ct = ct+1
+                rects2.append(x1/2)
+                rects2.append(y1/2)
+                rects2.append(x2/2)
+                rects2.append(y2/2)
         x_avg = x_avg/ct
         y_avg = y_avg/ct
+    #print rects2
     wrenchpub = rospy.Publisher('/wrench_centroids', numpy_msg(Floats), queue_size=5)
     wrenchpub.publish(cents)
+    #wrenchboxpub = rospy.Publisher('/wrench_bounding_box', numpy_msg(Floats), queue_size=5)
+    #wrenchboxpub.publish(np.array(rects2,dtype=np.float32))
     w_loc = np.array([x_avg,y_avg], dtype=np.float32)
 
     cimg = cv2.medianBlur(cv_image,5)

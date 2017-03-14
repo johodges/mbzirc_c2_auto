@@ -68,8 +68,8 @@ DWAPlannerROS:
   min_rot_vel: 1.0
 
   # Goal Tolerance Parameters
-  yaw_goal_tolerance: 0.2
-  xy_goal_tolerance: 0.4
+  yaw_goal_tolerance: 0.1
+  xy_goal_tolerance: 0.2
   latch_xy_goal_tolerance: false
 
   # Forward Simulation Parameters
