@@ -21,6 +21,8 @@
   <arg name="ur5_enabled" default="true"/>
   <arg name="kinectv2_enabled" default="true"/>
 
+  <rosparam command="load" file="$(find mbzirc_c2_auto)/params/arenaCoords.yaml"/>
+
   <group if="$(arg velodyne_enabled)" >
     <param name="lidar" value="velodyne"/>
     <node pkg="but_velodyne_proc" type="laser_scan" name="but_velodyne_proc_laserscan_node"
