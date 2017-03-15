@@ -30,6 +30,7 @@
 import rospy
 import smach
 import subprocess
+import tf
 from geometry_msgs.msg import Twist
 from mbzirc_c2_auto.msg import kf_msg
 from robot_mv_cmds import *
@@ -516,8 +517,18 @@ class ManualArmMove(smach.State):
         smach.State.__init__(self,
                              outcomes=['completed',
                                        'failed'])
+        self.tftree = tf.TransformListener() # Set up tf listener
 
     def execute(self, userdata):
+
+        if self.tftree.frameExists("/base_link") and self.tftree.frameExists("/gripper_camera"):
+            t = self.tftree.getLatestCommonTime("/base_link", "/gripper_camera")
+            posi, quat = self.tftree.lookupTransform("/base_link", "/gripper_camera", t)
+        else:
+            posi = [0.486, 0.109, 0.620]
+
+        rospy.set_param('ee_position',[float(posi[0]), float(posi[1]), float(posi[2])])
+
         prc = subprocess.Popen("roslaunch ugv_teleop arm_manual_control.launch", shell=True)
         prc.wait()
 

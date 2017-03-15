@@ -125,6 +125,26 @@ class InitSimulation(smach.State):
         rospy.sleep(0.5)
         return userdata.sim_type_in
 
+class SmachReady(smach.State):
+    """ Temporarily stops the state machine until a key is pushed
+
+    Outcomes
+    --------
+         startSMACHing - Ready to go
+
+    """
+
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['startSMACHing'])
+
+    def execute(self, userdata):
+        prc = subprocess.Popen("rosrun mbzirc_c2_auto init_smach.py", shell=True)
+        prc.wait()
+        return 'startSMACHing'
+
+
+
 def nav_term_cb(outcome_map):
     """ Termination callback to set concurrent nav behavior
     """
@@ -229,13 +249,16 @@ def main(sim_mode):
 
         # Define the Main State Machine (sm)
         smach.StateMachine.add('INITIALIZATION', InitSimulation(),
-                               transitions={'normal' : 'NAVIGATE',
+                               transitions={'normal' : 'SMACH_READY',
                                             'armTest' : 'TEST_ARM',
                                             'wrenchTest' : 'TEST_WRENCH',
                                             'valveTest' : 'TEST_VALVE',
                                             'manOpsTest' : 'TEST_MANUAL_OPS'},
                                remapping={'sim_type_in' : 'sim_type'})
 
+
+        smach.StateMachine.add('SMACH_READY', SmachReady(),
+                               transitions={'startSMACHing' : 'NAVIGATE'})
 
         smach.StateMachine.add('NAVIGATE', sm_nav,
                                transitions={'readyToOrient' : 'ORIENT',
