@@ -1,5 +1,5 @@
 <launch>
-  <arg name="vtrex_enabled" default="false"/>
+  <arg name="vtrex_enabled" default="true"/>
   <group if="$(arg vtrex_enabled)">
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
     <rosparam command="load" file="$(find vtrex_control)/config/localization.yaml" />

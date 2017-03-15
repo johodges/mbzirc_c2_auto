@@ -169,6 +169,7 @@ class Localize(smach.State):
                              outcomes=['localized'])
 
     def execute(self, userdata):
+        """
         physical_robot = rospy.get_param('physical_robot')
         vtrex_enabled = rospy.get_param('vtrex_enabled')
         if physical_robot:
@@ -207,6 +208,7 @@ class Localize(smach.State):
 
         else:
             pass
+        """
         return 'localized'
 
 

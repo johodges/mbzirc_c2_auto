@@ -4,14 +4,16 @@
   <param name="sm_version" value="old"/>
   <param name="physical_robot" value="true"/>
 
-  <arg name="gps2robot_x" value="38.797"/>
-  <arg name="gps2robot_y" value="26.069"/>
-  <arg name="gps2robot_yaw" value="-0.9076"/>
+  <arg name="gps2robot_x" value="19.000"/>
+  <arg name="gps2robot_y" value="24.100"/>
+  <arg name="gps2robot_yaw" value="-1.57"/>
   <arg name="imu_absolute_yaw" value="1.6"/>
   <arg name="state_machine" value="true"/>
   <arg name="state_machine_type" value="normal"/>
-  <arg name="vtrex_enabled" value="false"/>
-  <arg name="ur5_enabled" value="false"/>
+  <arg name="vtrex_enabled" value="true"/>
+  <arg name="ur5_enabled" value="true"/>
+
+<rosparam file="$(find mbzirc_c2_auto)/params/arenaCoords.yaml" command="load"/>
 
 <!-- SET PARAMS -->
   <param name="imu_absolute_yaw" value="$(arg imu_absolute_yaw)"/>
@@ -20,11 +22,11 @@
 <!-- HARDWARE -->
 
   <!-- SENSORS LAUNCH -->
-  <include file="$(find mbzirc_c2_auto)/launch/prep-sensors.launch">
+  <!--include file="$(find mbzirc_c2_auto)/launch/prep-sensors.launch">
     <arg name="gps2robot_x" value="$(arg gps2robot_x)"/>
     <arg name="gps2robot_y" value="$(arg gps2robot_y)"/>
     <arg name="gps2robot_yaw" value="$(arg gps2robot_yaw)"/>
-  </include>
+  </include-->
 
   <group if="$(arg ur5_enabled)">
     <!-- ARM LAUNCH -->
@@ -42,6 +44,23 @@
   </group>
 
   <!-- TREX LAUNCH -->
+
+<node pkg="rosserial_python" type="serial_node.py" name="serial_node_left_motors">
+        <param name="port" value="/dev/ttyACM0"/>
+      </node>
+      <node pkg="rosserial_python" type="serial_node.py" name="serial_node_right_motors">
+        <param name="port" value="/dev/ttyACM1"/>
+      </node>
+      <node pkg="tele_controller" type="odom_pub_node" name="odom_pub_node"/>
+
+<node name="vtrex_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!--node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+    <rosparam command="load" file="$(find husky_control)/config/localization.yaml" />
+  </node-->
+  <include file="$(find mbzirc_c2_auto)/launch/robot_localization.launch"/>
+
+
   <group if="$(arg vtrex_enabled)">
     <group unless="$(arg state_machine)">
       <node pkg="rosserial_python" type="serial_node.py" name="serial_node_left_motors">
@@ -101,10 +120,10 @@
   </group>
 
   <!-- MOVEBASE LAUNCH-->
-  <!--include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
+  <include file="$(find mbzirc_c2_auto)/launch/move_base.launch">
     <arg name="no_static_map" value="true"/>
     <arg name="oscillation_timeout" value="0.0"/>
-  </include-->
+  </include>
 
   <!-- SENSOR FUSION LAUNCH -->
   <group unless="$(arg state_machine)">
@@ -113,11 +132,13 @@
   </node>
   </group>
 
+ <!--node pkg="tele_controller" type="joy_teleop2.py" name="teleop_node"/>
+  <node pkg="joy" type="joy_node" name="joy_node"/-->
 
 
   <!-- MAPPING LAUNCH -->
   <!--include file="$(find mbzirc_c2_auto)/launch/gmapping.launch" /-->
-  <node name="read_odom" pkg="map_reader" type="read_odom.py"/>
+  <!--node name="read_odom" pkg="map_reader" type="read_odom.py"/-->
 
   <!-- VISUALIZATION LAUNCH -->
   <include file="$(find mbzirc_c2_auto)/launch/view_robot.launch" />

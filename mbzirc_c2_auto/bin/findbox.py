@@ -78,7 +78,7 @@ class findbox():
         self.arena_yneg = rospy.get_param('arena_yneg')
 
         self.rate = rospy.Rate(10)
-        self.scan_dist_thresh = 0.1  # Distance threshold to split obj into 2 obj.
+        self.scan_dist_thresh = 0.5  # Distance threshold to split obj into 2 obj.
         self.plot_data = True
         self.image_output = rospy.Publisher("/output/keyevent_image",Image, 
             queue_size=1)

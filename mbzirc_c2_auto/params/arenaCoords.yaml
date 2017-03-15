@@ -1,4 +1,4 @@
-arena_xpos: 30.0
+arena_xpos: 60.0
 arena_xneg: -1.0
-arena_ypos: 25.0
-arena_yneg: -10.0
+arena_ypos: 15.0
+arena_yneg: -15.0
