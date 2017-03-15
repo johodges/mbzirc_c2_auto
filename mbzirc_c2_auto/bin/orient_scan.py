@@ -137,7 +137,7 @@ class orient_scan():
         ycos = np.cos(y)
 
         # Apply a median filter to the LIDAR scan
-        x = sg.medfilt(data.ranges,1)
+        x = sg.medfilt(data.ranges,1)-0.25
 
         # Decompose range measurement into local x,y coordinates (x forward, y to left)
         y_coord = x*ysin
