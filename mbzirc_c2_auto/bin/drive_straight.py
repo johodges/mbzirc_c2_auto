@@ -112,7 +112,6 @@ class drive_straight():
             except:
                 pass
             self.noise_counter = self.noise_counter+1
-            rospy.logdebug("I see no object!")
             if self.state == 3:
                 # If move_base is registering 'SUCCEEDED' move to next waypoint
                 self.current_waypoint = self.current_waypoint+1

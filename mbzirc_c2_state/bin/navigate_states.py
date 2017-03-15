@@ -93,6 +93,11 @@ class FindBoard(smach.State):
             a = subprocess.Popen("rosrun mbzirc_c2_auto findbox_2d_vel.py",
                 stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
         """
+
+        drive_straight = subprocess.Popen("rosrun mbzirc_c2_auto drive_straight.py", shell=True)
+
+        drive_straight.wait()
+
         physical_robot = rospy.get_param('physical_robot')
         if physical_robot:
             a = subprocess.Popen("rosrun mbzirc_c2_auto findbox.py",
