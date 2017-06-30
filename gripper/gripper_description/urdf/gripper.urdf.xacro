@@ -251,6 +251,8 @@
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
-
+    <gazebo>
+      <xacro:gripper_gazebo />
+    </gazebo>
   </xacro:macro>
 </robot>

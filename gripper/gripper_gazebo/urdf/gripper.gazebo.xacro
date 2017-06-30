@@ -18,8 +18,6 @@
     </plugin>
   </gazebo -->
 
-  <xacro:gripper_gazebo />
-
   <xacro:macro name="gripper_gazebo">
 
     <xacro:gripper_camera_gazebo prefix="ur5_arm_gripper_camera"/>
