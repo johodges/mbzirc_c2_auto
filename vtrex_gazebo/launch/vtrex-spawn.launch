@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="velodyne_enabled" default="true"/>
+  <arg name="velodyne_enabled" default="false"/>
   <arg name="sick_enabled" default="false"/>
   <arg name="sawyer_enabled" default="false"/>
   <arg name="ur5_enabled" default="true"/>
@@ -71,6 +71,6 @@
   </group>
 
   <node name="vtrex_spawn" pkg="gazebo_ros" type="spawn_model"
-    args="-x 65 -z 0.15 -y -25 -Y 3.14 -urdf -param robot_description -model vtrex -J right_j0 3.14"/>
+    args="-x 0 -z 0 -y 0 -Y 0 -urdf -param robot_description -model vtrex -J right_j0 3.14"/>
 
 </launch>
