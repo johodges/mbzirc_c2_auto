@@ -6,7 +6,6 @@ project(mbzirc_c2_auto)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  husky_navigation
   move_base
   message_generation
 )

@@ -26,9 +26,9 @@ target_link_libraries(main_detection ${OpenCV_LIBS} )
 target_link_libraries(main_detection ${libcurl_LIBS} )
 target_link_libraries(main_detection curl)
 
-add_executable(sunba_video src/sunba.cpp)
-target_link_libraries(sunba_video
-  ${catkin_LIBRARIES}
-)
+#add_executable(sunba_video src/sunba.cpp)
+#target_link_libraries(sunba_video
+#  ${catkin_LIBRARIES}
+#)
 
 

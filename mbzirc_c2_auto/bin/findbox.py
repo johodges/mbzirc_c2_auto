@@ -62,6 +62,7 @@ class findbox():
         if self.physical_robot:
             rospy.Subscriber("/scan/long_range",sensor_msgs.msg.LaserScan,self.cb_scan, queue_size=1)
         else:
+            print("Simulation robot.")
             rospy.Subscriber("/scan",sensor_msgs.msg.LaserScan,self.cb_scan, queue_size=1)
         rospy.Subscriber('/odometry/filtered',Odometry, self.cb_odom)
         self.bearing_pub = rospy.Publisher("/detection",numpy_msg(Floats), queue_size=1)
@@ -79,7 +80,7 @@ class findbox():
 
         self.rate = rospy.Rate(10)
         self.scan_dist_thresh = 0.5  # Distance threshold to split obj into 2 obj.
-        self.plot_data = True
+        self.plot_data = False
         self.image_output = rospy.Publisher("/output/keyevent_image",Image, 
             queue_size=1)
 
@@ -152,11 +153,11 @@ class findbox():
             if ylen > self.ylen_lim:
                 # Calculate distance of this object
                 dist2_sum = np.sum(dist2[i][1:ylen-1])
-                y_pt = np.median(y_coord_glo[i])
-                x_pt = np.median(x_coord_glo[i])
+                y_pt = np.nanmedian(y_coord_glo[i])
+                x_pt = np.nanmedian(x_coord_glo[i])
                 # Check if this object is too small
                 if dist2_sum > self.dist_min and dist2_sum < self.dist_max:
-                    if y_pt < self.arena_ypos and y_pt > self.arena_yneg and x_pt < self.arena_xpos and x_pt > self.arena_xneg:
+                    if y_pt < self.arena_ypos and y_pt > self.arena_yneg and x_pt < self.arena_xpos and x_pt > self.arena_xneg and np.isfinite(y_pt) and np.isfinite(x_pt):
                         ang = np.median(y2[i])
                         dis = np.median(x2[i])
                         mn = min(x2[i][1:ylen])
@@ -179,11 +180,13 @@ class findbox():
                 ylen = len(y2[i])-0
                 if ylen > self.ylen_lim:
                     dist2_sum = np.sum(dist2[i][1:ylen-1])
-                    y_pt = np.median(y_coord_glo[i])
-                    x_pt = np.median(x_coord_glo[i])
-                    if y_pt > self.arena_ypos or y_pt < self.arena_yneg or x_pt > self.arena_xpos or x_pt < self.arena_xneg:
-                        print "x_mn, x_mx, x_pt: ", self.arena_xneg, self.arena_xpos, x_pt
-                        print "y_mn, y_mx, y_pt: ", self.arena_yneg, self.arena_ypos, y_pt
+                    y_pt = np.nanmedian(y_coord_glo[i])
+                    x_pt = np.nanmedian(x_coord_glo[i])
+                    #print(y_coord_glo[i])
+                    #print(x_coord_glo[i])
+                    if y_pt > self.arena_ypos or y_pt < self.arena_yneg or x_pt > self.arena_xpos or x_pt < self.arena_xneg or np.isfinite(y_pt) or np.isfinite(x_pt):
+                        #print "x_mn, x_mx, x_pt: ", self.arena_xneg, self.arena_xpos, x_pt
+                        #print "y_mn, y_mx, y_pt: ", self.arena_yneg, self.arena_ypos, y_pt
                         #plt.plot(y_pt,x_pt,'co',markersize=10.0)
                         plt.plot(y_coord_glo[i][1:ylen],x_coord_glo[i][1:ylen],'c-',linewidth=2.0)
                     else:

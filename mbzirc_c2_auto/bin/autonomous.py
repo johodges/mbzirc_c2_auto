@@ -132,10 +132,8 @@ class mbzirc_c2_auto():
 
         rospy.loginfo("Connected to move base server")
         rospy.loginfo("Starting navigation test")
-        # Subscribe to object detection topic
-        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
-        rospy.Subscriber("/prepare_to_die", Int8, self.cb_inigo, queue_size=1)
 
+        rospy.Subscriber("/prepare_to_die", Int8, self.cb_inigo, queue_size=1)
         rospy.sleep(self.rest_time)
         # If move_base is registering 'SUCCEEDED' move to next waypoint
         self.current_waypoint = self.current_waypoint+1
@@ -149,6 +147,10 @@ class mbzirc_c2_auto():
         self.stall_counter = 0
         self.detect_counter = 0
         rospy.sleep(self.rest_time*10)
+
+        # Subscribe to object detection topic
+        rospy.Subscriber("/detection", numpy_msg(Floats), self.callback, queue_size=1)
+
 
     def shutdown(self):
         """This subroutine runs when the autonomous node shutdown. It is

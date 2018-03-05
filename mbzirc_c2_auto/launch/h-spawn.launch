@@ -8,8 +8,13 @@
   <arg name="kinectv2_enabled" default="true"/>
   <arg name="primesense_enabled" default="false"/>
   <arg name="sawyer_enabled" default="false"/>
+  <arg name="robot_namespace" default="/"/>
+  <arg name="laser_enabled" default="false"/>
+  <arg name="urdf_extras" default="$(find husky_ur5_moveit_config)/urdf/accessories/huskyExtras.urdf"/>
+  <!--arg name="urdf_extras" default="$(find gripper_description)/urdf/gripper.urdf.xacro"/-->
 
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(env HUSKY_GAZEBO_DESCRIPTION)'
+
+  <!--param name="robot_description" command="$(find xacro)/xacro.py '$(find husky_description)/urdf/husky.urdf.xacro'
     velodyne_enabled:=$(arg velodyne_enabled)
     sick_enabled:=$(arg sick_enabled)
     ur5_enabled:=$(arg ur5_enabled)
@@ -17,6 +22,14 @@
     kinect_enabled:=$(arg kinect_enabled)
     kinectv2_enabled:=$(arg kinectv2_enabled)
     primesense_enabled:=$(arg primesense_enabled)
+    " /-->
+  <!-- Load robot description -->
+  <param name="robot_description" command="$(find xacro)/xacro '$(find husky_description)/urdf/husky.urdf.xacro'
+    --inorder
+    robot_namespace:=$(arg robot_namespace)
+    laser_enabled:=$(arg laser_enabled)
+    kinect_enabled:=$(arg kinect_enabled)
+    urdf_extras:=$(arg urdf_extras)
     " />
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -28,7 +41,7 @@
   <group if="$(arg ur5_enabled)">
 
     <!-- Load UR5 controllers -->
-    <rosparam command="load" file="$(find husky_control)/config/control_ur5.yaml" />
+    <rosparam command="load" file="$(find husky_ur5_moveit_config)/config/control_ur5.yaml" />
     <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="arm_controller --shutdown-timeout 3"/>
 
     <!-- Fake Calibration -->
@@ -138,4 +151,5 @@
 
   <!-- node name="spawn_husky_model" pkg="gazebo_ros" type="spawn_model"
     args="$(optenv ROBOTINITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/ -->
+  <node name="stow_ur5" pkg="mbzirc_c2_auto" type="stow_ur5.py"/>
 </launch>
