@@ -51,3 +51,25 @@
 
 9. Running with SMACH:
     * roslaunch mbzirc_c2_auto ch2-smach.launch
+
+10. ROS-Kinetic (alpha instructions)
+    * sudo apt-get update
+    * sudo apt-get upgrade
+    * sudo apt-get install ros-kinetic-moveit* ros-kinetic-manipulation-msgs ros-kinetic-joint-* ros-kinetic-trac-ik* ros-kinetic-urg-* ros-kinetic-teleop-t* ros-kinetic-rospy* ros-kinetic-smach* ros-kinetic-velodyne* ros-kinetic-usb-cam ros-kinetic-ur* ros-kinetic-lms1xx ros-kinetic-multimaster-*  ros-kinetic-interactive-marker-twist-server ros-kinetic-gazebo-* ros-kinetic-twist-mux ros-kinetic-pointcloud-to* xdot
+
+    * mkdir ~/catkin_ws_mbzirc2017 && cd ~/catkin_ws_mbzirc2017
+    * mkdir src && cd src
+    * git clone https://github.com/johodges/mbzirc_c2_auto -b kinetic-devel
+    * git clone https://github.com/husky/husky -b kinetic-devel
+    * git clone https://github.com/johodges/mbzirc_c2_simulation -b kinetic-devel
+    * cd .. && catkin_make
+
+11. Open new terminal and test husky install
+    * export HUSKY_URDF_EXTRAS=$(rospack find husky_description)/urdf/empty.urdf
+    * roslaunch husky_gazebo husky_empty_world.launch
+
+12. Open new terminal and launch mbzirc 2017 simulation
+    * roslaunch mbzirc_c2_auto ch2-smach.launch
+    * press spacebar in the terminal once everything has loaded to start. Note, the husky cannot currently turn with the ur5 mounted in kinetic.
+
+
