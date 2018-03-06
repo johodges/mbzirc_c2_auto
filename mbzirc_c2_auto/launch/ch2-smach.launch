@@ -9,7 +9,7 @@
   <arg name="fake_robot" default="true"/>
   <arg name="paused" default="false"/>
   <arg name="world_name" default="$(find mbzirc_c2_auto)/gazebo_models/world/mbzirc_arena_task_2_test3.world"/>
-  <arg name="state_machine" default="false"/>
+  <arg name="state_machine" default="true"/>
   <arg name="state_machine_type" default="normal"/>
   <arg name="joint_limit" default="false"/>
   <arg name="trex_enabled" default="false"/>
