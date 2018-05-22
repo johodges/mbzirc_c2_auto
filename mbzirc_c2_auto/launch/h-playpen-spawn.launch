@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="laser_enabled" default="true"/>
+  <arg name="sick_enabled" default="true"/>
   <arg name="ur5_enabled" default="true"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
@@ -9,7 +9,7 @@
   <arg name="primesense_enabled" default="false"/>
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(env HUSKY_GAZEBO_DESCRIPTION)'
-    laser_enabled:=$(arg laser_enabled)
+    sick_enabled:=$(arg sick_enabled)
     ur5_enabled:=$(arg ur5_enabled)
     ur5_camera_enabled:=$(arg ur5_camera_enabled)
     kinect_enabled:=$(arg kinect_enabled)

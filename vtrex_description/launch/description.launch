@@ -25,7 +25,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 -->
 <launch>
 
-  <!--arg name="laser_enabled" default="$(optenv HUSKY_LMS1XX_ENABLED false)"/>
+  <!--arg name="sick_enabled" default="$(optenv HUSKY_LMS1XX_ENABLED false)"/>
   <arg name="ur5_enabled" default="$(optenv HUSKY_UR5_ENABLED false)"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="ur5_mbzirc_gripper_enabled" default="false" />
@@ -43,7 +43,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     " />
 
   <!--param name="robot_description" command="$(find xacro)/xacro.py '$(find vtrex_description)/urdf/vtrex.xacro)'
-    laser_enabled:=$(arg laser_enabled)
+    sick_enabled:=$(arg sick_enabled)
     ur5_enabled:=$(arg ur5_enabled)
     ur5_camera_enabled:=$(arg ur5_camera_enabled)
     ur5_mbzirc_gripper_enabled:=$(arg ur5_mbzirc_gripper_enabled)

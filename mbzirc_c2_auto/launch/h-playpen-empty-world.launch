@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="world_name" default="worlds/empty.world"/>
-  <arg name="laser_enabled" default="true"/>
+  <arg name="sick_enabled" default="true"/>
   <arg name="ur5_enabled" default="true"/>
   <arg name="ur5_camera_enabled" default="false"/>
   <arg name="kinect_enabled" default="false"/>
@@ -18,7 +18,7 @@
   </include>
 
   <include file="$(find mbzirc_c2_auto)/launch/h-playpen-spawn.launch">
-    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
+    <arg name="sick_enabled" value="$(arg sick_enabled)"/>
     <arg name="ur5_enabled" value="$(arg ur5_enabled)"/>
     <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>
     <arg name="ur5_camera_enabled" value="$(arg ur5_camera_enabled)"/>

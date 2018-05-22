@@ -11,7 +11,7 @@
     <arg name="ur5_camera_enabled" value="false"/>
     <arg name="kinectv2_enabled" value="true"/>
     <arg name="velodyne_lidar" value="true"/>
-    <arg name="laser_enabled" value="false"/>
+    <arg name="sick_enabled" value="false"/>
   </include>
 
   <node pkg="but_velodyne_proc" type="laser_scan" name="but_velodyne_proc_laserscan_node" output="screen">
@@ -30,11 +30,11 @@
     <arg name="ur5_camera_enabled" value="false"/>
     <arg name="kinectv2_enabled" value="true"/>
     <arg name="velodyne_lidar" value="false"/>
-    <arg name="laser_enabled" value="true"/>
+    <arg name="sick_enabled" value="true"/>
   </include>
   <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch">
     <arg name="velodyne_lidar" value="false"/>
-    <arg name="laser_enabled" value="true"/>
+    <arg name="sick_enabled" value="true"/>
   </include>
   <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic.py" />
 

@@ -14,7 +14,7 @@
   </include>
   <include file="$(find husky_ur5_moveit_config)/launch/husky_ur5_planning_execution.launch">
     <arg name="velodyne_lidar" value="false"/>
-    <arg name="laser_enabled" value="true"/>
+    <arg name="sick_enabled" value="true"/>
   </include>
   <node name="move_arm_topic" pkg="mbzirc_c2_auto" type="move_arm_topic.py" />
 

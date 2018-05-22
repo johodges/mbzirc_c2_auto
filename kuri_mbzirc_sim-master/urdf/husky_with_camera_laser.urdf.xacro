@@ -1,5 +1,5 @@
 <robot name="husky_robot_gazebo" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:arg name="laser_enabled" default="true" />
+  <xacro:arg name="sick_enabled" default="true" />
   <xacro:arg name="ur5_enabled" default="false" />
   <xacro:arg name="kinect_enabled" default="false" />
   <xacro:arg name="gripper_enabled" default="false" />
