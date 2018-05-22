@@ -32,6 +32,7 @@
     * sudo apt-get install ros-indigo-moveit*
     * sudo apt-get install ros-indigo-velodyn*
     * sudo apt-get install ros-indigo-usb-cam
+    * sudo apt-get install ros-indigo-laser-scan-matcher
 
 7. Install our packages
     * cd ~/catkin_ws/src
