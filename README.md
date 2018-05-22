@@ -27,7 +27,6 @@
     * sudo apt-get install git
     * sudo apt-get install ros-indigo-trac-ik*
     * sudo apt-get install ros-indigo-smach*
-    * sudo dpkg -i libassimp3_3.0~dfsg-2_amd64.deb
     * sudo apt-get install ros-indigo-moveit-python ros-indigo-moveit-commander 
     * sudo apt-get install xdot
     * sudo apt-get install ros-indigo-moveit*
@@ -37,6 +36,8 @@
 7. Install our packages
     * cd ~/catkin_ws/src
     * git clone https://github.com/johodges/mbzirc_c2_auto
+    * cd ~/catkin_ws/src/mbzirc_c2_auto
+    * sudo dpkg -i libassimp3_3.0~dfsg-2_amd64.deb
     * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
     * sudo chmod +x *.py
     * sudo cp ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/sick_lms1xx.urdf.xacro /opt/ros/indigo/share/lms1xx/urdf
