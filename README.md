@@ -37,6 +37,7 @@
 7. Install our packages
     * cd ~/catkin_ws/src
     * git clone https://github.com/johodges/mbzirc_c2_auto
+    * git clone https://github.com/johodges/mbzirc_c2_simulation
     * cd ~/catkin_ws/src/mbzirc_c2_auto
     * sudo dpkg -i libassimp3_3.0~dfsg-2_amd64.deb
     * cd ~/catkin_ws/src/mbzirc_c2_auto/mbzirc_c2_auto/bin
